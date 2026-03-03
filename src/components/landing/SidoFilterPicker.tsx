@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useMapData } from '../../hooks/useMapData';
 import { getSidoList } from '../../utils/regionUtils';
 
@@ -11,13 +11,6 @@ export default function SidoFilterPicker({ value, onChange }: SidoFilterPickerPr
   const { geoData } = useMapData('sigungu');
 
   const sidoList = useMemo(() => (geoData ? getSidoList(geoData) : []), [geoData]);
-
-  // Default to first sido when no filter selected and list is available
-  useEffect(() => {
-    if (!value && sidoList.length > 0) {
-      onChange(sidoList[0].code);
-    }
-  }, [value, sidoList, onChange]);
 
   if (sidoList.length === 0) return null;
 
