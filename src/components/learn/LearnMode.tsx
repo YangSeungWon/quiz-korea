@@ -86,7 +86,7 @@ export default function LearnMode() {
         )}
       </div>
 
-      <div ref={containerRef} className="flex-1 flex items-start justify-center px-4 pb-4">
+      <div ref={containerRef} className="flex-1 flex items-start justify-center pb-4">
         <QuizMap
           geoData={filteredGeoData}
           topoData={topoData}

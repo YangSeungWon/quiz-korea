@@ -10,15 +10,15 @@ function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
   return (d: RegionFeature) => path(d) ?? '';
 }
 
-// Inset cities (7 metropolitan areas)
+// Inset cities (7 metropolitan areas) — 인천 last (spans 2 cols, wide shape)
 const INSET_CITIES = [
   { code: '11', label: '서울' },
   { code: '26', label: '부산' },
   { code: '27', label: '대구' },
-  { code: '28', label: '인천' },
   { code: '29', label: '광주' },
   { code: '30', label: '대전' },
   { code: '31', label: '울산' },
+  { code: '28', label: '인천' },
 ] as const;
 
 const INSET_COL_WIDTH = 180;
@@ -276,14 +276,15 @@ export default function QuizMap({
         );
         if (cityFeatures.length === 0) return;
 
-        // Position: right 2-column grid or bottom row
+        // Position: right 2-column grid (last item spans 2 cols) or bottom row
         let x: number, y: number, boxW: number, boxH: number;
         if (insetRight) {
-          boxW = INSET_COL_WIDTH;
-          boxH = boxW; // square
+          const isLast = i === INSET_CITIES.length - 1;
           const col = i % insetCols;
           const row = Math.floor(i / insetCols);
-          x = mainWidth + col * boxW;
+          boxW = isLast ? INSET_COL_WIDTH * insetCols : INSET_COL_WIDTH;
+          boxH = INSET_COL_WIDTH; // square height per cell
+          x = mainWidth + (isLast ? 0 : col * INSET_COL_WIDTH);
           y = row * boxH;
         } else {
           boxW = width / INSET_CITIES.length;
