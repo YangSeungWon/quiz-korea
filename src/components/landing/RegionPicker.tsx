@@ -12,7 +12,6 @@ interface RegionPickerProps {
   onChange: (selection: RegionSelection) => void;
 }
 
-// Short display names for buttons
 const SHORT_NAMES: Record<string, string> = {
   '11': '서울',
   '26': '부산',
@@ -40,52 +39,52 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
   const isSido = value.level === 'sido';
   const isAllSigungu = value.level === 'sigungu' && !value.filter;
 
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-600 mb-3">퀴즈 범위</label>
+  const selectedBtn = 'bg-blue-500 text-white';
+  const unselectedBtn = 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600';
 
-      <div className="flex gap-2 mb-3">
+  return (
+    <div className="space-y-3">
+      {/* 시도 */}
+      <div>
+        <div className="text-xs font-medium text-gray-400 mb-1.5">시도</div>
         <button
           onClick={() => onChange({ level: 'sido' })}
-          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isSido
-              ? 'bg-blue-500 text-white'
-              : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
+          className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            isSido ? selectedBtn : unselectedBtn
           }`}
         >
-          시도 전체
-        </button>
-        <button
-          onClick={() => onChange({ level: 'sigungu' })}
-          className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isAllSigungu
-              ? 'bg-blue-500 text-white'
-              : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300'
-          }`}
-        >
-          전체 시군구
+          전국 17개 시도
         </button>
       </div>
 
-      <div className="grid grid-cols-6 gap-1.5">
-        {sidoList.map((s) => {
-          const isSelected = value.level === 'sigungu' && value.filter === s.code;
-          const shortName = SHORT_NAMES[s.code] || s.name;
-          return (
-            <button
-              key={s.code}
-              onClick={() => onChange({ level: 'sigungu', filter: s.code })}
-              title={s.name}
-              className={`px-1 py-1.5 rounded text-xs font-medium transition-colors ${
-                isSelected
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600'
-              }`}
-            >
-              {shortName}
-            </button>
-          );
-        })}
+      {/* 시군구 */}
+      <div>
+        <div className="text-xs font-medium text-gray-400 mb-1.5">시군구</div>
+        <div className="grid grid-cols-6 gap-1.5">
+          <button
+            onClick={() => onChange({ level: 'sigungu' })}
+            className={`col-span-2 px-1 py-1.5 rounded text-xs font-medium transition-colors ${
+              isAllSigungu ? selectedBtn : unselectedBtn
+            }`}
+          >
+            전국
+          </button>
+          {sidoList.map((s) => {
+            const isSelected = value.level === 'sigungu' && value.filter === s.code;
+            return (
+              <button
+                key={s.code}
+                onClick={() => onChange({ level: 'sigungu', filter: s.code })}
+                title={s.name}
+                className={`px-1 py-1.5 rounded text-xs font-medium transition-colors ${
+                  isSelected ? selectedBtn : unselectedBtn
+                }`}
+              >
+                {SHORT_NAMES[s.code] || s.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
