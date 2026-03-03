@@ -1,9 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { AdminLevel } from '../../types';
-import AdminLevelPicker from './AdminLevelPicker';
-import SidoFilterPicker from './SidoFilterPicker';
+import RegionPicker from './RegionPicker';
 import QuizCard from './QuizCard';
+
+interface RegionSelection {
+  level: 'sido' | 'sigungu';
+  filter?: string;
+}
 
 const MODES = [
   {
@@ -30,27 +33,26 @@ const MODES = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [adminLevel, setAdminLevel] = useState<AdminLevel>('sido');
-  const [sidoFilter, setSidoFilter] = useState<string | undefined>();
+  const [region, setRegion] = useState<RegionSelection>({ level: 'sido' });
+
+  const buildParams = useCallback(() => {
+    const params = new URLSearchParams({ level: region.level });
+    if (region.filter) {
+      params.set('filter', region.filter);
+    }
+    return params.toString();
+  }, [region]);
 
   const handleModeClick = useCallback(
     (mode: string) => {
-      const params = new URLSearchParams({ level: adminLevel });
-      if (adminLevel === 'sigungu' && sidoFilter) {
-        params.set('filter', sidoFilter);
-      }
-      navigate(`/quiz/${mode}?${params.toString()}`);
+      navigate(`/quiz/${mode}?${buildParams()}`);
     },
-    [navigate, adminLevel, sidoFilter],
+    [navigate, buildParams],
   );
 
   const handleLearnClick = useCallback(() => {
-    const params = new URLSearchParams({ level: adminLevel });
-    if (adminLevel === 'sigungu' && sidoFilter) {
-      params.set('filter', sidoFilter);
-    }
-    navigate(`/learn?${params.toString()}`);
-  }, [navigate, adminLevel, sidoFilter]);
+    navigate(`/learn?${buildParams()}`);
+  }, [navigate, buildParams]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -61,14 +63,8 @@ export default function LandingPage() {
         </div>
 
         <div className="mb-6">
-          <AdminLevelPicker value={adminLevel} onChange={setAdminLevel} />
+          <RegionPicker value={region} onChange={setRegion} />
         </div>
-
-        {adminLevel === 'sigungu' && (
-          <div className="mb-6">
-            <SidoFilterPicker value={sidoFilter} onChange={setSidoFilter} />
-          </div>
-        )}
 
         <div className="grid grid-cols-2 gap-3 mb-4">
           {MODES.map((m) => (
