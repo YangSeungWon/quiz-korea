@@ -15,6 +15,7 @@ export default function LearnMode() {
   const { geoData, topoData, loading, error } = useMapData(adminLevel);
   const { containerRef, width, height } = useResponsiveSize();
   const [hoveredName, setHoveredName] = useState<string | null>(null);
+  const showInsets = adminLevel === 'sigungu' && !sidoFilter;
 
   const filteredGeoData = useMemo(() => {
     if (!geoData || !sidoFilter) return geoData;
@@ -92,7 +93,8 @@ export default function LearnMode() {
           displayMode="normal"
           width={width}
           height={height}
-          answeredCodes={new Set()}
+          showInsets={showInsets}
+          answeredCodes={new Map()}
           wrongFlashCode={null}
           onRegionHover={handleHover}
           showLabels

@@ -60,15 +60,15 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
       {/* 시군구 */}
       <div>
         <div className="text-xs font-medium text-gray-400 mb-1.5">시군구</div>
+        <button
+          onClick={() => onChange({ level: 'sigungu' })}
+          className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1.5 ${
+            isAllSigungu ? selectedBtn : unselectedBtn
+          }`}
+        >
+          전국{geoData ? ` ${geoData.features.length}개` : ''} 시군구
+        </button>
         <div className="grid grid-cols-6 gap-1.5">
-          <button
-            onClick={() => onChange({ level: 'sigungu' })}
-            className={`col-span-2 px-1 py-1.5 rounded text-xs font-medium transition-colors ${
-              isAllSigungu ? selectedBtn : unselectedBtn
-            }`}
-          >
-            전국
-          </button>
           {sidoList.map((s) => {
             const isSelected = value.level === 'sigungu' && value.filter === s.code;
             return (

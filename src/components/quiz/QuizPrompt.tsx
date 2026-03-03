@@ -5,12 +5,14 @@ interface QuizPromptProps {
   mode: QuizMode;
   currentRegion: QuizRegion | null;
   onTypeSubmit: (input: string) => void;
+  wrongShakeKey?: number;
 }
 
 export default function QuizPrompt({
   mode,
   currentRegion,
   onTypeSubmit,
+  wrongShakeKey,
 }: QuizPromptProps) {
   if (!currentRegion) return null;
 
@@ -25,7 +27,13 @@ export default function QuizPrompt({
           placeholder="지역 이름을 입력하세요"
         />
       ) : (
-        <p className="text-lg font-semibold text-gray-800">
+        <p
+          key={wrongShakeKey}
+          className="text-lg font-semibold text-gray-800"
+          style={{
+            animation: wrongShakeKey ? 'shake 0.3s ease' : undefined,
+          }}
+        >
           <span className="text-blue-600">{currentRegion.name}</span>
           을(를) 클릭하세요
         </p>

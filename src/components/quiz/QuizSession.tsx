@@ -65,7 +65,7 @@ export default function QuizSession() {
   const handlePinAnswer = useCallback(
     (clickedCode: string) => {
       if (!currentRegion || state.phase !== 'playing') return;
-      if (state.answered.has(clickedCode)) return;
+      if (state.answered.has(clickedCode)) return; // already answered
 
       if (clickedCode === currentRegion.code) {
         answerCorrect();
@@ -128,6 +128,7 @@ export default function QuizSession() {
 
   const displayMode = getDisplayMode(mode);
   const isPinMode = mode === 'pin' || mode === 'pin-hard';
+  const showInsets = adminLevel === 'sigungu' && !sidoFilter;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -143,6 +144,7 @@ export default function QuizSession() {
         mode={mode}
         currentRegion={currentRegion}
         onTypeSubmit={handleTypeAnswer}
+        wrongShakeKey={state.wrongAttempts}
       />
 
       <div ref={containerRef} className="flex-1 flex items-start justify-center px-4 pb-4">
@@ -152,6 +154,7 @@ export default function QuizSession() {
           displayMode={displayMode}
           width={width}
           height={height}
+          showInsets={showInsets}
           targetRegionCode={
             displayMode === 'outline-only' || (mode === 'type' && currentRegion)
               ? currentRegion?.code ?? null

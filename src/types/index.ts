@@ -38,7 +38,8 @@ export interface QuizState {
   phase: QuizPhase;
   queue: QuizRegion[];
   currentIndex: number;
-  answered: Set<string>;
+  answered: Map<string, number>;
+  currentWrongCount: number;
   wrongAttempts: number;
   totalRegions: number;
   wrongFlashCode: string | null;
