@@ -279,7 +279,6 @@ export default function QuizMap({
         // Position: right 2-column grid or bottom row
         let x: number, y: number, boxW: number, boxH: number;
         if (insetRight) {
-          const numRows = Math.ceil(INSET_CITIES.length / insetCols);
           boxW = INSET_COL_WIDTH;
           boxH = boxW; // square
           const col = i % insetCols;
