@@ -1,0 +1,165 @@
+import { useEffect, useMemo, useCallback } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useMapData } from '../../hooks/useMapData';
+import { useQuizEngine } from '../../hooks/useQuizEngine';
+import { useTimer } from '../../hooks/useTimer';
+import { useResponsiveSize } from '../../hooks/useResponsiveSize';
+import { extractRegions } from '../../utils/regionUtils';
+import { matchesRegionName } from '../../utils/regionUtils';
+import QuizMap from '../../maps/QuizMap';
+import QuizProgress from './QuizProgress';
+import QuizPrompt from './QuizPrompt';
+import QuizResults from './QuizResults';
+import type { QuizMode, AdminLevel, MapDisplayMode } from '../../types';
+
+function getDisplayMode(mode: QuizMode): MapDisplayMode {
+  switch (mode) {
+    case 'pin-hard':
+      return 'borderless';
+    case 'type-hard':
+      return 'outline-only';
+    default:
+      return 'normal';
+  }
+}
+
+export default function QuizSession() {
+  const { mode: modeParam } = useParams<{ mode: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const mode = (modeParam || 'pin') as QuizMode;
+  const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
+  const sidoFilter = searchParams.get('filter') || undefined;
+
+  const { geoData, topoData, loading, error } = useMapData(adminLevel);
+  const { state, currentRegion, progress, start, answerCorrect, answerWrong, reset } =
+    useQuizEngine();
+  const { formatted: elapsedTime } = useTimer(state.phase);
+  const { containerRef, width, height } = useResponsiveSize();
+
+  const regions = useMemo(() => {
+    if (!geoData) return [];
+    return extractRegions(geoData, sidoFilter);
+  }, [geoData, sidoFilter]);
+
+  // Auto-start when data is ready
+  useEffect(() => {
+    if (regions.length > 0 && state.phase === 'ready') {
+      start(regions);
+    }
+  }, [regions, state.phase, start]);
+
+  const handlePinAnswer = useCallback(
+    (clickedCode: string) => {
+      if (!currentRegion || state.phase !== 'playing') return;
+      if (state.answered.has(clickedCode)) return;
+
+      if (clickedCode === currentRegion.code) {
+        answerCorrect();
+      } else {
+        answerWrong();
+      }
+    },
+    [currentRegion, state.phase, state.answered, answerCorrect, answerWrong],
+  );
+
+  const handleTypeAnswer = useCallback(
+    (input: string) => {
+      if (!currentRegion || state.phase !== 'playing') return;
+
+      if (matchesRegionName(input, currentRegion.name)) {
+        answerCorrect();
+      } else {
+        answerWrong();
+      }
+    },
+    [currentRegion, state.phase, answerCorrect, answerWrong],
+  );
+
+  const handleRetry = useCallback(() => {
+    reset();
+    // Will auto-start via useEffect
+  }, [reset]);
+
+  const handleBack = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500 text-lg">데이터 로딩 중...</div>
+      </div>
+    );
+  }
+
+  if (error || !geoData || !topoData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">데이터를 불러오지 못했습니다.</div>
+      </div>
+    );
+  }
+
+  if (state.phase === 'finished') {
+    return (
+      <QuizResults
+        totalRegions={state.totalRegions}
+        wrongAttempts={state.wrongAttempts}
+        elapsedTime={elapsedTime}
+        onRetry={handleRetry}
+        onBack={handleBack}
+      />
+    );
+  }
+
+  const displayMode = getDisplayMode(mode);
+  const isPinMode = mode === 'pin' || mode === 'pin-hard';
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <QuizProgress
+        current={state.answered.size}
+        total={state.totalRegions}
+        percentage={progress}
+        time={elapsedTime}
+        onBack={handleBack}
+      />
+
+      <QuizPrompt
+        mode={mode}
+        currentRegion={currentRegion}
+        onTypeSubmit={handleTypeAnswer}
+      />
+
+      <div ref={containerRef} className="flex-1 flex items-start justify-center px-4 pb-4">
+        <QuizMap
+          geoData={geoData}
+          topoData={topoData}
+          displayMode={displayMode}
+          width={width}
+          height={height}
+          targetRegionCode={
+            displayMode === 'outline-only' || (mode === 'type' && currentRegion)
+              ? currentRegion?.code ?? null
+              : null
+          }
+          answeredCodes={state.answered}
+          wrongFlashCode={state.wrongFlashCode}
+          onRegionClick={isPinMode ? handlePinAnswer : undefined}
+        />
+      </div>
+
+      {/* Progress bar */}
+      <div className="px-4 pb-4">
+        <div className="max-w-xl mx-auto h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-blue-500 rounded-full transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

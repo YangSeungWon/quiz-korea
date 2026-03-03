@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { loadKoreaGeoJSON } from '../utils/dataLoader';
-import type { RegionCollection, AdminLevel } from '../types';
+import { loadKoreaMapData } from '../utils/dataLoader';
+import type { RegionCollection, AdminLevel, MapData } from '../types';
+import type { Topology } from 'topojson-specification';
 
 export function useMapData(level: AdminLevel = 'sido') {
-  const [data, setData] = useState<RegionCollection | null>(null);
+  const [geoData, setGeoData] = useState<RegionCollection | null>(null);
+  const [topoData, setTopoData] = useState<Topology | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -15,9 +17,10 @@ export function useMapData(level: AdminLevel = 'sido') {
       setError(null);
 
       try {
-        const geoData = await loadKoreaGeoJSON(level);
+        const result: MapData = await loadKoreaMapData(level);
         if (!cancelled) {
-          setData(geoData);
+          setGeoData(result.geoData);
+          setTopoData(result.topoData);
         }
       } catch (err) {
         if (!cancelled) {
@@ -37,5 +40,5 @@ export function useMapData(level: AdminLevel = 'sido') {
     };
   }, [level]);
 
-  return { data, loading, error };
+  return { geoData, topoData, loading, error };
 }

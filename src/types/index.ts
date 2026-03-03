@@ -1,75 +1,65 @@
 import type { Feature, FeatureCollection, Polygon, MultiPolygon } from 'geojson';
+import type { Topology } from 'topojson-specification';
 
-export type BaseMapType = 'geographic' | 'population-cartogram' | 'hexagonal';
+// Admin levels
+export type AdminLevel = 'sido' | 'sigungu';
 
+// Quiz modes matching Seterra
+export type QuizMode = 'pin' | 'type' | 'pin-hard' | 'type-hard';
+
+// Map display modes
+export type MapDisplayMode = 'normal' | 'borderless' | 'outline-only';
+
+// GeoJSON region types
 export interface RegionProperties {
   code: string;
   name: string;
-  nameEn?: string;
-  population?: number;
-  area?: number;
-  [key: string]: any;
+  CTPRVN_CD?: string;
+  CTP_KOR_NM?: string;
+  SIG_CD?: string;
+  SIG_KOR_NM?: string;
+  [key: string]: unknown;
 }
 
 export type RegionFeature = Feature<Polygon | MultiPolygon, RegionProperties>;
 export type RegionCollection = FeatureCollection<Polygon | MultiPolygon, RegionProperties>;
 
-export interface DataPoint {
-  regionCode: string;
-  regionName: string;
-  value: number;
-  [key: string]: any;
-}
-
-export interface VisualizationData {
+// Region used in quiz engine
+export interface QuizRegion {
+  code: string;
   name: string;
-  description?: string;
-  data: DataPoint[];
-  colorScheme?: string;
-  unit?: string;
+  feature: RegionFeature;
 }
 
-export interface MapViewState {
-  baseMapType: BaseMapType;
-  selectedRegion: string | null;
-  hoveredRegion: string | null;
-  visualizationData: VisualizationData | null;
-}
-
-export interface HexCell {
-  q: number;
-  r: number;
-  regionCode: string;
-  regionName: string;
-  x: number;
-  y: number;
-}
-
-export type AdminLevel = 'sido' | 'sigungu' | 'eupmyeondong';
-
-// Quiz types
-export type QuizMode = 'find-region' | 'name-quiz' | 'outline-quiz' | 'time-attack' | 'practice';
-
-export interface QuizQuestion {
-  regionCode: string;
-  regionName: string;
-  options?: string[]; // For multiple choice
-}
+// Quiz engine state
+export type QuizPhase = 'ready' | 'playing' | 'finished';
 
 export interface QuizState {
+  phase: QuizPhase;
+  queue: QuizRegion[];
+  currentIndex: number;
+  answered: Set<string>;
+  wrongAttempts: number;
+  totalRegions: number;
+  wrongFlashCode: string | null;
+}
+
+export type QuizAction =
+  | { type: 'START'; regions: QuizRegion[] }
+  | { type: 'ANSWER_CORRECT' }
+  | { type: 'ANSWER_WRONG' }
+  | { type: 'CLEAR_FLASH' }
+  | { type: 'RESET' };
+
+// Map data from hook
+export interface MapData {
+  geoData: RegionCollection;
+  topoData: Topology;
+}
+
+// Quiz config derived from URL
+export interface QuizConfig {
   mode: QuizMode;
   adminLevel: AdminLevel;
-  currentQuestion: number;
-  totalQuestions: number;
-  score: number;
-  questions: QuizQuestion[];
-  answers: Array<{
-    question: QuizQuestion;
-    userAnswer: string;
-    correct: boolean;
-    timeSpent?: number;
-  }>;
-  timeLimit?: number; // seconds
-  timeRemaining?: number;
-  isComplete: boolean;
+  sidoFilter?: string;
 }
