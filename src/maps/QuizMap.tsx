@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { RegionCollection, RegionFeature, MapDisplayMode } from '../types';
-import { getRegionCode, getRegionName } from '../utils/regionUtils';
+import { getRegionCode, getDisplayName } from '../utils/regionUtils';
 
 // Helper to avoid D3 generics mismatch on .attr('d', path)
 function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
@@ -237,7 +237,7 @@ export default function QuizMap({
       g.selectAll('path.region, path:not(.region)')
         .on('mouseenter.label', (_event: MouseEvent, d: unknown) => {
           const feature = d as RegionFeature;
-          const name = getRegionName(feature);
+          const name = getDisplayName(feature);
           const centroid = path.centroid(feature as d3.GeoPermissibleObjects);
 
           tooltip.selectAll('*').remove();
@@ -364,7 +364,7 @@ export default function QuizMap({
             .selectAll('path.inset-region')
             .on('mouseenter.label', (_event: MouseEvent, d: unknown) => {
               const feature = d as RegionFeature;
-              const name = getRegionName(feature);
+              const name = getDisplayName(feature);
               const centroid = insetPath.centroid(feature as d3.GeoPermissibleObjects);
 
               insetTooltip.selectAll('*').remove();

@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useMapData } from '../../hooks/useMapData';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
-import { getRegionName } from '../../utils/regionUtils';
+import { getDisplayName } from '../../utils/regionUtils';
 import QuizMap from '../../maps/QuizMap';
 import type { AdminLevel } from '../../types';
 
@@ -41,7 +41,7 @@ export default function LearnMode() {
           f.properties.code === code,
       );
       if (feature) {
-        setHoveredName(getRegionName(feature));
+        setHoveredName(getDisplayName(feature));
       }
     },
     [filteredGeoData],

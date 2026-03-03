@@ -26,7 +26,7 @@ export function extractRegions(
 
   return features.map((f) => ({
     code: getRegionCode(f),
-    name: getRegionName(f),
+    name: f.properties.SIG_KOR_NM ? getDisplayName(f) : getRegionName(f),
     feature: f,
   }));
 }
@@ -73,6 +73,28 @@ const SIDO_SHORT_FORMS: Record<string, string> = {
   '제주': '제주특별자치도',
 };
 
+// Metro city codes → short prefix for sigungu display names
+const METRO_SHORT: Record<string, string> = {
+  '11': '서울',
+  '26': '부산',
+  '27': '대구',
+  '28': '인천',
+  '29': '광주',
+  '30': '대전',
+  '31': '울산',
+};
+
+// Get display name with metro prefix for sigungu features
+export function getDisplayName(feature: RegionFeature): string {
+  const name = getRegionName(feature);
+  const code = feature.properties.SIG_CD || getRegionCode(feature);
+  if (code.length >= 2) {
+    const prefix = METRO_SHORT[code.substring(0, 2)];
+    if (prefix) return `${prefix} ${name}`;
+  }
+  return name;
+}
+
 // Sigungu suffixes that can be dropped
 const SIGUNGU_SUFFIXES = ['특별시', '광역시', '특별자치시', '특별자치도', '시', '군', '구'];
 
@@ -87,6 +109,17 @@ export function matchesRegionName(input: string, regionName: string): boolean {
   // Short-form sido match
   const fullName = SIDO_SHORT_FORMS[normalized];
   if (fullName && fullName === regionName) return true;
+
+  // Metro-prefixed name: "서울 중구" → also accept "서울중구", "중구", "중"
+  const spaceIdx = regionName.indexOf(' ');
+  if (spaceIdx !== -1) {
+    const prefix = regionName.substring(0, spaceIdx);
+    const baseName = regionName.substring(spaceIdx + 1);
+    // "서울중구" (no space)
+    if (normalized === prefix + baseName) return true;
+    // Match against just the base name part
+    if (matchesRegionName(normalized, baseName)) return true;
+  }
 
   // Sigungu: accept without suffix
   for (const suffix of SIGUNGU_SUFFIXES) {
