@@ -21,7 +21,7 @@ const INSET_CITIES = [
   { code: '31', label: '울산' },
 ] as const;
 
-const INSET_COL_WIDTH = 140;
+const INSET_COL_WIDTH = 180;
 
 interface QuizMapProps {
   geoData: RegionCollection;

@@ -12,9 +12,7 @@ export function useResponsiveSize() {
       const entry = entries[0];
       if (entry) {
         const { width, height } = entry.contentRect;
-        const w = Math.min(width, 1000);
-        const h = Math.min(height, 800);
-        setSize({ width: w, height: Math.max(h, 400) });
+        setSize({ width: Math.floor(width), height: Math.max(Math.floor(height), 400) });
       }
     });
 
