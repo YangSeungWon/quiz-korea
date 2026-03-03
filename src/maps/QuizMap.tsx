@@ -22,6 +22,7 @@ const INSET_CITIES = [
 ] as const;
 
 const INSET_COL_WIDTH = 180;
+const INSET_ROW_HEIGHT = 120;
 
 interface QuizMapProps {
   geoData: RegionCollection;
@@ -84,9 +85,12 @@ export default function QuizMap({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    // Determine main map width (leave room for insets if needed)
+    // Determine inset layout: right column on wide screens, bottom row on narrow
     const effectiveInsets = showInsets && displayMode !== 'outline-only';
-    const mainWidth = effectiveInsets ? width - INSET_COL_WIDTH : width;
+    const insetRight = effectiveInsets && width >= 700;
+    const insetBottom = effectiveInsets && !insetRight;
+    const mainWidth = insetRight ? width - INSET_COL_WIDTH : width;
+    const mainHeight = insetBottom ? height - INSET_ROW_HEIGHT : height;
 
     const g = svg.append('g');
     const projection = d3.geoMercator();
@@ -127,7 +131,7 @@ export default function QuizMap({
     projection.fitExtent(
       [
         [20, 20],
-        [mainWidth - 20, height - 20],
+        [mainWidth - 20, mainHeight - 20],
       ],
       geoData,
     );
@@ -262,7 +266,6 @@ export default function QuizMap({
 
     // Render inset maps for metropolitan areas
     if (effectiveInsets) {
-      const insetBoxHeight = height / INSET_CITIES.length;
       const insetPad = 3;
       const labelH = 14;
 
@@ -272,10 +275,19 @@ export default function QuizMap({
         );
         if (cityFeatures.length === 0) return;
 
-        const x = mainWidth;
-        const y = i * insetBoxHeight;
-        const boxW = INSET_COL_WIDTH;
-        const boxH = insetBoxHeight;
+        // Position: right column or bottom row
+        let x: number, y: number, boxW: number, boxH: number;
+        if (insetRight) {
+          boxW = INSET_COL_WIDTH;
+          boxH = height / INSET_CITIES.length;
+          x = mainWidth;
+          y = i * boxH;
+        } else {
+          boxW = width / INSET_CITIES.length;
+          boxH = INSET_ROW_HEIGHT;
+          x = i * boxW;
+          y = mainHeight;
+        }
 
         const insetG = svg.append('g').attr('transform', `translate(${x},${y})`);
 
@@ -297,7 +309,7 @@ export default function QuizMap({
           .attr('x', boxW / 2)
           .attr('y', labelH)
           .attr('text-anchor', 'middle')
-          .attr('font-size', '10px')
+          .attr('font-size', insetRight ? '10px' : '9px')
           .attr('font-weight', '600')
           .attr('fill', '#374151')
           .text(city.label);
