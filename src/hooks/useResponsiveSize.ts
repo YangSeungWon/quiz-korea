@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 export function useResponsiveSize() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 600, height: 500 });
+  const [size, setSize] = useState({ width: 700, height: 600 });
 
   useEffect(() => {
     const el = containerRef.current;
@@ -11,11 +11,10 @@ export function useResponsiveSize() {
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (entry) {
-        const { width } = entry.contentRect;
-        // Maintain roughly 5:4 aspect ratio, capped
-        const w = Math.min(width, 800);
-        const h = Math.min(Math.round(w * 0.85), 650);
-        setSize({ width: w, height: h });
+        const { width, height } = entry.contentRect;
+        const w = Math.min(width, 1000);
+        const h = Math.min(height, 800);
+        setSize({ width: w, height: Math.max(h, 400) });
       }
     });
 
