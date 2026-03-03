@@ -89,7 +89,8 @@ export default function QuizMap({
     const effectiveInsets = showInsets && displayMode !== 'outline-only';
     const insetRight = effectiveInsets && width >= 700;
     const insetBottom = effectiveInsets && !insetRight;
-    const mainWidth = insetRight ? width - INSET_COL_WIDTH : width;
+    const insetCols = 2;
+    const mainWidth = insetRight ? width - INSET_COL_WIDTH * insetCols : width;
     const mainHeight = insetBottom ? height - INSET_ROW_HEIGHT : height;
 
     const g = svg.append('g');
@@ -275,13 +276,16 @@ export default function QuizMap({
         );
         if (cityFeatures.length === 0) return;
 
-        // Position: right column or bottom row
+        // Position: right 2-column grid or bottom row
         let x: number, y: number, boxW: number, boxH: number;
         if (insetRight) {
+          const numRows = Math.ceil(INSET_CITIES.length / insetCols);
           boxW = INSET_COL_WIDTH;
-          boxH = height / INSET_CITIES.length;
-          x = mainWidth;
-          y = i * boxH;
+          boxH = boxW; // square
+          const col = i % insetCols;
+          const row = Math.floor(i / insetCols);
+          x = mainWidth + col * boxW;
+          y = row * boxH;
         } else {
           boxW = width / INSET_CITIES.length;
           boxH = INSET_ROW_HEIGHT;

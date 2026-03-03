@@ -73,8 +73,8 @@ const SIDO_SHORT_FORMS: Record<string, string> = {
   '제주': '제주특별자치도',
 };
 
-// Metro city codes → short prefix for sigungu display names
-const METRO_SHORT: Record<string, string> = {
+// Sido code → short name for prefixing duplicates
+const SIDO_SHORT: Record<string, string> = {
   '11': '서울',
   '26': '부산',
   '27': '대구',
@@ -82,15 +82,29 @@ const METRO_SHORT: Record<string, string> = {
   '29': '광주',
   '30': '대전',
   '31': '울산',
+  '41': '경기',
+  '42': '강원',
+  '43': '충북',
+  '44': '충남',
+  '45': '전북',
+  '46': '전남',
+  '47': '경북',
+  '48': '경남',
+  '50': '제주',
 };
 
-// Get display name with metro prefix for sigungu features
+// Sigungu names that exist in multiple sido — only these get prefixed
+const DUPLICATE_NAMES = new Set(['중구', '동구', '서구', '남구', '북구', '강서구', '고성군']);
+
+// Get display name: prefix with sido short name only when the name is ambiguous
 export function getDisplayName(feature: RegionFeature): string {
   const name = getRegionName(feature);
-  const code = feature.properties.SIG_CD || getRegionCode(feature);
-  if (code.length >= 2) {
-    const prefix = METRO_SHORT[code.substring(0, 2)];
-    if (prefix) return `${prefix} ${name}`;
+  if (DUPLICATE_NAMES.has(name)) {
+    const code = feature.properties.SIG_CD || getRegionCode(feature);
+    if (code.length >= 2) {
+      const prefix = SIDO_SHORT[code.substring(0, 2)];
+      if (prefix) return `${prefix} ${name}`;
+    }
   }
   return name;
 }
