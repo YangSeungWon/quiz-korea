@@ -43,6 +43,18 @@ export default function QuizSession() {
     return extractRegions(geoData, sidoFilter);
   }, [geoData, sidoFilter]);
 
+  // Filtered geoData for map display (only show relevant regions)
+  const filteredGeoData = useMemo(() => {
+    if (!geoData || !sidoFilter) return geoData;
+    return {
+      ...geoData,
+      features: geoData.features.filter((f) => {
+        const code = f.properties.SIG_CD || f.properties.CTPRVN_CD || f.properties.code || '';
+        return code.startsWith(sidoFilter);
+      }),
+    };
+  }, [geoData, sidoFilter]);
+
   // Auto-start when data is ready
   useEffect(() => {
     if (regions.length > 0 && state.phase === 'ready') {
@@ -135,7 +147,7 @@ export default function QuizSession() {
 
       <div ref={containerRef} className="flex-1 flex items-start justify-center px-4 pb-4">
         <QuizMap
-          geoData={geoData}
+          geoData={filteredGeoData!}
           topoData={topoData}
           displayMode={displayMode}
           width={width}

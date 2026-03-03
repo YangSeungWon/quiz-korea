@@ -92,11 +92,14 @@ export default function QuizMap({
       }
     }
 
-    // Normal or borderless mode: show all regions
-    projection
-      .center([127.5, 36.0])
-      .scale(Math.min(width, height) * 6)
-      .translate([width / 2, height / 2]);
+    // Normal or borderless mode: fit to all features
+    projection.fitExtent(
+      [
+        [20, 20],
+        [width - 20, height - 20],
+      ],
+      geoData,
+    );
 
     const path = d3.geoPath().projection(projection);
 

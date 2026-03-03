@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useMapData } from '../../hooks/useMapData';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
@@ -10,18 +10,30 @@ export default function LearnMode() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
+  const sidoFilter = searchParams.get('filter') || undefined;
 
   const { geoData, topoData, loading, error } = useMapData(adminLevel);
   const { containerRef, width, height } = useResponsiveSize();
   const [hoveredName, setHoveredName] = useState<string | null>(null);
 
+  const filteredGeoData = useMemo(() => {
+    if (!geoData || !sidoFilter) return geoData;
+    return {
+      ...geoData,
+      features: geoData.features.filter((f) => {
+        const code = f.properties.SIG_CD || f.properties.CTPRVN_CD || f.properties.code || '';
+        return code.startsWith(sidoFilter);
+      }),
+    };
+  }, [geoData, sidoFilter]);
+
   const handleHover = useCallback(
     (code: string | null) => {
-      if (!code || !geoData) {
+      if (!code || !filteredGeoData) {
         setHoveredName(null);
         return;
       }
-      const feature = geoData.features.find(
+      const feature = filteredGeoData.features.find(
         (f) =>
           f.properties.CTPRVN_CD === code ||
           f.properties.SIG_CD === code ||
@@ -31,7 +43,7 @@ export default function LearnMode() {
         setHoveredName(getRegionName(feature));
       }
     },
-    [geoData],
+    [filteredGeoData],
   );
 
   if (loading) {
@@ -42,7 +54,7 @@ export default function LearnMode() {
     );
   }
 
-  if (error || !geoData || !topoData) {
+  if (error || !filteredGeoData || !topoData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-red-500">데이터를 불러오지 못했습니다.</div>
@@ -78,7 +90,7 @@ export default function LearnMode() {
 
       <div ref={containerRef} className="flex-1 flex items-start justify-center px-4 pb-4">
         <QuizMap
-          geoData={geoData}
+          geoData={filteredGeoData}
           topoData={topoData}
           displayMode="normal"
           width={width}
