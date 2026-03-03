@@ -33,9 +33,10 @@ const MODES = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [region, setRegion] = useState<RegionSelection>({ level: 'sido' });
+  const [region, setRegion] = useState<RegionSelection | null>(null);
 
   const buildParams = useCallback(() => {
+    if (!region) return '';
     const params = new URLSearchParams({ level: region.level });
     if (region.filter) {
       params.set('filter', region.filter);
@@ -66,28 +67,32 @@ export default function LandingPage() {
           <RegionPicker value={region} onChange={setRegion} />
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {MODES.map((m) => (
-            <QuizCard
-              key={m.key}
-              title={m.title}
-              description={m.description}
-              onClick={() => handleModeClick(m.key)}
-            />
-          ))}
-        </div>
+        {region && (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {MODES.map((m) => (
+                <QuizCard
+                  key={m.key}
+                  title={m.title}
+                  description={m.description}
+                  onClick={() => handleModeClick(m.key)}
+                />
+              ))}
+            </div>
 
-        <button
-          onClick={handleLearnClick}
-          className="w-full bg-white border border-gray-200 rounded-xl p-5 text-left hover:border-green-300 hover:shadow-md transition-all group"
-        >
-          <h3 className="text-base font-semibold text-gray-900 group-hover:text-green-600 transition-colors mb-1">
-            학습 모드
-          </h3>
-          <p className="text-sm text-gray-500">
-            자유롭게 지도를 탐색하며 지역 이름을 익히세요.
-          </p>
-        </button>
+            <button
+              onClick={handleLearnClick}
+              className="w-full bg-white border border-gray-200 rounded-xl p-5 text-left hover:border-green-300 hover:shadow-md transition-all group"
+            >
+              <h3 className="text-base font-semibold text-gray-900 group-hover:text-green-600 transition-colors mb-1">
+                학습 모드
+              </h3>
+              <p className="text-sm text-gray-500">
+                자유롭게 지도를 탐색하며 지역 이름을 익히세요.
+              </p>
+            </button>
+          </>
+        )}
 
         <footer className="text-center mt-10 text-xs text-gray-400">
           데이터 출처:{' '}

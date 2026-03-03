@@ -8,7 +8,7 @@ interface RegionSelection {
 }
 
 interface RegionPickerProps {
-  value: RegionSelection;
+  value: RegionSelection | null;
   onChange: (selection: RegionSelection) => void;
 }
 
@@ -36,8 +36,8 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
   const { geoData } = useMapData('sigungu');
   const sidoList = useMemo(() => (geoData ? getSidoList(geoData) : []), [geoData]);
 
-  const isSido = value.level === 'sido';
-  const isAllSigungu = value.level === 'sigungu' && !value.filter;
+  const isSido = value?.level === 'sido';
+  const isAllSigungu = value?.level === 'sigungu' && !value.filter;
 
   const selectedBtn = 'bg-blue-500 text-white';
   const unselectedBtn = 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600';
@@ -70,7 +70,7 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
         </button>
         <div className="grid grid-cols-6 gap-1.5">
           {sidoList.map((s) => {
-            const isSelected = value.level === 'sigungu' && value.filter === s.code;
+            const isSelected = value?.level === 'sigungu' && value.filter === s.code;
             return (
               <button
                 key={s.code}
