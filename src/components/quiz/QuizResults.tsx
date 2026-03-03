@@ -1,8 +1,6 @@
-import { calculateScore } from '../../utils/quizEngine';
-
 interface QuizResultsProps {
   totalRegions: number;
-  wrongAttempts: number;
+  answered: Map<string, number>;
   elapsedTime: string;
   onRetry: () => void;
   onBack: () => void;
@@ -10,12 +8,17 @@ interface QuizResultsProps {
 
 export default function QuizResults({
   totalRegions,
-  wrongAttempts,
+  answered,
   elapsedTime,
   onRetry,
   onBack,
 }: QuizResultsProps) {
-  const score = calculateScore(totalRegions, wrongAttempts);
+  let firstTryCount = 0;
+  for (const mistakes of answered.values()) {
+    if (mistakes === 0) firstTryCount++;
+  }
+
+  const score = totalRegions > 0 ? Math.round((firstTryCount / totalRegions) * 100) : 0;
 
   let message: string;
   if (score === 100) {
@@ -33,17 +36,15 @@ export default function QuizResults({
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">퀴즈 완료</h2>
 
-        <div className="text-6xl font-bold text-blue-600 mb-2">{score}%</div>
+        <div className="text-6xl font-bold text-blue-600 mb-2">
+          {firstTryCount}/{totalRegions}
+        </div>
         <p className="text-gray-600 mb-6">{message}</p>
 
-        <div className="grid grid-cols-3 gap-4 mb-8 text-sm">
+        <div className="grid grid-cols-2 gap-4 mb-8 text-sm">
           <div className="bg-gray-50 rounded-lg p-3">
-            <div className="text-xl font-bold text-gray-900">{totalRegions}</div>
-            <div className="text-gray-500">총 문제</div>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="text-xl font-bold text-red-500">{wrongAttempts}</div>
-            <div className="text-gray-500">오답</div>
+            <div className="text-xl font-bold text-green-500">{firstTryCount}</div>
+            <div className="text-gray-500">한번에 정답</div>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="text-xl font-bold text-gray-900 font-mono">{elapsedTime}</div>

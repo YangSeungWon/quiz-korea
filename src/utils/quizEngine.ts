@@ -8,8 +8,3 @@ export function shuffle<T>(arr: T[]): T[] {
   return result;
 }
 
-// Seterra-style scoring: 100 * totalRegions / (totalRegions + wrongAttempts)
-export function calculateScore(totalRegions: number, wrongAttempts: number): number {
-  if (totalRegions === 0) return 0;
-  return Math.round((100 * totalRegions) / (totalRegions + wrongAttempts));
-}

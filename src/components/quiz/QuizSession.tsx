@@ -118,7 +118,7 @@ export default function QuizSession() {
     return (
       <QuizResults
         totalRegions={state.totalRegions}
-        wrongAttempts={state.wrongAttempts}
+        answered={state.answered}
         elapsedTime={elapsedTime}
         onRetry={handleRetry}
         onBack={handleBack}
