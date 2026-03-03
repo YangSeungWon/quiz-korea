@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Simplified Korea map shape -->
+  <path d="M 50 15 L 60 20 L 65 15 L 70 20 L 75 18 L 78 25 L 75 35 L 78 45 L 75 55 L 72 65 L 68 75 L 62 78 L 55 75 L 50 78 L 45 75 L 40 72 L 35 68 L 32 62 L 30 55 L 28 48 L 25 40 L 23 32 L 25 25 L 30 20 L 35 18 L 40 20 L 45 18 Z"
+        fill="url(#grad)"
+        stroke="#1e40af"
+        stroke-width="1.5"/>
+
+  <!-- Jeju Island -->
+  <ellipse cx="35" cy="82" rx="6" ry="3" fill="url(#grad)" stroke="#1e40af" stroke-width="1"/>
+</svg>
