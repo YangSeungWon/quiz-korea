@@ -77,16 +77,13 @@ export default function LearnMode() {
         <div className="w-12" />
       </div>
 
-      {hoveredName && (
-        <div className="text-center py-3">
+      <div className="text-center py-3 h-12 flex items-center justify-center">
+        {hoveredName ? (
           <span className="text-lg font-semibold text-gray-800">{hoveredName}</span>
-        </div>
-      )}
-      {!hoveredName && (
-        <div className="text-center py-3">
+        ) : (
           <span className="text-sm text-gray-400">지역 위에 마우스를 올려보세요</span>
-        </div>
-      )}
+        )}
+      </div>
 
       <div ref={containerRef} className="flex-1 flex items-start justify-center px-4 pb-4">
         <QuizMap
