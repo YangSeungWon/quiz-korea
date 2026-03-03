@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/', // Custom domain: viz-korea.ysw.kr
+  base: '/', // Custom domain: quiz-korea.ysw.kr
   server: {
     port: 10000,
   },

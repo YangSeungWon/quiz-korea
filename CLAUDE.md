@@ -13,7 +13,7 @@ No test framework is configured.
 
 ## Architecture
 
-Korean geography quiz SPA (Seterra-style). React 19 + TypeScript + D3.js + TailwindCSS 4. Deployed to GitHub Pages at `viz-korea.ysw.kr`.
+Korean geography quiz SPA (Seterra-style). React 19 + TypeScript + D3.js + TailwindCSS 4. Deployed to GitHub Pages at `quiz-korea.ysw.kr`.
 
 ### Routing
 
