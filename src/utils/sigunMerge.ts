@@ -1,4 +1,5 @@
 import * as topojson from 'topojson-client';
+import { geoArea } from 'd3';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { RegionCollection, RegionFeature } from '../types';
 import { SIDO_MAP } from './regionUtils';
@@ -44,32 +45,25 @@ function getSigunNameEn(sido: string, code: string, nameKo: string): string {
   return SIGUNGU_NAMES_EN[code] || SIDO_MAP_EN[code] || nameKo;
 }
 
-// Signed area of a ring (shoelace formula).
-// Positive = counterclockwise (outer ring in GeoJSON RFC 7946)
-// Negative = clockwise (hole in GeoJSON RFC 7946)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ringSignedArea(ring: any[]): number {
-  let sum = 0;
-  for (let i = 0, n = ring.length - 1; i < n; i++) {
-    sum += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
-  }
-  return sum / 2;
-}
-
 // Flatten all rings from a merged MultiPolygon into individual solid polygons.
 // topojson.merge() can produce wrong ring groupings and winding orders.
 // Instead of trying to fix the hierarchy, treat every ring as its own polygon
-// with correct CCW winding. Holes (rivers/lakes) get filled in — fine for a quiz map.
+// with correct winding. Uses D3's spherical geoArea to determine winding:
+// if a ring covers more than half the sphere (area > 2π), it's wound backwards.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function flattenToSolidPolygons(coordinates: any[][][][]): any[][][][] {
   const result: any[][][][] = [];
   for (const poly of coordinates) {
     for (const ring of poly) {
-      const area = ringSignedArea(ring);
-      if (Math.abs(area) < 1e-10) continue; // skip degenerate rings
-      // Ensure CCW (positive area) for outer ring
-      const ccwRing = area < 0 ? ring.slice().reverse() : ring;
-      result.push([ccwRing]);
+      if (ring.length < 4) continue; // skip degenerate rings
+      // Use spherical area to check winding — Cartesian shoelace is unreliable
+      const area = geoArea({ type: 'Polygon', coordinates: [ring] });
+      if (area > 2 * Math.PI) {
+        // Ring covers more than half the sphere → wrong winding, reverse it
+        result.push([ring.slice().reverse()]);
+      } else {
+        result.push([ring]);
+      }
     }
   }
   return result;
