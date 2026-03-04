@@ -116,6 +116,12 @@ export const SIDO_SHORT: Record<string, string> = {
 export function getDisplayName(feature: RegionFeature, locale: Locale = 'ko'): string {
   // Sigun merged features have their own name
   if (feature.properties.SIGUN_NAME_EN && locale === 'en') {
+    const code = getRegionCode(feature);
+    // Non-metro sigun: add sido prefix (e.g. "Gyeonggi Suwon-si")
+    if (code.length > 2) {
+      const prefix = SIDO_SHORT_EN[code.substring(0, 2)];
+      if (prefix) return `${prefix} ${feature.properties.SIGUN_NAME_EN}`;
+    }
     return feature.properties.SIGUN_NAME_EN as string;
   }
 
