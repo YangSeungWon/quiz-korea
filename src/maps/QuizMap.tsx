@@ -12,7 +12,7 @@ function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
 
 // Inset zones: dense cores where sigungu are too small to click (north→south order)
 const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [number, number, number, number]; color: string }[] = [
-  { label: '수도권', labelEn: 'Capital', bbox: [126.56, 37.22, 127.18, 37.70], color: '#4f46e5' },
+  { label: '수도권', labelEn: 'Capital', bbox: [126.56, 37.22, 127.25, 37.75], color: '#4f46e5' },
   { label: '대구', labelEn: 'Daegu', bbox: [128.47, 35.77, 128.73, 35.99], color: '#059669' },
   { label: '부산', labelEn: 'Busan', bbox: [128.96, 35.05, 129.21, 35.28], color: '#dc2626' },
 ];
@@ -470,10 +470,15 @@ export default function QuizMap({
           .attr('fill', zone.color)
           .text(labelText);
 
-        // Independent projection fitted to zone features
-        const zoneCollection: RegionCollection = {
+        // Independent projection fitted to zone bbox
+        const [minLon, minLat, maxLon, maxLat] = zone.bbox;
+        const bboxGeoJSON: RegionCollection = {
           type: 'FeatureCollection',
-          features: zoneFeatures,
+          features: [{
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'Polygon', coordinates: [[[minLon, minLat], [maxLon, minLat], [maxLon, maxLat], [minLon, maxLat], [minLon, minLat]]] },
+          } as unknown as RegionFeature],
         };
 
         const insetProj = d3.geoMercator().fitExtent(
@@ -481,12 +486,23 @@ export default function QuizMap({
             [insetPad, labelH + insetPad],
             [boxW - insetPad, boxH - insetPad],
           ],
-          zoneCollection,
+          bboxGeoJSON,
         );
         const insetPath = d3.geoPath().projection(insetProj);
 
+        // Clip regions to bbox area
+        const clipId = `inset-clip-${i}`;
+        const clipTL = insetProj([minLon, maxLat])!;
+        const clipBR = insetProj([maxLon, minLat])!;
+        insetG.append('defs').append('clipPath').attr('id', clipId)
+          .append('rect')
+          .attr('x', clipTL[0]).attr('y', clipTL[1])
+          .attr('width', clipBR[0] - clipTL[0]).attr('height', clipBR[1] - clipTL[1]);
+
+        const clippedG = insetG.append('g').attr('clip-path', `url(#${clipId})`);
+
         // Render regions (always in normal style within insets)
-        insetG
+        clippedG
           .selectAll('path.inset-region')
           .data(zoneFeatures)
           .join('path')
@@ -528,7 +544,7 @@ export default function QuizMap({
         if (showLabels) {
           const insetTooltip = insetG.append('g').style('pointer-events', 'none');
 
-          insetG
+          clippedG
             .selectAll('path.inset-region')
             .on('mouseenter.label', (_event: MouseEvent, d: unknown) => {
               const feature = d as RegionFeature;
