@@ -51,4 +51,7 @@ export interface TranslationStrings {
   'results.backToModes': string;
   'results.hideOverlay': string;
   'results.showOverlay': string;
+  'results.share': string;
+  'results.copied': string;
+  'results.shareText': string;
 }

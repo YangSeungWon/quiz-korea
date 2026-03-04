@@ -46,6 +46,9 @@ const en: TranslationStrings = {
   'results.backToModes': 'Back to Modes',
   'results.hideOverlay': 'View Map',
   'results.showOverlay': 'Show Results',
+  'results.share': 'Share',
+  'results.copied': 'Copied!',
+  'results.shareText': 'Korea Geography Quiz 🇰🇷',
 };
 
 export default en;

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useI18n } from '../../i18n/useI18n';
 
 interface QuizResultsProps {
@@ -6,6 +7,7 @@ interface QuizResultsProps {
   elapsedTime: string;
   onRetry: () => void;
   onBack: () => void;
+  onClose?: () => void;
 }
 
 export default function QuizResults({
@@ -14,8 +16,10 @@ export default function QuizResults({
   elapsedTime,
   onRetry,
   onBack,
+  onClose,
 }: QuizResultsProps) {
   const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
 
   let firstTryCount = 0;
   for (const mistakes of answered.values()) {
@@ -37,7 +41,15 @@ export default function QuizResults({
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
+      <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center relative">
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        )}
         <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('results.title')}</h2>
 
         <div className="text-6xl font-bold text-blue-600 mb-2">
@@ -57,6 +69,25 @@ export default function QuizResults({
         </div>
 
         <div className="flex flex-col gap-3">
+          <button
+            onClick={async () => {
+              const text = `${t('results.shareText')}\n${firstTryCount}/${totalRegions} | ${elapsedTime}\nquiz-korea.ysw.kr`;
+              if (navigator.share) {
+                try {
+                  await navigator.share({ text });
+                } catch {
+                  // user cancelled share
+                }
+              } else {
+                await navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }
+            }}
+            className="w-full bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors"
+          >
+            {copied ? t('results.copied') : t('results.share')}
+          </button>
           <button
             onClick={onRetry}
             className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"

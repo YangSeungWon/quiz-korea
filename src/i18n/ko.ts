@@ -46,6 +46,9 @@ const ko: TranslationStrings = {
   'results.backToModes': '모드 선택으로',
   'results.hideOverlay': '지도 보기',
   'results.showOverlay': '결과 보기',
+  'results.share': '공유',
+  'results.copied': '복사됨!',
+  'results.shareText': '한국 지리 퀴즈 🇰🇷',
 };
 
 export default ko;

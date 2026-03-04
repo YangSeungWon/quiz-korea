@@ -221,13 +221,8 @@ export default function QuizSession() {
           {showResults && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
               <div className="relative">
-                <button
-                  onClick={() => setShowResults(false)}
-                  className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors z-10"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
                 <QuizResults
+                  onClose={() => setShowResults(false)}
                   totalRegions={state.totalRegions}
                   answered={state.answered}
                   elapsedTime={elapsedTime}
