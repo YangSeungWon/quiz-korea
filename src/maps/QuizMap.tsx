@@ -477,7 +477,7 @@ export default function QuizMap({
           features: [{
             type: 'Feature',
             properties: {},
-            geometry: { type: 'Polygon', coordinates: [[[minLon, minLat], [maxLon, minLat], [maxLon, maxLat], [minLon, maxLat], [minLon, minLat]]] },
+            geometry: { type: 'Polygon', coordinates: [[[minLon, minLat], [minLon, maxLat], [maxLon, maxLat], [maxLon, minLat], [minLon, minLat]]] },
           } as unknown as RegionFeature],
         };
 
