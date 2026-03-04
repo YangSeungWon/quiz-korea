@@ -116,9 +116,17 @@ export default function QuizMap({
   showLabels = false,
 }: QuizMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const zoomTransformRef = useRef(d3.zoomIdentity);
+  const prevGeoDataRef = useRef(geoData);
 
   useEffect(() => {
     if (!svgRef.current || !geoData || width === 0 || height === 0) return;
+
+    // Reset zoom when data or size changes
+    if (prevGeoDataRef.current !== geoData) {
+      zoomTransformRef.current = d3.zoomIdentity;
+      prevGeoDataRef.current = geoData;
+    }
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
@@ -127,6 +135,19 @@ export default function QuizMap({
       computeInsetLayout(width, height, showInsets, displayMode);
 
     const g = svg.append('g');
+
+    // Apply stored zoom transform and set up zoom behavior
+    g.attr('transform', zoomTransformRef.current.toString());
+    const zoom = d3.zoom<SVGSVGElement, unknown>()
+      .scaleExtent([1, 8])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+        zoomTransformRef.current = event.transform;
+      });
+    svg.call(zoom);
+    if (zoomTransformRef.current !== d3.zoomIdentity) {
+      svg.call(zoom.transform, zoomTransformRef.current);
+    }
     const projection = d3.geoMercator();
 
     if (displayMode === 'outline-only' && targetRegionCode) {
@@ -450,6 +471,7 @@ export default function QuizMap({
       height={computedHeight}
       viewBox={`0 0 ${width} ${computedHeight}`}
       className="block mx-auto"
+      style={{ touchAction: 'none' }}
     />
   );
 }
