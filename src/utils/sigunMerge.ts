@@ -56,6 +56,9 @@ function flattenToSolidPolygons(coordinates: any[][][][]): any[][][][] {
   for (const poly of coordinates) {
     for (const ring of poly) {
       if (ring.length < 4) continue; // skip degenerate rings
+      // Skip unclosed rings — topojson.merge() artifacts (open line segments)
+      const first = ring[0], last = ring[ring.length - 1];
+      if (first[0] !== last[0] || first[1] !== last[1]) continue;
       // Use spherical area to check winding — Cartesian shoelace is unreliable
       const area = geoArea({ type: 'Polygon', coordinates: [ring] });
       if (area > 2 * Math.PI) {
