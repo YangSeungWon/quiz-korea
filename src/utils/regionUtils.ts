@@ -18,6 +18,8 @@ export function getRegionNameLocale(feature: RegionFeature, locale: Locale = 'ko
   if (locale === 'ko') return getRegionName(feature);
 
   const code = getRegionCode(feature);
+  // Sigun merged feature
+  if (feature.properties.SIGUN_NAME_EN) return feature.properties.SIGUN_NAME_EN as string;
   // Try sigungu lookup first
   if (SIGUNGU_NAMES_EN[code]) return SIGUNGU_NAMES_EN[code];
   // Try sido lookup
@@ -91,7 +93,7 @@ const SIDO_SHORT_FORMS: Record<string, string> = {
 };
 
 // Sido code → short name for prefixing duplicates
-const SIDO_SHORT: Record<string, string> = {
+export const SIDO_SHORT: Record<string, string> = {
   '11': '서울',
   '26': '부산',
   '27': '대구',
@@ -115,6 +117,11 @@ const DUPLICATE_NAMES = new Set(['중구', '동구', '서구', '남구', '북구
 
 // Get display name: prefix with sido short name only when the name is ambiguous
 export function getDisplayName(feature: RegionFeature, locale: Locale = 'ko'): string {
+  // Sigun merged features have their own name
+  if (feature.properties.SIGUN_NAME_EN && locale === 'en') {
+    return feature.properties.SIGUN_NAME_EN as string;
+  }
+
   if (locale === 'en') {
     const code = getRegionCode(feature);
     const enName = SIGUNGU_NAMES_EN[code];

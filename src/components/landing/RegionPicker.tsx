@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { useMapData } from '../../hooks/useMapData';
 import { getSidoList } from '../../utils/regionUtils';
+import { getSigunCount } from '../../utils/sigunMerge';
 import { useI18n } from '../../i18n/useI18n';
 import { SHORT_NAMES_EN } from '../../i18n/regions/sido';
+import type { AdminLevel } from '../../types';
 
 interface RegionSelection {
-  level: 'sido' | 'sigungu';
+  level: AdminLevel;
   filter?: string;
 }
 
@@ -38,9 +40,11 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
   const { locale, t } = useI18n();
   const { geoData } = useMapData('sigungu');
   const sidoList = useMemo(() => (geoData ? getSidoList(geoData, locale) : []), [geoData, locale]);
+  const sigunCount = useMemo(() => (geoData ? getSigunCount(geoData) : 0), [geoData]);
   const shortNames = locale === 'en' ? SHORT_NAMES_EN : SHORT_NAMES_KO;
 
   const isSido = value?.level === 'sido';
+  const isSigun = value?.level === 'sigun';
   const isAllSigungu = value?.level === 'sigungu' && !value.filter;
 
   const selectedBtn = 'bg-blue-500 text-white';
@@ -58,6 +62,19 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
           }`}
         >
           {t('picker.allSido')}
+        </button>
+      </div>
+
+      {/* Sigun */}
+      <div>
+        <div className="text-xs font-medium text-gray-400 mb-1.5">{t('picker.sigun')}</div>
+        <button
+          onClick={() => onChange({ level: 'sigun' })}
+          className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            isSigun ? selectedBtn : unselectedBtn
+          }`}
+        >
+          {t('picker.allSigun', { count: sigunCount || '' })}
         </button>
       </div>
 

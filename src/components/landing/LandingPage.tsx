@@ -4,9 +4,10 @@ import { useI18n } from '../../i18n/useI18n';
 import RegionPicker from './RegionPicker';
 import QuizCard from './QuizCard';
 import LanguageToggle from '../LanguageToggle';
+import type { AdminLevel } from '../../types';
 
 interface RegionSelection {
-  level: 'sido' | 'sigungu';
+  level: AdminLevel;
   filter?: string;
 }
 

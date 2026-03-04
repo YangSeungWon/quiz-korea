@@ -17,6 +17,8 @@ const ko: TranslationStrings = {
 
   'picker.sido': '시도',
   'picker.allSido': '전국 17개 시도',
+  'picker.sigun': '시군',
+  'picker.allSigun': '전국 {count}개 시군',
   'picker.sigungu': '시군구',
   'picker.allSigungu': '전국 {count}개 시군구',
 

@@ -19,6 +19,8 @@ export interface TranslationStrings {
   // Region picker
   'picker.sido': string;
   'picker.allSido': string;
+  'picker.sigun': string;
+  'picker.allSigun': string;
   'picker.sigungu': string;
   'picker.allSigungu': string;
 

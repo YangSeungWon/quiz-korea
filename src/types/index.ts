@@ -4,7 +4,7 @@ import type { Topology } from 'topojson-specification';
 export type { Locale } from '../i18n/types';
 
 // Admin levels
-export type AdminLevel = 'sido' | 'sigungu';
+export type AdminLevel = 'sido' | 'sigun' | 'sigungu';
 
 // Quiz modes matching Seterra
 export type QuizMode = 'pin' | 'type' | 'pin-hard' | 'type-hard';

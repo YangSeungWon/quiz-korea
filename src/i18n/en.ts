@@ -17,6 +17,8 @@ const en: TranslationStrings = {
 
   'picker.sido': 'Provinces',
   'picker.allSido': 'All 17 Provinces',
+  'picker.sigun': 'Cities',
+  'picker.allSigun': 'All {count} Cities',
   'picker.sigungu': 'Districts',
   'picker.allSigungu': 'All {count} Districts',
 
