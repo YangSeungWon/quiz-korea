@@ -96,7 +96,7 @@ export default function QuizMap({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    // Determine inset layout: right column on wide screens, bottom row on narrow
+    // Determine inset layout: right column on wide screens, bottom grid on narrow
     const effectiveInsets = showInsets && displayMode !== 'outline-only';
     const insetRight = effectiveInsets && width >= 700;
     const insetBottom = effectiveInsets && !insetRight;
@@ -104,11 +104,11 @@ export default function QuizMap({
     const insetColW = insetRight
       ? Math.max(100, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.2)))
       : Math.floor(width / insetCols);
-    const bottomInsetTotalH = insetBottom ? Math.floor(height * 0.45) : 0;
-    const bottomInsetRowH = insetBottom ? Math.floor(bottomInsetTotalH / INSET_ROWS) : 0;
-    const insetRowH = insetRight ? Math.floor(height / INSET_ROWS) : bottomInsetRowH;
+    const insetRowH = insetRight
+      ? Math.floor(height / INSET_ROWS)
+      : insetColW; // square cells based on width
     const mainWidth = insetRight ? width - insetColW * insetCols : width;
-    const mainHeight = insetBottom ? height - bottomInsetTotalH : height;
+    const mainHeight = insetBottom ? Math.floor(width * 1.3) : height;
 
     const g = svg.append('g');
     const projection = d3.geoMercator();
@@ -426,12 +426,22 @@ export default function QuizMap({
     }
   }, [geoData, topoData, displayMode, width, height, showInsets, locale, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels]);
 
+  const svgHeight = (() => {
+    if (width === 0 || height === 0) return height;
+    const eff = showInsets && displayMode !== 'outline-only';
+    const right = eff && width >= 700;
+    const bottom = eff && !right;
+    if (!bottom) return height;
+    const colW = Math.floor(width / 2);
+    return Math.floor(width * 1.3) + colW * INSET_ROWS;
+  })();
+
   return (
     <svg
       ref={svgRef}
       width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
+      height={svgHeight}
+      viewBox={`0 0 ${width} ${svgHeight}`}
       className="block mx-auto"
     />
   );
