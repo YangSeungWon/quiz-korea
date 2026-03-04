@@ -33,11 +33,11 @@ function computeInsetLayout(width: number, height: number, showInsets: boolean, 
   let mainWidth: number, mainHeight: number;
 
   if (insetRight) {
-    const panelW = Math.max(120, Math.min(240, Math.floor(width * 0.25)));
+    const panelW = Math.max(240, Math.min(480, Math.floor(width * 0.4)));
     mainWidth = width - panelW;
     mainHeight = height;
-    const topH = Math.floor(height * 0.55);
-    const botH = height - topH;
+    const topH = Math.floor(height * 0.55 * 0.9);
+    const botH = Math.floor(height * 0.45 * 0.9);
     const halfW = Math.floor(panelW / 2);
     boxes.push({ x: mainWidth, y: 0, w: panelW, h: topH });           // 수도권
     boxes.push({ x: mainWidth, y: topH, w: halfW, h: botH });          // 대구
@@ -45,8 +45,8 @@ function computeInsetLayout(width: number, height: number, showInsets: boolean, 
   } else if (insetBottom) {
     mainWidth = width;
     mainHeight = Math.floor(width * 1.3);
-    const topRowH = Math.floor(width * 0.35);
-    const botRowH = Math.floor(width * 0.25);
+    const topRowH = Math.floor(width * 0.35 * 2 * 0.9);
+    const botRowH = Math.floor(width * 0.25 * 2 * 0.9);
     const halfW = Math.floor(width / 2);
     boxes.push({ x: 0, y: mainHeight, w: width, h: topRowH });         // 수도권
     boxes.push({ x: 0, y: mainHeight + topRowH, w: halfW, h: botRowH }); // 대구
