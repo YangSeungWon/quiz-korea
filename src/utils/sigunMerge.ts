@@ -56,14 +56,32 @@ function ringSignedArea(ring: any[]): number {
   return sum / 2;
 }
 
-// Ensure correct GeoJSON winding order for D3 spherical rendering.
-// Outer ring: counterclockwise (positive area), holes: clockwise (negative area).
-// topojson.merge() doesn't guarantee this, causing some polygons to cover the entire globe.
+// Fix polygon rings: find the largest ring (= true outer boundary),
+// place it first, then ensure correct winding (outer=CCW, holes=CW).
+// topojson.merge() can produce rings in wrong order and wrong winding.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function rewindPolygon(coords: any[][]): any[][] {
-  return coords.map((ring, i) => {
+function fixPolygonRings(coords: any[][]): any[][] {
+  // Find ring with largest absolute area — that's the outer boundary
+  let maxAbsArea = -1;
+  let outerIdx = 0;
+  coords.forEach((ring, i) => {
+    const absArea = Math.abs(ringSignedArea(ring));
+    if (absArea > maxAbsArea) {
+      maxAbsArea = absArea;
+      outerIdx = i;
+    }
+  });
+
+  // Reorder: outer ring first, then holes
+  const reordered = [coords[outerIdx]];
+  for (let i = 0; i < coords.length; i++) {
+    if (i !== outerIdx) reordered.push(coords[i]);
+  }
+
+  // Fix winding: outer=CCW (positive area), holes=CW (negative area)
+  return reordered.map((ring, i) => {
     const area = ringSignedArea(ring);
-    const shouldBeCCW = i === 0; // outer ring = CCW, holes = CW
+    const shouldBeCCW = i === 0;
     if (shouldBeCCW ? area < 0 : area > 0) {
       return ring.slice().reverse();
     }
@@ -118,9 +136,9 @@ export function buildSigunData(
     // Fix winding order — topojson.merge() can produce inverted polygons
     // that D3's spherical renderer interprets as covering the entire globe
     if (merged.type === 'MultiPolygon') {
-      merged.coordinates = merged.coordinates.map((poly) => rewindPolygon(poly));
+      merged.coordinates = merged.coordinates.map((poly) => fixPolygonRings(poly));
     } else if (merged.type === 'Polygon') {
-      merged.coordinates = rewindPolygon(merged.coordinates);
+      merged.coordinates = fixPolygonRings(merged.coordinates);
     }
 
     return {
