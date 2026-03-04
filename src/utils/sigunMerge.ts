@@ -56,37 +56,23 @@ function ringSignedArea(ring: any[]): number {
   return sum / 2;
 }
 
-// Fix polygon rings: find the largest ring (= true outer boundary),
-// place it first, then ensure correct winding (outer=CCW, holes=CW).
-// topojson.merge() can produce rings in wrong order and wrong winding.
+// Flatten all rings from a merged MultiPolygon into individual solid polygons.
+// topojson.merge() can produce wrong ring groupings and winding orders.
+// Instead of trying to fix the hierarchy, treat every ring as its own polygon
+// with correct CCW winding. Holes (rivers/lakes) get filled in — fine for a quiz map.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function fixPolygonRings(coords: any[][]): any[][] {
-  // Find ring with largest absolute area — that's the outer boundary
-  let maxAbsArea = -1;
-  let outerIdx = 0;
-  coords.forEach((ring, i) => {
-    const absArea = Math.abs(ringSignedArea(ring));
-    if (absArea > maxAbsArea) {
-      maxAbsArea = absArea;
-      outerIdx = i;
+function flattenToSolidPolygons(coordinates: any[][][][]): any[][][][] {
+  const result: any[][][][] = [];
+  for (const poly of coordinates) {
+    for (const ring of poly) {
+      const area = ringSignedArea(ring);
+      if (Math.abs(area) < 1e-10) continue; // skip degenerate rings
+      // Ensure CCW (positive area) for outer ring
+      const ccwRing = area < 0 ? ring.slice().reverse() : ring;
+      result.push([ccwRing]);
     }
-  });
-
-  // Reorder: outer ring first, then holes
-  const reordered = [coords[outerIdx]];
-  for (let i = 0; i < coords.length; i++) {
-    if (i !== outerIdx) reordered.push(coords[i]);
   }
-
-  // Fix winding: outer=CCW (positive area), holes=CW (negative area)
-  return reordered.map((ring, i) => {
-    const area = ringSignedArea(ring);
-    const shouldBeCCW = i === 0;
-    if (shouldBeCCW ? area < 0 : area > 0) {
-      return ring.slice().reverse();
-    }
-    return ring;
-  });
+  return result;
 }
 
 export function buildSigunData(
@@ -133,17 +119,17 @@ export function buildSigunData(
     const toMerge = group.indices.map((i) => geometries[i]);
     const merged = topojson.merge(topoData, toMerge as Parameters<typeof topojson.merge>[1]);
 
-    // Fix winding order — topojson.merge() can produce inverted polygons
-    // that D3's spherical renderer interprets as covering the entire globe
-    if (merged.type === 'MultiPolygon') {
-      merged.coordinates = merged.coordinates.map((poly) => fixPolygonRings(poly));
-    } else if (merged.type === 'Polygon') {
-      merged.coordinates = fixPolygonRings(merged.coordinates);
-    }
+    // Flatten all rings into individual solid CCW polygons.
+    // topojson.merge() produces unreliable ring groupings and winding orders.
+    const solidCoords = flattenToSolidPolygons(
+      merged.type === 'MultiPolygon'
+        ? merged.coordinates
+        : [merged.coordinates],
+    );
 
     return {
       type: 'Feature' as const,
-      geometry: merged,
+      geometry: { type: 'MultiPolygon' as const, coordinates: solidCoords },
       properties: {
         code: group.code,
         name: group.nameKo,
