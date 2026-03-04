@@ -28,7 +28,7 @@ export default function LandingPage() {
   const [count, setCount] = useState(0); // 0 = all
 
   // Show count picker for levels with many regions
-  const showCountPicker = region && region.level !== 'sido';
+  const showCountPicker = region && region.level !== 'sido' && !region.filter;
 
   const buildParams = useCallback(() => {
     if (!region) return '';
@@ -65,7 +65,7 @@ export default function LandingPage() {
         </div>
 
         <div className="mb-6">
-          <RegionPicker value={region} onChange={setRegion} />
+          <RegionPicker value={region} onChange={(r) => { setRegion(r); setCount(0); }} />
         </div>
 
         {showCountPicker && (
