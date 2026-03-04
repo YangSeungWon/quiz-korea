@@ -9,6 +9,7 @@ interface QuizResultsProps {
   elapsedTime: string;
   mode: QuizMode;
   adminLevel: AdminLevel;
+  isSubset: boolean;
   onRetry: () => void;
   onBack: () => void;
   onClose?: () => void;
@@ -20,6 +21,7 @@ export default function QuizResults({
   elapsedTime,
   mode,
   adminLevel,
+  isSubset,
   onRetry,
   onBack,
   onClose,
@@ -84,7 +86,7 @@ export default function QuizResults({
                 'type-hard': 'landing.typeHard',
               };
               const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun';
-              const modeLine = `${t(modeKeys[mode])} · ${t(levelKey)} ${totalRegions}`;
+              const modeLine = `${t(modeKeys[mode])} · ${t(levelKey)}${isSubset ? ` ${totalRegions}` : ''}`;
               const text = `${t('results.shareText')}\n${modeLine}\n${firstTryCount}/${totalRegions} | ${elapsedTime}\nquiz-korea.ysw.kr`;
               if (navigator.share) {
                 try {

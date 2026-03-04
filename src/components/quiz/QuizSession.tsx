@@ -228,6 +228,7 @@ export default function QuizSession() {
                   elapsedTime={elapsedTime}
                   mode={mode}
                   adminLevel={adminLevel}
+                  isSubset={countParam > 0}
                   onRetry={handleRetry}
                   onBack={handleBack}
                 />
