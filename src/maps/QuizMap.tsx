@@ -25,7 +25,6 @@ const INSET_CITIES_KO = [
 const INSET_CITY_CODES = INSET_CITIES_KO.map((c) => c.code);
 
 const INSET_COL_WIDTH = 180;
-const INSET_ROW_HEIGHT = 120;
 const INSET_ROWS = 4; // 7 cities in 2-col grid: 3 full rows + 1 spanning row
 
 interface QuizMapProps {
@@ -102,10 +101,14 @@ export default function QuizMap({
     const insetRight = effectiveInsets && width >= 700;
     const insetBottom = effectiveInsets && !insetRight;
     const insetCols = 2;
-    const insetColW = insetRight ? Math.max(100, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.2))) : INSET_COL_WIDTH;
-    const insetRowH = insetRight ? Math.floor(height / INSET_ROWS) : INSET_ROW_HEIGHT;
+    const insetColW = insetRight
+      ? Math.max(100, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.2)))
+      : Math.floor(width / insetCols);
+    const bottomInsetTotalH = insetBottom ? Math.floor(height * 0.45) : 0;
+    const bottomInsetRowH = insetBottom ? Math.floor(bottomInsetTotalH / INSET_ROWS) : 0;
+    const insetRowH = insetRight ? Math.floor(height / INSET_ROWS) : bottomInsetRowH;
     const mainWidth = insetRight ? width - insetColW * insetCols : width;
-    const mainHeight = insetBottom ? height - INSET_ROW_HEIGHT : height;
+    const mainHeight = insetBottom ? height - bottomInsetTotalH : height;
 
     const g = svg.append('g');
     const projection = d3.geoMercator();
@@ -301,10 +304,13 @@ export default function QuizMap({
           x = mainWidth + (isLast ? 0 : col * insetColW);
           y = row * boxH;
         } else {
-          boxW = width / INSET_CITY_CODES.length;
-          boxH = INSET_ROW_HEIGHT;
-          x = i * boxW;
-          y = mainHeight;
+          const isLast = i === INSET_CITY_CODES.length - 1;
+          const col = i % insetCols;
+          const row = Math.floor(i / insetCols);
+          boxW = isLast ? insetColW * insetCols : insetColW;
+          boxH = insetRowH;
+          x = isLast ? 0 : col * insetColW;
+          y = mainHeight + row * boxH;
         }
 
         const insetG = svg.append('g').attr('transform', `translate(${x},${y})`);
