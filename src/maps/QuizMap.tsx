@@ -5,28 +5,30 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { MultiLineString } from 'geojson';
 import type { RegionCollection, RegionFeature, MapDisplayMode, Locale } from '../types';
 import { getRegionCode, getDisplayName } from '../utils/regionUtils';
-import { SIDO_SHORT_EN } from '../i18n/regions/sido';
-
 // Helper to avoid D3 generics mismatch on .attr('d', path)
 function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
   return (d: RegionFeature) => path(d) ?? '';
 }
 
-// Inset cities (7 metropolitan areas) — 인천 last (spans 2 cols, wide shape)
-const INSET_CITIES_KO = [
-  { code: '11', label: '서울' },
-  { code: '26', label: '부산' },
-  { code: '27', label: '대구' },
-  { code: '29', label: '광주' },
-  { code: '30', label: '대전' },
-  { code: '31', label: '울산' },
-  { code: '28', label: '인천' },
-] as const;
+// Inset zones: dense cores of metro areas + Suwon (bbox = [minLon, minLat, maxLon, maxLat])
+const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [number, number, number, number] }[] = [
+  { label: '서울', labelEn: 'Seoul', bbox: [126.76, 37.43, 127.18, 37.70] },
+  { label: '부산', labelEn: 'Busan', bbox: [128.96, 35.05, 129.21, 35.28] },
+  { label: '대구', labelEn: 'Daegu', bbox: [128.47, 35.77, 128.73, 35.99] },
+  { label: '광주', labelEn: 'Gwangju', bbox: [126.75, 35.05, 127.02, 35.26] },
+  { label: '대전', labelEn: 'Daejeon', bbox: [127.28, 36.18, 127.56, 36.48] },
+  { label: '울산', labelEn: 'Ulsan', bbox: [129.24, 35.45, 129.46, 35.68] },
+  { label: '인천', labelEn: 'Incheon', bbox: [126.56, 37.34, 126.79, 37.64] },
+  { label: '수원', labelEn: 'Suwon', bbox: [126.93, 37.22, 127.09, 37.35] },
+];
 
-const INSET_CITY_CODES = INSET_CITIES_KO.map((c) => c.code);
+function featureInBbox(feature: RegionFeature, bbox: readonly [number, number, number, number]): boolean {
+  const [lon, lat] = d3.geoCentroid(feature);
+  return lon >= bbox[0] && lon <= bbox[2] && lat >= bbox[1] && lat <= bbox[3];
+}
 
 const INSET_COL_WIDTH = 180;
-const INSET_ROWS = 4; // 7 cities in 2-col grid: 3 full rows + 1 spanning row
+const INSET_ROWS = 4; // 8 zones in 2-col × 4-row grid
 const INSET_COLS = 2;
 
 // Shared layout calculation used by both D3 rendering and SVG sizing
@@ -49,7 +51,7 @@ function computeSvgHeight(width: number, height: number, showInsets: boolean, di
   if (width === 0 || height === 0) return height;
   const { insetBottom, insetRowH, mainHeight } = computeInsetLayout(width, height, showInsets, displayMode);
   if (!insetBottom) return height; // landscape: exactly viewport height
-  return mainHeight + insetRowH * (INSET_ROWS - 1) + Math.floor(insetRowH * 1.5);
+  return mainHeight + insetRowH * INSET_ROWS;
 }
 
 interface QuizMapProps {
@@ -92,12 +94,6 @@ function getAnsweredFill(answeredCodes: Map<string, number>, code: string): stri
   if (mistakes === 1) return COLORS.mistake1;
   if (mistakes === 2) return COLORS.mistake2;
   return COLORS.mistake3;
-}
-
-function getInsetLabel(code: string, locale: Locale): string {
-  if (locale === 'en') return SIDO_SHORT_EN[code] || code;
-  const city = INSET_CITIES_KO.find((c) => c.code === code);
-  return city?.label || code;
 }
 
 export default function QuizMap({
@@ -338,36 +334,22 @@ export default function QuizMap({
         });
     }
 
-    // Render inset maps for metropolitan areas
+    // Render inset maps for dense metro cores
     if (effectiveInsets) {
       const insetPad = 3;
       const labelH = 14;
 
-      INSET_CITY_CODES.forEach((cityCode, i) => {
-        const cityFeatures = geoData.features.filter((f) =>
-          getRegionCode(f).startsWith(cityCode),
-        );
-        if (cityFeatures.length === 0) return;
+      INSET_ZONES.forEach((zone, i) => {
+        const zoneFeatures = geoData.features.filter((f) => featureInBbox(f, zone.bbox));
+        if (zoneFeatures.length === 0) return;
 
-        // Position: right 2-column grid (last item spans 2 cols) or bottom row
-        let x: number, y: number, boxW: number, boxH: number;
-        if (insetRight) {
-          const isLast = i === INSET_CITY_CODES.length - 1;
-          const col = i % INSET_COLS;
-          const row = Math.floor(i / INSET_COLS);
-          boxW = isLast ? insetColW * INSET_COLS : insetColW;
-          boxH = isLast ? insetRowH * 1.5 : insetRowH;
-          x = mainWidth + (isLast ? 0 : col * insetColW);
-          y = row * insetRowH;
-        } else {
-          const isLast = i === INSET_CITY_CODES.length - 1;
-          const col = i % INSET_COLS;
-          const row = Math.floor(i / INSET_COLS);
-          boxW = isLast ? insetColW * INSET_COLS : insetColW;
-          boxH = isLast ? insetRowH * 1.5 : insetRowH;
-          x = isLast ? 0 : col * insetColW;
-          y = mainHeight + row * insetRowH;
-        }
+        // Position: uniform 2-col × 4-row grid
+        const col = i % INSET_COLS;
+        const row = Math.floor(i / INSET_COLS);
+        const boxW = insetColW;
+        const boxH = insetRowH;
+        const x = (insetRight ? mainWidth : 0) + col * insetColW;
+        const y = (insetRight ? 0 : mainHeight) + row * insetRowH;
 
         const insetG = svg.append('g').attr('class', 'inset-group').attr('transform', `translate(${x},${y})`);
 
@@ -383,7 +365,8 @@ export default function QuizMap({
           .attr('stroke-width', 0.5)
           .attr('rx', 3);
 
-        // City label
+        // Zone label
+        const labelText = locale === 'en' ? zone.labelEn : zone.label;
         insetG
           .append('text')
           .attr('x', boxW / 2)
@@ -392,12 +375,12 @@ export default function QuizMap({
           .attr('font-size', insetRight ? '10px' : '9px')
           .attr('font-weight', '600')
           .attr('fill', '#374151')
-          .text(getInsetLabel(cityCode, locale));
+          .text(labelText);
 
-        // Independent projection for this city
-        const cityCollection: RegionCollection = {
+        // Independent projection fitted to zone features
+        const zoneCollection: RegionCollection = {
           type: 'FeatureCollection',
-          features: cityFeatures,
+          features: zoneFeatures,
         };
 
         const insetProj = d3.geoMercator().fitExtent(
@@ -405,14 +388,14 @@ export default function QuizMap({
             [insetPad, labelH + insetPad],
             [boxW - insetPad, boxH - insetPad],
           ],
-          cityCollection,
+          zoneCollection,
         );
         const insetPath = d3.geoPath().projection(insetProj);
 
         // Render regions (always in normal style within insets)
         insetG
           .selectAll('path.inset-region')
-          .data(cityFeatures)
+          .data(zoneFeatures)
           .join('path')
           .attr('class', 'inset-region')
           .attr('d', pathAttr(insetPath))
