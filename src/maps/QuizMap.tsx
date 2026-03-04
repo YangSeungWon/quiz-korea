@@ -17,9 +17,9 @@ const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [nu
   { label: '부산', labelEn: 'Busan', bbox: [128.96, 35.05, 129.21, 35.28], color: '#dc2626' },
 ];
 
-function featureInBbox(feature: RegionFeature, bbox: readonly [number, number, number, number]): boolean {
-  const [lon, lat] = d3.geoCentroid(feature);
-  return lon >= bbox[0] && lon <= bbox[2] && lat >= bbox[1] && lat <= bbox[3];
+function featureOverlapsBbox(feature: RegionFeature, bbox: readonly [number, number, number, number]): boolean {
+  const [[fMinLon, fMinLat], [fMaxLon, fMaxLat]] = d3.geoBounds(feature);
+  return fMaxLon >= bbox[0] && fMinLon <= bbox[2] && fMaxLat >= bbox[1] && fMinLat <= bbox[3];
 }
 
 interface InsetBox { x: number; y: number; w: number; h: number }
@@ -439,7 +439,7 @@ export default function QuizMap({
       const labelH = 18;
 
       INSET_ZONES.forEach((zone, i) => {
-        const zoneFeatures = geoData.features.filter((f) => featureInBbox(f, zone.bbox));
+        const zoneFeatures = geoData.features.filter((f) => featureOverlapsBbox(f, zone.bbox));
         if (zoneFeatures.length === 0 || !boxes[i]) return;
 
         const { x, y, w: boxW, h: boxH } = boxes[i];
