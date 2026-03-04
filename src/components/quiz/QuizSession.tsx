@@ -142,7 +142,7 @@ export default function QuizSession() {
   const showInsets = adminLevel === 'sigungu' && !sidoFilter;
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden">
       <QuizProgress
         current={state.answered.size}
         total={state.totalRegions}

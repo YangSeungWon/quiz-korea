@@ -26,6 +26,30 @@ const INSET_CITY_CODES = INSET_CITIES_KO.map((c) => c.code);
 
 const INSET_COL_WIDTH = 180;
 const INSET_ROWS = 4; // 7 cities in 2-col grid: 3 full rows + 1 spanning row
+const INSET_COLS = 2;
+
+// Shared layout calculation used by both D3 rendering and SVG sizing
+function computeInsetLayout(width: number, height: number, showInsets: boolean, displayMode: MapDisplayMode) {
+  const effectiveInsets = showInsets && displayMode !== 'outline-only';
+  const insetRight = effectiveInsets && width >= 700;
+  const insetBottom = effectiveInsets && !insetRight;
+  const insetColW = insetRight
+    ? Math.max(100, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.2)))
+    : Math.floor(width / INSET_COLS);
+  const insetRowH = insetRight
+    ? Math.floor(height / INSET_ROWS)
+    : insetColW; // square cells based on width
+  const mainWidth = insetRight ? width - insetColW * INSET_COLS : width;
+  const mainHeight = insetBottom ? Math.floor(width * 1.3) : height;
+  return { effectiveInsets, insetRight, insetBottom, insetColW, insetRowH, mainWidth, mainHeight };
+}
+
+function computeSvgHeight(width: number, height: number, showInsets: boolean, displayMode: MapDisplayMode) {
+  if (width === 0 || height === 0) return height;
+  const { insetBottom, insetRowH, mainHeight } = computeInsetLayout(width, height, showInsets, displayMode);
+  if (!insetBottom) return height; // landscape: exactly viewport height
+  return mainHeight + insetRowH * INSET_ROWS;
+}
 
 interface QuizMapProps {
   geoData: RegionCollection;
@@ -96,19 +120,8 @@ export default function QuizMap({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    // Determine inset layout: right column on wide screens, bottom grid on narrow
-    const effectiveInsets = showInsets && displayMode !== 'outline-only';
-    const insetRight = effectiveInsets && width >= 700;
-    const insetBottom = effectiveInsets && !insetRight;
-    const insetCols = 2;
-    const insetColW = insetRight
-      ? Math.max(100, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.2)))
-      : Math.floor(width / insetCols);
-    const insetRowH = insetRight
-      ? Math.floor(height / INSET_ROWS)
-      : insetColW; // square cells based on width
-    const mainWidth = insetRight ? width - insetColW * insetCols : width;
-    const mainHeight = insetBottom ? Math.floor(width * 1.3) : height;
+    const { effectiveInsets, insetRight, insetColW, insetRowH, mainWidth, mainHeight } =
+      computeInsetLayout(width, height, showInsets, displayMode);
 
     const g = svg.append('g');
     const projection = d3.geoMercator();
@@ -297,17 +310,17 @@ export default function QuizMap({
         let x: number, y: number, boxW: number, boxH: number;
         if (insetRight) {
           const isLast = i === INSET_CITY_CODES.length - 1;
-          const col = i % insetCols;
-          const row = Math.floor(i / insetCols);
-          boxW = isLast ? insetColW * insetCols : insetColW;
+          const col = i % INSET_COLS;
+          const row = Math.floor(i / INSET_COLS);
+          boxW = isLast ? insetColW * INSET_COLS : insetColW;
           boxH = insetRowH;
           x = mainWidth + (isLast ? 0 : col * insetColW);
           y = row * boxH;
         } else {
           const isLast = i === INSET_CITY_CODES.length - 1;
-          const col = i % insetCols;
-          const row = Math.floor(i / insetCols);
-          boxW = isLast ? insetColW * insetCols : insetColW;
+          const col = i % INSET_COLS;
+          const row = Math.floor(i / INSET_COLS);
+          boxW = isLast ? insetColW * INSET_COLS : insetColW;
           boxH = insetRowH;
           x = isLast ? 0 : col * insetColW;
           y = mainHeight + row * boxH;
@@ -426,22 +439,14 @@ export default function QuizMap({
     }
   }, [geoData, topoData, displayMode, width, height, showInsets, locale, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels]);
 
-  const svgHeight = (() => {
-    if (width === 0 || height === 0) return height;
-    const eff = showInsets && displayMode !== 'outline-only';
-    const right = eff && width >= 700;
-    const bottom = eff && !right;
-    if (!bottom) return height;
-    const colW = Math.floor(width / 2);
-    return Math.floor(width * 1.3) + colW * INSET_ROWS;
-  })();
+  const computedHeight = computeSvgHeight(width, height, showInsets, displayMode);
 
   return (
     <svg
       ref={svgRef}
       width={width}
-      height={svgHeight}
-      viewBox={`0 0 ${width} ${svgHeight}`}
+      height={computedHeight}
+      viewBox={`0 0 ${width} ${computedHeight}`}
       className="block mx-auto"
     />
   );
