@@ -214,20 +214,6 @@ export default function QuizMap({
         .style('cursor', 'pointer')
         .on('click', (_, d: RegionFeature) => {
           onRegionClick?.(getRegionCode(d));
-        })
-        .on('mouseenter', (event: MouseEvent, d: RegionFeature) => {
-          if (!answeredCodes.has(getRegionCode(d))) {
-            d3.select(event.currentTarget as Element).attr('fill', COLORS.hover);
-          }
-          onRegionHover?.(getRegionCode(d));
-        })
-        .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
-          const code = getRegionCode(d);
-          if (code === wrongFlashCode) return;
-          if (!answeredCodes.has(code)) {
-            d3.select(event.currentTarget as Element).attr('fill', 'transparent');
-          }
-          onRegionHover?.(null);
         });
     } else {
       // Normal mode: full map with borders
