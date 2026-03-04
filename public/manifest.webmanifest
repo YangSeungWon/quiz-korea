@@ -1,0 +1,13 @@
+{
+  "name": "한국 지리 퀴즈",
+  "short_name": "지리퀴즈",
+  "description": "한국의 시도와 시군구를 지도에서 찾아보는 지리 퀴즈",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
