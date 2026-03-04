@@ -49,7 +49,7 @@ function computeSvgHeight(width: number, height: number, showInsets: boolean, di
   if (width === 0 || height === 0) return height;
   const { insetBottom, insetRowH, mainHeight } = computeInsetLayout(width, height, showInsets, displayMode);
   if (!insetBottom) return height; // landscape: exactly viewport height
-  return mainHeight + insetRowH * INSET_ROWS;
+  return mainHeight + insetRowH * (INSET_ROWS - 1) + Math.floor(insetRowH * 1.5);
 }
 
 interface QuizMapProps {
@@ -146,7 +146,14 @@ export default function QuizMap({
     // Apply stored zoom transform and set up zoom behavior
     g.attr('transform', zoomTransformRef.current.toString());
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 8])
+      .scaleExtent([1, 4])
+      .translateExtent([[0, 0], [mainWidth, mainHeight]])
+      .filter((event) => {
+        // Block zoom events originating from inset areas
+        const target = event.target as Element;
+        if (target && target.closest && target.closest('.inset-group')) return false;
+        return true;
+      })
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
         zoomTransformRef.current = event.transform;
@@ -343,20 +350,20 @@ export default function QuizMap({
           const col = i % INSET_COLS;
           const row = Math.floor(i / INSET_COLS);
           boxW = isLast ? insetColW * INSET_COLS : insetColW;
-          boxH = insetRowH;
+          boxH = isLast ? insetRowH * 1.5 : insetRowH;
           x = mainWidth + (isLast ? 0 : col * insetColW);
-          y = row * boxH;
+          y = row * insetRowH;
         } else {
           const isLast = i === INSET_CITY_CODES.length - 1;
           const col = i % INSET_COLS;
           const row = Math.floor(i / INSET_COLS);
           boxW = isLast ? insetColW * INSET_COLS : insetColW;
-          boxH = insetRowH;
+          boxH = isLast ? insetRowH * 1.5 : insetRowH;
           x = isLast ? 0 : col * insetColW;
-          y = mainHeight + row * boxH;
+          y = mainHeight + row * insetRowH;
         }
 
-        const insetG = svg.append('g').attr('transform', `translate(${x},${y})`);
+        const insetG = svg.append('g').attr('class', 'inset-group').attr('transform', `translate(${x},${y})`);
 
         // Background box
         insetG
