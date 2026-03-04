@@ -158,7 +158,7 @@ export default function QuizSession() {
         wrongShakeKey={state.wrongAttempts}
       />
 
-      <div ref={containerRef} className="flex-1 flex items-start justify-center pb-4">
+      <div ref={containerRef} className="flex-1 min-h-0 flex items-start justify-center pb-4">
         <QuizMap
           geoData={filteredGeoData!}
           topoData={topoData}
