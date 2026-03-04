@@ -55,17 +55,18 @@ function flattenToSolidPolygons(coordinates: any[][][][]): any[][][][] {
   const result: any[][][][] = [];
   for (const poly of coordinates) {
     for (const ring of poly) {
-      if (ring.length < 4) continue; // skip degenerate rings
-      // Skip unclosed rings — topojson.merge() artifacts (open line segments)
-      const first = ring[0], last = ring[ring.length - 1];
-      if (first[0] !== last[0] || first[1] !== last[1]) continue;
-      // Use spherical area to check winding — Cartesian shoelace is unreliable
-      const area = geoArea({ type: 'Polygon', coordinates: [ring] });
+      if (ring.length < 3) continue; // skip degenerate rings
+      // Close unclosed rings (topojson.merge() artifacts)
+      const closed = ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]
+        ? ring
+        : [...ring, ring[0]];
+      if (closed.length < 4) continue;
+      // Use spherical area to check winding
+      const area = geoArea({ type: 'Polygon', coordinates: [closed] });
       if (area > 2 * Math.PI) {
-        // Ring covers more than half the sphere → wrong winding, reverse it
-        result.push([ring.slice().reverse()]);
+        result.push([closed.slice().reverse()]);
       } else {
-        result.push([ring]);
+        result.push([closed]);
       }
     }
   }
