@@ -352,8 +352,8 @@ export default function QuizMap({
           .attr('width', br[0] - tl[0]).attr('height', br[1] - tl[1])
           .attr('fill', 'none')
           .attr('stroke', zone.color)
-          .attr('stroke-width', 1.5)
-          .attr('stroke-dasharray', '4,2')
+          .attr('stroke-width', 2)
+          .attr('stroke-dasharray', '6,3')
           .attr('rx', 2)
           .style('pointer-events', 'none');
       });
@@ -455,7 +455,7 @@ export default function QuizMap({
           .attr('height', boxH - 2)
           .attr('fill', 'white')
           .attr('stroke', zone.color)
-          .attr('stroke-width', 1.5)
+          .attr('stroke-width', 2.5)
           .attr('rx', 3);
 
         // Zone label
