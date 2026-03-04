@@ -191,45 +191,40 @@ export default function QuizSession() {
         </div>
       )}
 
-      {isFinished && showResults && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
-          <div className="flex flex-col items-center gap-3">
-            <QuizResults
-              totalRegions={state.totalRegions}
-              answered={state.answered}
-              elapsedTime={elapsedTime}
-              onRetry={handleRetry}
-              onBack={handleBack}
-            />
-            <button
-              onClick={() => setShowResults(false)}
-              className="bg-white/90 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white transition-colors shadow"
-            >
-              {t('results.hideOverlay')}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {isFinished && !showResults && (
+      {isFinished && (
         <>
-          {/* Watermark: score + URL */}
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10 pointer-events-none">
-            <div className="bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow text-center">
+          {/* Top center: watermark + toggle button */}
+          <div className="absolute top-4 left-0 right-0 flex justify-center z-20">
+            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow">
               <span className="text-lg font-bold text-blue-600">
                 {(() => { let c = 0; for (const m of state.answered.values()) if (m === 0) c++; return c; })()}/{state.totalRegions}
               </span>
-              <span className="text-gray-400 mx-2">|</span>
-              <span className="text-xs text-gray-500">quiz-korea.ysw.kr</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-sm text-gray-500">{elapsedTime}</span>
+              <span className="text-gray-300">|</span>
+              <span className="text-xs text-gray-400">quiz-korea.ysw.kr</span>
+              <span className="text-gray-300">|</span>
+              <button
+                onClick={() => setShowResults((v) => !v)}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                {showResults ? t('results.hideOverlay') : t('results.showOverlay')}
+              </button>
             </div>
           </div>
-          {/* Show results button */}
-          <button
-            onClick={() => setShowResults(true)}
-            className="absolute top-4 right-4 z-10 bg-white/90 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-white transition-colors shadow"
-          >
-            {t('results.showOverlay')}
-          </button>
+
+          {/* Results overlay */}
+          {showResults && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
+              <QuizResults
+                totalRegions={state.totalRegions}
+                answered={state.answered}
+                elapsedTime={elapsedTime}
+                onRetry={handleRetry}
+                onBack={handleBack}
+              />
+            </div>
+          )}
         </>
       )}
     </div>
