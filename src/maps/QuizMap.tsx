@@ -141,7 +141,11 @@ export default function QuizMap({
     const { effectiveInsets, insetRight, insetColW, insetRowH, mainWidth, mainHeight } =
       computeInsetLayout(width, height, showInsets, displayMode);
 
-    const g = svg.append('g');
+    // Clip main map to its area so it doesn't render behind insets
+    svg.append('defs').append('clipPath').attr('id', 'main-clip')
+      .append('rect').attr('width', mainWidth).attr('height', mainHeight);
+    const clipG = svg.append('g').attr('clip-path', 'url(#main-clip)');
+    const g = clipG.append('g');
 
     // Apply stored zoom transform and set up zoom behavior
     g.attr('transform', zoomTransformRef.current.toString());
