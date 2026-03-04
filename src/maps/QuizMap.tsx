@@ -26,6 +26,7 @@ const INSET_CITY_CODES = INSET_CITIES_KO.map((c) => c.code);
 
 const INSET_COL_WIDTH = 180;
 const INSET_ROW_HEIGHT = 120;
+const INSET_ROWS = 4; // 7 cities in 2-col grid: 3 full rows + 1 spanning row
 
 interface QuizMapProps {
   geoData: RegionCollection;
@@ -91,7 +92,7 @@ export default function QuizMap({
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    if (!svgRef.current || !geoData) return;
+    if (!svgRef.current || !geoData || width === 0 || height === 0) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
@@ -101,7 +102,9 @@ export default function QuizMap({
     const insetRight = effectiveInsets && width >= 700;
     const insetBottom = effectiveInsets && !insetRight;
     const insetCols = 2;
-    const mainWidth = insetRight ? width - INSET_COL_WIDTH * insetCols : width;
+    const insetColW = insetRight ? Math.max(100, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.2))) : INSET_COL_WIDTH;
+    const insetRowH = insetRight ? Math.floor(height / INSET_ROWS) : INSET_ROW_HEIGHT;
+    const mainWidth = insetRight ? width - insetColW * insetCols : width;
     const mainHeight = insetBottom ? height - INSET_ROW_HEIGHT : height;
 
     const g = svg.append('g');
@@ -293,9 +296,9 @@ export default function QuizMap({
           const isLast = i === INSET_CITY_CODES.length - 1;
           const col = i % insetCols;
           const row = Math.floor(i / insetCols);
-          boxW = isLast ? INSET_COL_WIDTH * insetCols : INSET_COL_WIDTH;
-          boxH = INSET_COL_WIDTH; // square height per cell
-          x = mainWidth + (isLast ? 0 : col * INSET_COL_WIDTH);
+          boxW = isLast ? insetColW * insetCols : insetColW;
+          boxH = insetRowH;
+          x = mainWidth + (isLast ? 0 : col * insetColW);
           y = row * boxH;
         } else {
           boxW = width / INSET_CITY_CODES.length;

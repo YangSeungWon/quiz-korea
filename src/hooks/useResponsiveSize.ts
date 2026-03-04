@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 export function useResponsiveSize() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ width: 700, height: 600 });
+  const [size, setSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
     const el = containerRef.current;
