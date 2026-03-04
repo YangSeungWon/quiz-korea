@@ -22,30 +22,48 @@ function featureInBbox(feature: RegionFeature, bbox: readonly [number, number, n
   return lon >= bbox[0] && lon <= bbox[2] && lat >= bbox[1] && lat <= bbox[3];
 }
 
-const INSET_COL_WIDTH = 240;
-const NUM_INSETS = INSET_ZONES.length; // 3
+interface InsetBox { x: number; y: number; w: number; h: number }
 
-// Shared layout calculation used by both D3 rendering and SVG sizing
+// Layout: 수도권 wide on top, 대구+부산 split below
 function computeInsetLayout(width: number, height: number, showInsets: boolean, displayMode: MapDisplayMode) {
   const effectiveInsets = showInsets && displayMode !== 'outline-only';
   const insetRight = effectiveInsets && width >= 700;
   const insetBottom = effectiveInsets && !insetRight;
-  const insetColW = insetRight
-    ? Math.max(120, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.25)))
-    : Math.floor(width / NUM_INSETS);
-  const insetRowH = insetRight
-    ? Math.floor(height / NUM_INSETS)
-    : insetColW; // square cells
-  const mainWidth = insetRight ? width - insetColW : width;
-  const mainHeight = insetBottom ? Math.floor(width * 1.3) : height;
-  return { effectiveInsets, insetRight, insetBottom, insetColW, insetRowH, mainWidth, mainHeight };
+  const boxes: InsetBox[] = [];
+  let mainWidth: number, mainHeight: number;
+
+  if (insetRight) {
+    const panelW = Math.max(120, Math.min(240, Math.floor(width * 0.25)));
+    mainWidth = width - panelW;
+    mainHeight = height;
+    const topH = Math.floor(height * 0.55);
+    const botH = height - topH;
+    const halfW = Math.floor(panelW / 2);
+    boxes.push({ x: mainWidth, y: 0, w: panelW, h: topH });           // 수도권
+    boxes.push({ x: mainWidth, y: topH, w: halfW, h: botH });          // 대구
+    boxes.push({ x: mainWidth + halfW, y: topH, w: panelW - halfW, h: botH }); // 부산
+  } else if (insetBottom) {
+    mainWidth = width;
+    mainHeight = Math.floor(width * 1.3);
+    const topRowH = Math.floor(width * 0.35);
+    const botRowH = Math.floor(width * 0.25);
+    const halfW = Math.floor(width / 2);
+    boxes.push({ x: 0, y: mainHeight, w: width, h: topRowH });         // 수도권
+    boxes.push({ x: 0, y: mainHeight + topRowH, w: halfW, h: botRowH }); // 대구
+    boxes.push({ x: halfW, y: mainHeight + topRowH, w: width - halfW, h: botRowH }); // 부산
+  } else {
+    mainWidth = width;
+    mainHeight = height;
+  }
+
+  return { effectiveInsets, insetRight, insetBottom, mainWidth, mainHeight, boxes };
 }
 
 function computeSvgHeight(width: number, height: number, showInsets: boolean, displayMode: MapDisplayMode) {
   if (width === 0 || height === 0) return height;
-  const { insetBottom, insetRowH, mainHeight } = computeInsetLayout(width, height, showInsets, displayMode);
-  if (!insetBottom) return height; // landscape: exactly viewport height
-  return mainHeight + insetRowH;
+  const { insetBottom, mainHeight, boxes } = computeInsetLayout(width, height, showInsets, displayMode);
+  if (!insetBottom) return height;
+  return boxes.reduce((max, b) => Math.max(max, b.y + b.h), mainHeight);
 }
 
 interface QuizMapProps {
@@ -128,7 +146,7 @@ export default function QuizMap({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    const { effectiveInsets, insetRight, insetColW, insetRowH, mainWidth, mainHeight } =
+    const { effectiveInsets, insetRight, mainWidth, mainHeight, boxes } =
       computeInsetLayout(width, height, showInsets, displayMode);
 
     // Nested SVG clips main map content; zoom is on parent SVG
@@ -422,13 +440,9 @@ export default function QuizMap({
 
       INSET_ZONES.forEach((zone, i) => {
         const zoneFeatures = geoData.features.filter((f) => featureInBbox(f, zone.bbox));
-        if (zoneFeatures.length === 0) return;
+        if (zoneFeatures.length === 0 || !boxes[i]) return;
 
-        // Position: 1-col × N-row (landscape) or N-col × 1-row (portrait)
-        const boxW = insetColW;
-        const boxH = insetRowH;
-        const x = insetRight ? mainWidth : i * insetColW;
-        const y = insetRight ? i * insetRowH : mainHeight;
+        const { x, y, w: boxW, h: boxH } = boxes[i];
 
         const insetG = svg.append('g').attr('class', 'inset-group').attr('transform', `translate(${x},${y})`);
 
