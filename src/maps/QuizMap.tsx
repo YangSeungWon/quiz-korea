@@ -146,7 +146,7 @@ export default function QuizMap({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    const { effectiveInsets, insetRight, mainWidth, mainHeight, boxes } =
+    const { effectiveInsets, mainWidth, mainHeight, boxes } =
       computeInsetLayout(width, height, showInsets, displayMode);
 
     // Nested SVG clips main map content; zoom is on parent SVG
@@ -435,8 +435,8 @@ export default function QuizMap({
 
     // Render inset maps for dense metro cores
     if (effectiveInsets) {
-      const insetPad = 3;
-      const labelH = 14;
+      const insetPad = 4;
+      const labelH = 18;
 
       INSET_ZONES.forEach((zone, i) => {
         const zoneFeatures = geoData.features.filter((f) => featureInBbox(f, zone.bbox));
@@ -465,7 +465,7 @@ export default function QuizMap({
           .attr('x', boxW / 2)
           .attr('y', labelH)
           .attr('text-anchor', 'middle')
-          .attr('font-size', insetRight ? '10px' : '9px')
+          .attr('font-size', '13px')
           .attr('font-weight', '600')
           .attr('fill', zone.color)
           .text(labelText);
@@ -542,7 +542,7 @@ export default function QuizMap({
                 .attr('y', centroid[1])
                 .attr('text-anchor', 'middle')
                 .attr('dy', '-0.5em')
-                .attr('font-size', '9px')
+                .attr('font-size', '13px')
                 .attr('font-weight', '600')
                 .attr('fill', '#1f2937')
                 .attr('stroke', 'white')
