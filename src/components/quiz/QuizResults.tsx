@@ -1,3 +1,5 @@
+import { useI18n } from '../../i18n/useI18n';
+
 interface QuizResultsProps {
   totalRegions: number;
   answered: Map<string, number>;
@@ -13,6 +15,8 @@ export default function QuizResults({
   onRetry,
   onBack,
 }: QuizResultsProps) {
+  const { t } = useI18n();
+
   let firstTryCount = 0;
   for (const mistakes of answered.values()) {
     if (mistakes === 0) firstTryCount++;
@@ -22,19 +26,19 @@ export default function QuizResults({
 
   let message: string;
   if (score === 100) {
-    message = '완벽합니다!';
+    message = t('results.perfect');
   } else if (score >= 90) {
-    message = '훌륭해요!';
+    message = t('results.great');
   } else if (score >= 70) {
-    message = '잘했어요!';
+    message = t('results.good');
   } else {
-    message = '더 연습해보세요!';
+    message = t('results.tryAgain');
   }
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full text-center">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">퀴즈 완료</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('results.title')}</h2>
 
         <div className="text-6xl font-bold text-blue-600 mb-2">
           {firstTryCount}/{totalRegions}
@@ -44,11 +48,11 @@ export default function QuizResults({
         <div className="grid grid-cols-2 gap-4 mb-8 text-sm">
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="text-xl font-bold text-green-500">{firstTryCount}</div>
-            <div className="text-gray-500">한번에 정답</div>
+            <div className="text-gray-500">{t('results.firstTry')}</div>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="text-xl font-bold text-gray-900 font-mono">{elapsedTime}</div>
-            <div className="text-gray-500">시간</div>
+            <div className="text-gray-500">{t('results.time')}</div>
           </div>
         </div>
 
@@ -57,13 +61,13 @@ export default function QuizResults({
             onClick={onRetry}
             className="w-full bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
           >
-            다시 도전
+            {t('results.retry')}
           </button>
           <button
             onClick={onBack}
             className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
           >
-            모드 선택으로
+            {t('results.backToModes')}
           </button>
         </div>
       </div>

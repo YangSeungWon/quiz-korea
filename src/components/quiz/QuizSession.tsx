@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react';
+import { useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useMapData } from '../../hooks/useMapData';
 import { useQuizEngine } from '../../hooks/useQuizEngine';
@@ -6,6 +6,7 @@ import { useTimer } from '../../hooks/useTimer';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
 import { extractRegions } from '../../utils/regionUtils';
 import { matchesRegionName } from '../../utils/regionUtils';
+import { useI18n } from '../../i18n/useI18n';
 import QuizMap from '../../maps/QuizMap';
 import QuizProgress from './QuizProgress';
 import QuizPrompt from './QuizPrompt';
@@ -27,6 +28,8 @@ export default function QuizSession() {
   const { mode: modeParam } = useParams<{ mode: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { locale, t } = useI18n();
+  const prevLocaleRef = useRef(locale);
 
   const mode = (modeParam || 'pin') as QuizMode;
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
@@ -40,8 +43,8 @@ export default function QuizSession() {
 
   const regions = useMemo(() => {
     if (!geoData) return [];
-    return extractRegions(geoData, sidoFilter);
-  }, [geoData, sidoFilter]);
+    return extractRegions(geoData, sidoFilter, locale);
+  }, [geoData, sidoFilter, locale]);
 
   // Filtered geoData for map display (only show relevant regions)
   const filteredGeoData = useMemo(() => {
@@ -54,6 +57,14 @@ export default function QuizSession() {
       }),
     };
   }, [geoData, sidoFilter]);
+
+  // Reset quiz when locale changes
+  useEffect(() => {
+    if (prevLocaleRef.current !== locale) {
+      prevLocaleRef.current = locale;
+      reset();
+    }
+  }, [locale, reset]);
 
   // Auto-start when data is ready
   useEffect(() => {
@@ -80,13 +91,13 @@ export default function QuizSession() {
     (input: string) => {
       if (!currentRegion || state.phase !== 'playing') return;
 
-      if (matchesRegionName(input, currentRegion.name)) {
+      if (matchesRegionName(input, currentRegion.name, locale)) {
         answerCorrect();
       } else {
         answerWrong();
       }
     },
-    [currentRegion, state.phase, answerCorrect, answerWrong],
+    [currentRegion, state.phase, locale, answerCorrect, answerWrong],
   );
 
   const handleRetry = useCallback(() => {
@@ -101,7 +112,7 @@ export default function QuizSession() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500 text-lg">데이터 로딩 중...</div>
+        <div className="text-gray-500 text-lg">{t('quiz.loading')}</div>
       </div>
     );
   }
@@ -109,7 +120,7 @@ export default function QuizSession() {
   if (error || !geoData || !topoData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">데이터를 불러오지 못했습니다.</div>
+        <div className="text-red-500">{t('quiz.loadError')}</div>
       </div>
     );
   }
@@ -155,6 +166,7 @@ export default function QuizSession() {
           width={width}
           height={height}
           showInsets={showInsets}
+          locale={locale}
           targetRegionCode={
             displayMode === 'outline-only' || (mode === 'type' && currentRegion)
               ? currentRegion?.code ?? null

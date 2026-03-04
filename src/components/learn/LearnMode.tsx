@@ -3,12 +3,15 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useMapData } from '../../hooks/useMapData';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
 import { getDisplayName } from '../../utils/regionUtils';
+import { useI18n } from '../../i18n/useI18n';
 import QuizMap from '../../maps/QuizMap';
+import LanguageToggle from '../LanguageToggle';
 import type { AdminLevel } from '../../types';
 
 export default function LearnMode() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { locale, t } = useI18n();
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
   const sidoFilter = searchParams.get('filter') || undefined;
 
@@ -41,16 +44,16 @@ export default function LearnMode() {
           f.properties.code === code,
       );
       if (feature) {
-        setHoveredName(getDisplayName(feature));
+        setHoveredName(getDisplayName(feature, locale));
       }
     },
-    [filteredGeoData],
+    [filteredGeoData, locale],
   );
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500 text-lg">데이터 로딩 중...</div>
+        <div className="text-gray-500 text-lg">{t('quiz.loading')}</div>
       </div>
     );
   }
@@ -58,7 +61,7 @@ export default function LearnMode() {
   if (error || !filteredGeoData || !topoData) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">데이터를 불러오지 못했습니다.</div>
+        <div className="text-red-500">{t('quiz.loadError')}</div>
       </div>
     );
   }
@@ -70,19 +73,19 @@ export default function LearnMode() {
           onClick={() => navigate('/')}
           className="text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
         >
-          &larr; 뒤로
+          &larr; {t('quiz.back')}
         </button>
         <div className="flex-1 text-center">
-          <span className="text-sm font-semibold text-gray-700">학습 모드</span>
+          <span className="text-sm font-semibold text-gray-700">{t('learn.title')}</span>
         </div>
-        <div className="w-12" />
+        <LanguageToggle />
       </div>
 
       <div className="text-center py-3 h-12 flex items-center justify-center">
         {hoveredName ? (
           <span className="text-lg font-semibold text-gray-800">{hoveredName}</span>
         ) : (
-          <span className="text-sm text-gray-400">지역 위에 마우스를 올려보세요</span>
+          <span className="text-sm text-gray-400">{t('learn.hoverHint')}</span>
         )}
       </div>
 
@@ -94,6 +97,7 @@ export default function LearnMode() {
           width={width}
           height={height}
           showInsets={showInsets}
+          locale={locale}
           answeredCodes={new Map()}
           wrongFlashCode={null}
           onRegionHover={handleHover}

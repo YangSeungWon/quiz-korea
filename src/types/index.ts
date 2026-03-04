@@ -1,6 +1,8 @@
 import type { Feature, FeatureCollection, Polygon, MultiPolygon } from 'geojson';
 import type { Topology } from 'topojson-specification';
 
+export type { Locale } from '../i18n/types';
+
 // Admin levels
 export type AdminLevel = 'sido' | 'sigungu';
 

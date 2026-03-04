@@ -1,3 +1,4 @@
+import { useI18n } from '../../i18n/useI18n';
 import type { QuizMode, QuizRegion } from '../../types';
 import TypeInput from './TypeInput';
 
@@ -14,6 +15,8 @@ export default function QuizPrompt({
   onTypeSubmit,
   wrongShakeKey,
 }: QuizPromptProps) {
+  const { t } = useI18n();
+
   if (!currentRegion) return null;
 
   const isTypeMode = mode === 'type' || mode === 'type-hard';
@@ -24,7 +27,7 @@ export default function QuizPrompt({
         <TypeInput
           key={currentRegion.code}
           onSubmit={onTypeSubmit}
-          placeholder="지역 이름을 입력하세요"
+          placeholder={t('quiz.typePlaceholder')}
         />
       ) : (
         <p
@@ -34,8 +37,7 @@ export default function QuizPrompt({
             animation: wrongShakeKey ? 'shake 0.3s ease' : undefined,
           }}
         >
-          <span className="text-blue-600">{currentRegion.name}</span>
-          을(를) 클릭하세요
+          {t('quiz.clickPrompt', { name: currentRegion.name })}
         </p>
       )}
     </div>

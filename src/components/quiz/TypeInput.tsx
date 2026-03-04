@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useI18n } from '../../i18n/useI18n';
 
 interface TypeInputProps {
   onSubmit: (input: string) => void;
@@ -6,6 +7,7 @@ interface TypeInputProps {
 }
 
 export default function TypeInput({ onSubmit, placeholder }: TypeInputProps) {
+  const { t } = useI18n();
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -37,7 +39,7 @@ export default function TypeInput({ onSubmit, placeholder }: TypeInputProps) {
         type="submit"
         className="px-5 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
       >
-        확인
+        {t('quiz.submit')}
       </button>
     </form>
   );

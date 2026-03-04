@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import { useMapData } from '../../hooks/useMapData';
 import { getSidoList } from '../../utils/regionUtils';
+import { useI18n } from '../../i18n/useI18n';
+import { SHORT_NAMES_EN } from '../../i18n/regions/sido';
 
 interface RegionSelection {
   level: 'sido' | 'sigungu';
@@ -12,7 +14,7 @@ interface RegionPickerProps {
   onChange: (selection: RegionSelection) => void;
 }
 
-const SHORT_NAMES: Record<string, string> = {
+const SHORT_NAMES_KO: Record<string, string> = {
   '11': '서울',
   '26': '부산',
   '27': '대구',
@@ -33,8 +35,10 @@ const SHORT_NAMES: Record<string, string> = {
 };
 
 export default function RegionPicker({ value, onChange }: RegionPickerProps) {
+  const { locale, t } = useI18n();
   const { geoData } = useMapData('sigungu');
-  const sidoList = useMemo(() => (geoData ? getSidoList(geoData) : []), [geoData]);
+  const sidoList = useMemo(() => (geoData ? getSidoList(geoData, locale) : []), [geoData, locale]);
+  const shortNames = locale === 'en' ? SHORT_NAMES_EN : SHORT_NAMES_KO;
 
   const isSido = value?.level === 'sido';
   const isAllSigungu = value?.level === 'sigungu' && !value.filter;
@@ -44,29 +48,29 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
 
   return (
     <div className="space-y-3">
-      {/* 시도 */}
+      {/* Sido */}
       <div>
-        <div className="text-xs font-medium text-gray-400 mb-1.5">시도</div>
+        <div className="text-xs font-medium text-gray-400 mb-1.5">{t('picker.sido')}</div>
         <button
           onClick={() => onChange({ level: 'sido' })}
           className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
             isSido ? selectedBtn : unselectedBtn
           }`}
         >
-          전국 17개 시도
+          {t('picker.allSido')}
         </button>
       </div>
 
-      {/* 시군구 */}
+      {/* Sigungu */}
       <div>
-        <div className="text-xs font-medium text-gray-400 mb-1.5">시군구</div>
+        <div className="text-xs font-medium text-gray-400 mb-1.5">{t('picker.sigungu')}</div>
         <button
           onClick={() => onChange({ level: 'sigungu' })}
           className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1.5 ${
             isAllSigungu ? selectedBtn : unselectedBtn
           }`}
         >
-          전국{geoData ? ` ${geoData.features.length}개` : ''} 시군구
+          {t('picker.allSigungu', { count: geoData ? geoData.features.length : '' })}
         </button>
         <div className="grid grid-cols-6 gap-1.5">
           {sidoList.map((s) => {
@@ -80,7 +84,7 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
                   isSelected ? selectedBtn : unselectedBtn
                 }`}
               >
-                {SHORT_NAMES[s.code] || s.name}
+                {shortNames[s.code] || s.name}
               </button>
             );
           })}

@@ -1,3 +1,6 @@
+import { useI18n } from '../../i18n/useI18n';
+import LanguageToggle from '../LanguageToggle';
+
 interface QuizProgressProps {
   current: number;
   total: number;
@@ -13,13 +16,15 @@ export default function QuizProgress({
   time,
   onBack,
 }: QuizProgressProps) {
+  const { t } = useI18n();
+
   return (
     <div className="flex items-center gap-4 px-4 py-3 bg-white border-b border-gray-200">
       <button
         onClick={onBack}
         className="text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
       >
-        &larr; 뒤로
+        &larr; {t('quiz.back')}
       </button>
 
       <div className="flex-1 flex items-center justify-center gap-4 text-sm font-medium text-gray-700">
@@ -32,8 +37,7 @@ export default function QuizProgress({
         <span className="font-mono">{time}</span>
       </div>
 
-      {/* Spacer to balance back button */}
-      <div className="w-12" />
+      <LanguageToggle />
     </div>
   );
 }

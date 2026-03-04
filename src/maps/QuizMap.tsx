@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
-import type { RegionCollection, RegionFeature, MapDisplayMode } from '../types';
+import type { RegionCollection, RegionFeature, MapDisplayMode, Locale } from '../types';
 import { getRegionCode, getDisplayName } from '../utils/regionUtils';
+import { SIDO_SHORT_EN } from '../i18n/regions/sido';
 
 // Helper to avoid D3 generics mismatch on .attr('d', path)
 function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
@@ -11,7 +12,7 @@ function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
 }
 
 // Inset cities (7 metropolitan areas) — 인천 last (spans 2 cols, wide shape)
-const INSET_CITIES = [
+const INSET_CITIES_KO = [
   { code: '11', label: '서울' },
   { code: '26', label: '부산' },
   { code: '27', label: '대구' },
@@ -20,6 +21,8 @@ const INSET_CITIES = [
   { code: '31', label: '울산' },
   { code: '28', label: '인천' },
 ] as const;
+
+const INSET_CITY_CODES = INSET_CITIES_KO.map((c) => c.code);
 
 const INSET_COL_WIDTH = 180;
 const INSET_ROW_HEIGHT = 120;
@@ -31,6 +34,7 @@ interface QuizMapProps {
   width: number;
   height: number;
   showInsets?: boolean;
+  locale?: Locale;
   targetRegionCode?: string | null;
   answeredCodes: Map<string, number>;
   wrongFlashCode: string | null;
@@ -63,6 +67,12 @@ function getAnsweredFill(answeredCodes: Map<string, number>, code: string): stri
   return COLORS.mistake3;
 }
 
+function getInsetLabel(code: string, locale: Locale): string {
+  if (locale === 'en') return SIDO_SHORT_EN[code] || code;
+  const city = INSET_CITIES_KO.find((c) => c.code === code);
+  return city?.label || code;
+}
+
 export default function QuizMap({
   geoData,
   topoData,
@@ -70,6 +80,7 @@ export default function QuizMap({
   width,
   height,
   showInsets = false,
+  locale = 'ko',
   targetRegionCode,
   answeredCodes,
   wrongFlashCode,
@@ -242,7 +253,7 @@ export default function QuizMap({
       g.selectAll('path.region, path:not(.region)')
         .on('mouseenter.label', (_event: MouseEvent, d: unknown) => {
           const feature = d as RegionFeature;
-          const name = getDisplayName(feature);
+          const name = getDisplayName(feature, locale);
           const centroid = path.centroid(feature as d3.GeoPermissibleObjects);
 
           tooltip.selectAll('*').remove();
@@ -270,16 +281,16 @@ export default function QuizMap({
       const insetPad = 3;
       const labelH = 14;
 
-      INSET_CITIES.forEach((city, i) => {
+      INSET_CITY_CODES.forEach((cityCode, i) => {
         const cityFeatures = geoData.features.filter((f) =>
-          getRegionCode(f).startsWith(city.code),
+          getRegionCode(f).startsWith(cityCode),
         );
         if (cityFeatures.length === 0) return;
 
         // Position: right 2-column grid (last item spans 2 cols) or bottom row
         let x: number, y: number, boxW: number, boxH: number;
         if (insetRight) {
-          const isLast = i === INSET_CITIES.length - 1;
+          const isLast = i === INSET_CITY_CODES.length - 1;
           const col = i % insetCols;
           const row = Math.floor(i / insetCols);
           boxW = isLast ? INSET_COL_WIDTH * insetCols : INSET_COL_WIDTH;
@@ -287,7 +298,7 @@ export default function QuizMap({
           x = mainWidth + (isLast ? 0 : col * INSET_COL_WIDTH);
           y = row * boxH;
         } else {
-          boxW = width / INSET_CITIES.length;
+          boxW = width / INSET_CITY_CODES.length;
           boxH = INSET_ROW_HEIGHT;
           x = i * boxW;
           y = mainHeight;
@@ -316,7 +327,7 @@ export default function QuizMap({
           .attr('font-size', insetRight ? '10px' : '9px')
           .attr('font-weight', '600')
           .attr('fill', '#374151')
-          .text(city.label);
+          .text(getInsetLabel(cityCode, locale));
 
         // Independent projection for this city
         const cityCollection: RegionCollection = {
@@ -380,7 +391,7 @@ export default function QuizMap({
             .selectAll('path.inset-region')
             .on('mouseenter.label', (_event: MouseEvent, d: unknown) => {
               const feature = d as RegionFeature;
-              const name = getDisplayName(feature);
+              const name = getDisplayName(feature, locale);
               const centroid = insetPath.centroid(feature as d3.GeoPermissibleObjects);
 
               insetTooltip.selectAll('*').remove();
@@ -404,7 +415,7 @@ export default function QuizMap({
         }
       });
     }
-  }, [geoData, topoData, displayMode, width, height, showInsets, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels]);
+  }, [geoData, topoData, displayMode, width, height, showInsets, locale, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels]);
 
   return (
     <svg
