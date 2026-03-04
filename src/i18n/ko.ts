@@ -21,6 +21,8 @@ const ko: TranslationStrings = {
   'picker.allSigun': '전국 {count}개 시군',
   'picker.sigungu': '시군구',
   'picker.allSigungu': '전국 {count}개 시군구',
+  'picker.count': '문제 수',
+  'picker.countAll': '전체',
 
   'quiz.clickPrompt': '{name}을(를) 클릭하세요',
   'quiz.typePlaceholder': '지역 이름을 입력하세요',

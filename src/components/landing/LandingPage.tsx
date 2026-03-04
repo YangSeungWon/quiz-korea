@@ -19,10 +19,16 @@ const MODE_I18N = [
   { title: 'landing.typeHard', desc: 'landing.typeHardDesc' },
 ] as const;
 
+const COUNT_OPTIONS = [16, 32, 64, 0] as const; // 0 = all
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
   const [region, setRegion] = useState<RegionSelection | null>(null);
+  const [count, setCount] = useState(0); // 0 = all
+
+  // Show count picker for levels with many regions
+  const showCountPicker = region && region.level !== 'sido';
 
   const buildParams = useCallback(() => {
     if (!region) return '';
@@ -30,8 +36,11 @@ export default function LandingPage() {
     if (region.filter) {
       params.set('filter', region.filter);
     }
+    if (count > 0) {
+      params.set('count', String(count));
+    }
     return params.toString();
-  }, [region]);
+  }, [region, count]);
 
   const handleModeClick = useCallback(
     (mode: string) => {
@@ -58,6 +67,29 @@ export default function LandingPage() {
         <div className="mb-6">
           <RegionPicker value={region} onChange={setRegion} />
         </div>
+
+        {showCountPicker && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('picker.count')}
+            </label>
+            <div className="flex gap-2">
+              {COUNT_OPTIONS.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setCount(n)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    count === n
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
+                  }`}
+                >
+                  {n === 0 ? t('picker.countAll') : n}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {region && (
           <>

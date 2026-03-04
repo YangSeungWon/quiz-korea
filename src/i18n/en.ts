@@ -21,6 +21,8 @@ const en: TranslationStrings = {
   'picker.allSigun': 'All {count} Cities',
   'picker.sigungu': 'Districts',
   'picker.allSigungu': 'All {count} Districts',
+  'picker.count': 'Questions',
+  'picker.countAll': 'All',
 
   'quiz.clickPrompt': 'Click on {name}',
   'quiz.typePlaceholder': 'Type the region name',

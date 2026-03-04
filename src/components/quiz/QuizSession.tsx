@@ -6,6 +6,7 @@ import { useTimer } from '../../hooks/useTimer';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
 import { extractRegions } from '../../utils/regionUtils';
 import { matchesRegionName } from '../../utils/regionUtils';
+import { shuffle } from '../../utils/quizEngine';
 import { useI18n } from '../../i18n/useI18n';
 import QuizMap from '../../maps/QuizMap';
 import QuizProgress from './QuizProgress';
@@ -34,6 +35,7 @@ export default function QuizSession() {
   const mode = (modeParam || 'pin') as QuizMode;
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
   const sidoFilter = searchParams.get('filter') || undefined;
+  const countParam = parseInt(searchParams.get('count') || '0', 10) || 0;
 
   const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);
   const { state, currentRegion, progress, start, answerCorrect, answerWrong, reset } =
@@ -43,8 +45,12 @@ export default function QuizSession() {
 
   const regions = useMemo(() => {
     if (!geoData) return [];
-    return extractRegions(geoData, sidoFilter, locale);
-  }, [geoData, sidoFilter, locale]);
+    const all = extractRegions(geoData, sidoFilter, locale);
+    if (countParam > 0 && countParam < all.length) {
+      return shuffle(all).slice(0, countParam);
+    }
+    return all;
+  }, [geoData, sidoFilter, locale, countParam]);
 
   // Filtered geoData for map display (only show relevant regions)
   const filteredGeoData = useMemo(() => {

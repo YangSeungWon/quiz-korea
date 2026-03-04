@@ -23,6 +23,8 @@ export interface TranslationStrings {
   'picker.allSigun': string;
   'picker.sigungu': string;
   'picker.allSigungu': string;
+  'picker.count': string;
+  'picker.countAll': string;
 
   // Quiz
   'quiz.clickPrompt': string;
