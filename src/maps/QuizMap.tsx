@@ -298,7 +298,7 @@ export default function QuizMap({
         .attr('d', pathAttr(path))
         .attr('fill', getNormalFill)
         .attr('stroke', hasMesh ? 'none' : COLORS.stroke)
-        .attr('stroke-width', hasMesh ? 0 : 0.5)
+        .attr('stroke-width', hasMesh ? 0 : 0.8)
         .style('cursor', 'pointer')
         .style('transition', 'fill 0.15s ease')
         .on('click', (_, d: RegionFeature) => {
@@ -316,7 +316,7 @@ export default function QuizMap({
         .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
           const code = getRegionCode(d);
           const el = d3.select(event.currentTarget as Element);
-          if (!hasMesh) el.attr('stroke', COLORS.stroke).attr('stroke-width', 0.5);
+          if (!hasMesh) el.attr('stroke', COLORS.stroke).attr('stroke-width', 0.8);
           if (code === wrongFlashCode) return;
           if (answeredCodes.has(code)) {
             el.attr('fill', getAnsweredFill(answeredCodes, code));
@@ -335,7 +335,7 @@ export default function QuizMap({
           .attr('d', path(borderMesh) ?? '')
           .attr('fill', 'none')
           .attr('stroke', COLORS.stroke)
-          .attr('stroke-width', 0.5)
+          .attr('stroke-width', 0.8)
           .style('pointer-events', 'none');
       }
     }
@@ -510,7 +510,7 @@ export default function QuizMap({
           .attr('d', pathAttr(insetPath))
           .attr('fill', getNormalFill)
           .attr('stroke', COLORS.stroke)
-          .attr('stroke-width', 0.7)
+          .attr('stroke-width', 1)
           .style('cursor', 'pointer')
           .style('transition', 'fill 0.15s ease')
           .on('click', (_, d: RegionFeature) => {
@@ -528,7 +528,7 @@ export default function QuizMap({
           .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
             const code = getRegionCode(d);
             const el = d3.select(event.currentTarget as Element);
-            el.attr('stroke', COLORS.stroke).attr('stroke-width', 0.7);
+            el.attr('stroke', COLORS.stroke).attr('stroke-width', 1);
             if (code === wrongFlashCode) return;
             if (answeredCodes.has(code)) {
               el.attr('fill', getAnsweredFill(answeredCodes, code));
