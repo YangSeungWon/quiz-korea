@@ -44,6 +44,33 @@ function getSigunNameEn(sido: string, code: string, nameKo: string): string {
   return SIGUNGU_NAMES_EN[code] || SIDO_MAP_EN[code] || nameKo;
 }
 
+// Signed area of a ring (shoelace formula).
+// Positive = counterclockwise (outer ring in GeoJSON RFC 7946)
+// Negative = clockwise (hole in GeoJSON RFC 7946)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ringSignedArea(ring: any[]): number {
+  let sum = 0;
+  for (let i = 0, n = ring.length - 1; i < n; i++) {
+    sum += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+  }
+  return sum / 2;
+}
+
+// Ensure correct GeoJSON winding order for D3 spherical rendering.
+// Outer ring: counterclockwise (positive area), holes: clockwise (negative area).
+// topojson.merge() doesn't guarantee this, causing some polygons to cover the entire globe.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rewindPolygon(coords: any[][]): any[][] {
+  return coords.map((ring, i) => {
+    const area = ringSignedArea(ring);
+    const shouldBeCCW = i === 0; // outer ring = CCW, holes = CW
+    if (shouldBeCCW ? area < 0 : area > 0) {
+      return ring.slice().reverse();
+    }
+    return ring;
+  });
+}
+
 export function buildSigunData(
   topoData: Topology,
   geoData: RegionCollection,
@@ -88,11 +115,12 @@ export function buildSigunData(
     const toMerge = group.indices.map((i) => geometries[i]);
     const merged = topojson.merge(topoData, toMerge as Parameters<typeof topojson.merge>[1]);
 
-    // Remove holes (inner rings) from merged polygons — they're rivers/gaps between districts
+    // Fix winding order — topojson.merge() can produce inverted polygons
+    // that D3's spherical renderer interprets as covering the entire globe
     if (merged.type === 'MultiPolygon') {
-      merged.coordinates = merged.coordinates.map((poly) => [poly[0]]);
+      merged.coordinates = merged.coordinates.map((poly) => rewindPolygon(poly));
     } else if (merged.type === 'Polygon') {
-      merged.coordinates = [merged.coordinates[0]];
+      merged.coordinates = rewindPolygon(merged.coordinates);
     }
 
     return {
