@@ -193,9 +193,9 @@ export default function QuizSession() {
 
       {isFinished && (
         <>
-          {/* Top center: watermark + toggle button */}
-          <div className="absolute top-4 left-0 right-0 flex justify-center z-20">
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow">
+          {/* Top center: watermark bar (always visible) */}
+          <div className="absolute top-4 left-0 right-0 flex justify-center z-20 pointer-events-none">
+            <div className="pointer-events-auto flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow">
               <span className="text-lg font-bold text-blue-600">
                 {(() => { let c = 0; for (const m of state.answered.values()) if (m === 0) c++; return c; })()}/{state.totalRegions}
               </span>
@@ -203,26 +203,38 @@ export default function QuizSession() {
               <span className="text-sm text-gray-500">{elapsedTime}</span>
               <span className="text-gray-300">|</span>
               <span className="text-xs text-gray-400">quiz-korea.ysw.kr</span>
-              <span className="text-gray-300">|</span>
-              <button
-                onClick={() => setShowResults((v) => !v)}
-                className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                {showResults ? t('results.hideOverlay') : t('results.showOverlay')}
-              </button>
+              {!showResults && (
+                <>
+                  <span className="text-gray-300">|</span>
+                  <button
+                    onClick={() => setShowResults(true)}
+                    className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    {t('results.showOverlay')}
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Results overlay */}
+          {/* Results overlay with X close */}
           {showResults && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
-              <QuizResults
-                totalRegions={state.totalRegions}
-                answered={state.answered}
-                elapsedTime={elapsedTime}
-                onRetry={handleRetry}
-                onBack={handleBack}
-              />
+              <div className="relative">
+                <button
+                  onClick={() => setShowResults(false)}
+                  className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors z-10"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+                <QuizResults
+                  totalRegions={state.totalRegions}
+                  answered={state.answered}
+                  elapsedTime={elapsedTime}
+                  onRetry={handleRetry}
+                  onBack={handleBack}
+                />
+              </div>
             </div>
           )}
         </>
