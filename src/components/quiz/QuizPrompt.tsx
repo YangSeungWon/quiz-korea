@@ -32,12 +32,18 @@ export default function QuizPrompt({
       ) : (
         <p
           key={wrongShakeKey}
-          className="text-lg font-semibold text-gray-800"
+          className="text-gray-800 flex items-baseline justify-center gap-2"
           style={{
             animation: wrongShakeKey ? 'shake 0.3s ease' : undefined,
           }}
         >
-          {t('quiz.clickPrompt', { name: currentRegion.name })}
+          {t('quiz.clickPrefix') && (
+            <span className="text-sm text-gray-400">{t('quiz.clickPrefix')}</span>
+          )}
+          <span className="text-xl font-bold">{currentRegion.name}</span>
+          {t('quiz.clickSuffix') && (
+            <span className="text-sm text-gray-400">{t('quiz.clickSuffix')}</span>
+          )}
         </p>
       )}
     </div>

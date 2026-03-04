@@ -27,7 +27,8 @@ export interface TranslationStrings {
   'picker.countAll': string;
 
   // Quiz
-  'quiz.clickPrompt': string;
+  'quiz.clickPrefix': string;
+  'quiz.clickSuffix': string;
   'quiz.typePlaceholder': string;
   'quiz.submit': string;
   'quiz.back': string;

@@ -24,7 +24,8 @@ const en: TranslationStrings = {
   'picker.count': 'Questions',
   'picker.countAll': 'All',
 
-  'quiz.clickPrompt': 'Click on {name}',
+  'quiz.clickPrefix': 'Click on',
+  'quiz.clickSuffix': '',
   'quiz.typePlaceholder': 'Type the region name',
   'quiz.submit': 'Submit',
   'quiz.back': 'Back',

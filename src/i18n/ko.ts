@@ -24,7 +24,8 @@ const ko: TranslationStrings = {
   'picker.count': '문제 수',
   'picker.countAll': '전체',
 
-  'quiz.clickPrompt': '{name}을(를) 클릭하세요',
+  'quiz.clickPrefix': '',
+  'quiz.clickSuffix': '을(를) 클릭하세요',
   'quiz.typePlaceholder': '지역 이름을 입력하세요',
   'quiz.submit': '확인',
   'quiz.back': '뒤로',
