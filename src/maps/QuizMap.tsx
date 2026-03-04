@@ -141,11 +141,12 @@ export default function QuizMap({
     const { effectiveInsets, insetRight, insetColW, insetRowH, mainWidth, mainHeight } =
       computeInsetLayout(width, height, showInsets, displayMode);
 
-    // Clip main map to its area so it doesn't render behind insets
-    svg.append('defs').append('clipPath').attr('id', 'main-clip')
-      .append('rect').attr('width', mainWidth).attr('height', mainHeight);
-    const clipG = svg.append('g').attr('clip-path', 'url(#main-clip)');
-    const g = clipG.append('g');
+    // Nested SVG for main map — creates its own viewport, fully isolated from insets
+    const mainSvg = svg.append('svg')
+      .attr('width', mainWidth)
+      .attr('height', mainHeight)
+      .attr('overflow', 'hidden');
+    const g = mainSvg.append('g');
 
     // Apply stored zoom transform and set up zoom behavior
     g.attr('transform', zoomTransformRef.current.toString());
@@ -162,9 +163,11 @@ export default function QuizMap({
         g.attr('transform', event.transform);
         zoomTransformRef.current = event.transform;
       });
-    svg.call(zoom);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (mainSvg as any).call(zoom);
     if (zoomTransformRef.current !== d3.zoomIdentity) {
-      svg.call(zoom.transform, zoomTransformRef.current);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (mainSvg as any).call(zoom.transform, zoomTransformRef.current);
     }
     const projection = d3.geoMercator();
 
