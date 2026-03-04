@@ -510,7 +510,7 @@ export default function QuizMap({
           .attr('d', pathAttr(insetPath))
           .attr('fill', getNormalFill)
           .attr('stroke', COLORS.stroke)
-          .attr('stroke-width', 0.3)
+          .attr('stroke-width', 0.7)
           .style('cursor', 'pointer')
           .style('transition', 'fill 0.15s ease')
           .on('click', (_, d: RegionFeature) => {
@@ -528,7 +528,7 @@ export default function QuizMap({
           .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
             const code = getRegionCode(d);
             const el = d3.select(event.currentTarget as Element);
-            el.attr('stroke', COLORS.stroke).attr('stroke-width', 0.3);
+            el.attr('stroke', COLORS.stroke).attr('stroke-width', 0.7);
             if (code === wrongFlashCode) return;
             if (answeredCodes.has(code)) {
               el.attr('fill', getAnsweredFill(answeredCodes, code));
