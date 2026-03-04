@@ -10,16 +10,11 @@ function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
   return (d: RegionFeature) => path(d) ?? '';
 }
 
-// Inset zones: dense cores of metro areas + Suwon (bbox = [minLon, minLat, maxLon, maxLat])
-const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [number, number, number, number] }[] = [
-  { label: '서울', labelEn: 'Seoul', bbox: [126.76, 37.43, 127.18, 37.70] },
-  { label: '부산', labelEn: 'Busan', bbox: [128.96, 35.05, 129.21, 35.28] },
-  { label: '대구', labelEn: 'Daegu', bbox: [128.47, 35.77, 128.73, 35.99] },
-  { label: '광주', labelEn: 'Gwangju', bbox: [126.75, 35.05, 127.02, 35.26] },
-  { label: '대전', labelEn: 'Daejeon', bbox: [127.28, 36.18, 127.56, 36.48] },
-  { label: '울산', labelEn: 'Ulsan', bbox: [129.24, 35.45, 129.46, 35.68] },
-  { label: '인천', labelEn: 'Incheon', bbox: [126.56, 37.34, 126.79, 37.64] },
-  { label: '수원', labelEn: 'Suwon', bbox: [126.93, 37.22, 127.09, 37.35] },
+// Inset zones: dense cores where sigungu are too small to click (north→south order)
+const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [number, number, number, number]; color: string }[] = [
+  { label: '수도권', labelEn: 'Capital', bbox: [126.56, 37.22, 127.18, 37.70], color: '#4f46e5' },
+  { label: '대구', labelEn: 'Daegu', bbox: [128.47, 35.77, 128.73, 35.99], color: '#059669' },
+  { label: '부산', labelEn: 'Busan', bbox: [128.96, 35.05, 129.21, 35.28], color: '#dc2626' },
 ];
 
 function featureInBbox(feature: RegionFeature, bbox: readonly [number, number, number, number]): boolean {
@@ -27,9 +22,8 @@ function featureInBbox(feature: RegionFeature, bbox: readonly [number, number, n
   return lon >= bbox[0] && lon <= bbox[2] && lat >= bbox[1] && lat <= bbox[3];
 }
 
-const INSET_COL_WIDTH = 180;
-const INSET_ROWS = 4; // 8 zones in 2-col × 4-row grid
-const INSET_COLS = 2;
+const INSET_COL_WIDTH = 240;
+const NUM_INSETS = INSET_ZONES.length; // 3
 
 // Shared layout calculation used by both D3 rendering and SVG sizing
 function computeInsetLayout(width: number, height: number, showInsets: boolean, displayMode: MapDisplayMode) {
@@ -37,12 +31,12 @@ function computeInsetLayout(width: number, height: number, showInsets: boolean, 
   const insetRight = effectiveInsets && width >= 700;
   const insetBottom = effectiveInsets && !insetRight;
   const insetColW = insetRight
-    ? Math.max(100, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.2)))
-    : Math.floor(width / INSET_COLS);
+    ? Math.max(120, Math.min(INSET_COL_WIDTH, Math.floor(width * 0.25)))
+    : Math.floor(width / NUM_INSETS);
   const insetRowH = insetRight
-    ? Math.floor(height / INSET_ROWS)
-    : insetColW; // square cells based on width
-  const mainWidth = insetRight ? width - insetColW * INSET_COLS : width;
+    ? Math.floor(height / NUM_INSETS)
+    : insetColW; // square cells
+  const mainWidth = insetRight ? width - insetColW : width;
   const mainHeight = insetBottom ? Math.floor(width * 1.3) : height;
   return { effectiveInsets, insetRight, insetBottom, insetColW, insetRowH, mainWidth, mainHeight };
 }
@@ -51,7 +45,7 @@ function computeSvgHeight(width: number, height: number, showInsets: boolean, di
   if (width === 0 || height === 0) return height;
   const { insetBottom, insetRowH, mainHeight } = computeInsetLayout(width, height, showInsets, displayMode);
   if (!insetBottom) return height; // landscape: exactly viewport height
-  return mainHeight + insetRowH * INSET_ROWS;
+  return mainHeight + insetRowH;
 }
 
 interface QuizMapProps {
@@ -328,6 +322,25 @@ export default function QuizMap({
       }
     }
 
+    // Draw bbox rectangles on main map to show inset coverage areas
+    if (effectiveInsets) {
+      INSET_ZONES.forEach((zone) => {
+        const [minLon, minLat, maxLon, maxLat] = zone.bbox;
+        const tl = projection([minLon, maxLat]);
+        const br = projection([maxLon, minLat]);
+        if (!tl || !br) return;
+        g.append('rect')
+          .attr('x', tl[0]).attr('y', tl[1])
+          .attr('width', br[0] - tl[0]).attr('height', br[1] - tl[1])
+          .attr('fill', 'none')
+          .attr('stroke', zone.color)
+          .attr('stroke-width', 1.5)
+          .attr('stroke-dasharray', '4,2')
+          .attr('rx', 2)
+          .style('pointer-events', 'none');
+      });
+    }
+
     // Show labels on hover in learn mode
     if (showLabels) {
       const tooltip = g.append('g').attr('class', 'tooltip').style('pointer-events', 'none');
@@ -411,17 +424,15 @@ export default function QuizMap({
         const zoneFeatures = geoData.features.filter((f) => featureInBbox(f, zone.bbox));
         if (zoneFeatures.length === 0) return;
 
-        // Position: uniform 2-col × 4-row grid
-        const col = i % INSET_COLS;
-        const row = Math.floor(i / INSET_COLS);
+        // Position: 1-col × N-row (landscape) or N-col × 1-row (portrait)
         const boxW = insetColW;
         const boxH = insetRowH;
-        const x = (insetRight ? mainWidth : 0) + col * insetColW;
-        const y = (insetRight ? 0 : mainHeight) + row * insetRowH;
+        const x = insetRight ? mainWidth : i * insetColW;
+        const y = insetRight ? i * insetRowH : mainHeight;
 
         const insetG = svg.append('g').attr('class', 'inset-group').attr('transform', `translate(${x},${y})`);
 
-        // Background box
+        // Background box with matching zone color
         insetG
           .append('rect')
           .attr('x', 1)
@@ -429,8 +440,8 @@ export default function QuizMap({
           .attr('width', boxW - 2)
           .attr('height', boxH - 2)
           .attr('fill', 'white')
-          .attr('stroke', '#d1d5db')
-          .attr('stroke-width', 0.5)
+          .attr('stroke', zone.color)
+          .attr('stroke-width', 1.5)
           .attr('rx', 3);
 
         // Zone label
@@ -442,7 +453,7 @@ export default function QuizMap({
           .attr('text-anchor', 'middle')
           .attr('font-size', insetRight ? '10px' : '9px')
           .attr('font-weight', '600')
-          .attr('fill', '#374151')
+          .attr('fill', zone.color)
           .text(labelText);
 
         // Independent projection fitted to zone features
