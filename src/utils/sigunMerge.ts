@@ -1,6 +1,4 @@
-import * as topojson from 'topojson-client';
-import { geoArea } from 'd3';
-import type { Topology, GeometryCollection } from 'topojson-specification';
+import type { Topology } from 'topojson-specification';
 import type { RegionCollection, RegionFeature } from '../types';
 import { SIDO_MAP } from './regionUtils';
 import { SIDO_MAP_EN } from '../i18n/regions/sido';
@@ -14,7 +12,7 @@ interface SigunGroup {
   code: string; // representative code (first 2 digits for metro, first 4 for compound, full for standalone)
   nameKo: string;
   nameEn: string;
-  indices: number[]; // indices into topology geometries
+  indices: number[]; // indices into geoData features
 }
 
 function getSigunNameKo(sido: string, firstName: string): string {
@@ -45,41 +43,10 @@ function getSigunNameEn(sido: string, code: string, nameKo: string): string {
   return SIGUNGU_NAMES_EN[code] || SIDO_MAP_EN[code] || nameKo;
 }
 
-// Flatten all rings from a merged MultiPolygon into individual solid polygons.
-// topojson.merge() can produce wrong ring groupings and winding orders.
-// Instead of trying to fix the hierarchy, treat every ring as its own polygon
-// with correct winding. Uses D3's spherical geoArea to determine winding:
-// if a ring covers more than half the sphere (area > 2π), it's wound backwards.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function flattenToSolidPolygons(coordinates: any[][][][]): any[][][][] {
-  const result: any[][][][] = [];
-  for (const poly of coordinates) {
-    for (const ring of poly) {
-      if (ring.length < 3) continue; // skip degenerate rings
-      // Close unclosed rings (topojson.merge() artifacts)
-      const closed = ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]
-        ? ring
-        : [...ring, ring[0]];
-      if (closed.length < 4) continue;
-      // Use spherical area to check winding
-      const area = geoArea({ type: 'Polygon', coordinates: [closed] });
-      if (area > 2 * Math.PI) {
-        result.push([closed.slice().reverse()]);
-      } else {
-        result.push([closed]);
-      }
-    }
-  }
-  return result;
-}
-
 export function buildSigunData(
-  topoData: Topology,
+  _topoData: Topology,
   geoData: RegionCollection,
 ): { geoData: RegionCollection; groups: SigunGroup[] } {
-  const objectKey = Object.keys(topoData.objects)[0];
-  const geometries = (topoData.objects[objectKey] as GeometryCollection).geometries;
-
   // Build groups
   const groupMap = new Map<string, SigunGroup>();
 
@@ -112,22 +79,25 @@ export function buildSigunData(
 
   const groups = Array.from(groupMap.values());
 
-  // Merge geometries for each group
+  // Combine individual feature geometries directly (no topojson.merge).
+  // Internal boundaries between sub-regions remain visible but all geometry is correct.
   const features: RegionFeature[] = groups.map((group) => {
-    const toMerge = group.indices.map((i) => geometries[i]);
-    const merged = topojson.merge(topoData, toMerge as Parameters<typeof topojson.merge>[1]);
-
-    // Flatten all rings into individual solid CCW polygons.
-    // topojson.merge() produces unreliable ring groupings and winding orders.
-    const solidCoords = flattenToSolidPolygons(
-      merged.type === 'MultiPolygon'
-        ? merged.coordinates
-        : [merged.coordinates],
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const allPolygons: any[] = [];
+    for (const idx of group.indices) {
+      const geom = geoData.features[idx].geometry;
+      if (geom.type === 'Polygon') {
+        allPolygons.push(geom.coordinates);
+      } else if (geom.type === 'MultiPolygon') {
+        for (const poly of geom.coordinates) {
+          allPolygons.push(poly);
+        }
+      }
+    }
 
     return {
       type: 'Feature' as const,
-      geometry: { type: 'MultiPolygon' as const, coordinates: solidCoords },
+      geometry: { type: 'MultiPolygon' as const, coordinates: allPolygons },
       properties: {
         code: group.code,
         name: group.nameKo,
