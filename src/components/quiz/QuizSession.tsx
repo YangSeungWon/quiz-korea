@@ -125,69 +125,75 @@ export default function QuizSession() {
     );
   }
 
-  if (state.phase === 'finished') {
-    return (
-      <QuizResults
-        totalRegions={state.totalRegions}
-        answered={state.answered}
-        elapsedTime={elapsedTime}
-        onRetry={handleRetry}
-        onBack={handleBack}
-      />
-    );
-  }
-
+  const isFinished = state.phase === 'finished';
   const displayMode = getDisplayMode(mode);
   const isPinMode = mode === 'pin' || mode === 'pin-hard';
   const showInsets = adminLevel === 'sigungu' && !sidoFilter;
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden">
-      <QuizProgress
-        current={state.answered.size}
-        total={state.totalRegions}
-        percentage={progress}
-        time={elapsedTime}
-        onBack={handleBack}
-      />
+    <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden relative">
+      {!isFinished && (
+        <>
+          <QuizProgress
+            current={state.answered.size}
+            total={state.totalRegions}
+            percentage={progress}
+            time={elapsedTime}
+            onBack={handleBack}
+          />
 
-      <QuizPrompt
-        mode={mode}
-        currentRegion={currentRegion}
-        onTypeSubmit={handleTypeAnswer}
-        wrongShakeKey={state.wrongAttempts}
-      />
+          <QuizPrompt
+            mode={mode}
+            currentRegion={currentRegion}
+            onTypeSubmit={handleTypeAnswer}
+            wrongShakeKey={state.wrongAttempts}
+          />
+        </>
+      )}
 
-      <div ref={containerRef} className="flex-1 min-h-0 flex items-start justify-center pb-4">
+      <div ref={containerRef} className={`flex-1 min-h-0 flex items-start justify-center ${isFinished ? 'pt-4' : ''} pb-4`}>
         <QuizMap
           geoData={filteredGeoData!}
           topoData={topoData}
           borderMesh={borderMesh}
-          displayMode={displayMode}
+          displayMode={isFinished ? 'normal' : displayMode}
           width={width}
           height={height}
           showInsets={showInsets}
           locale={locale}
           targetRegionCode={
-            displayMode === 'outline-only' || (mode === 'type' && currentRegion)
+            !isFinished && (displayMode === 'outline-only' || (mode === 'type' && currentRegion))
               ? currentRegion?.code ?? null
               : null
           }
           answeredCodes={state.answered}
           wrongFlashCode={state.wrongFlashCode}
-          onRegionClick={isPinMode ? handlePinAnswer : undefined}
+          onRegionClick={!isFinished && isPinMode ? handlePinAnswer : undefined}
         />
       </div>
 
-      {/* Progress bar */}
-      <div className="px-4 pb-4">
-        <div className="max-w-xl mx-auto h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-blue-500 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
+      {!isFinished && (
+        <div className="px-4 pb-4">
+          <div className="max-w-xl mx-auto h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {isFinished && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-10">
+          <QuizResults
+            totalRegions={state.totalRegions}
+            answered={state.answered}
+            elapsedTime={elapsedTime}
+            onRetry={handleRetry}
+            onBack={handleBack}
           />
         </div>
-      </div>
+      )}
     </div>
   );
 }
