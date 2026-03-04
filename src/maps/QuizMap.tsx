@@ -141,7 +141,7 @@ export default function QuizMap({
     const { effectiveInsets, insetRight, insetColW, insetRowH, mainWidth, mainHeight } =
       computeInsetLayout(width, height, showInsets, displayMode);
 
-    // Nested SVG for main map — creates its own viewport, fully isolated from insets
+    // Nested SVG clips main map content; zoom is on parent SVG
     const mainSvg = svg.append('svg')
       .attr('width', mainWidth)
       .attr('height', mainHeight)
@@ -152,6 +152,7 @@ export default function QuizMap({
     g.attr('transform', zoomTransformRef.current.toString());
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 4])
+      .extent([[0, 0], [mainWidth, mainHeight]])
       .translateExtent([[0, 0], [mainWidth, mainHeight]])
       .filter((event) => {
         // Block zoom events originating from inset areas
@@ -163,11 +164,9 @@ export default function QuizMap({
         g.attr('transform', event.transform);
         zoomTransformRef.current = event.transform;
       });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (mainSvg as any).call(zoom);
+    svg.call(zoom);
     if (zoomTransformRef.current !== d3.zoomIdentity) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (mainSvg as any).call(zoom.transform, zoomTransformRef.current);
+      svg.call(zoom.transform, zoomTransformRef.current);
     }
     const projection = d3.geoMercator();
 
