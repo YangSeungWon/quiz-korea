@@ -1,8 +1,8 @@
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { RegionCollection, RegionFeature } from '../types';
-import { SIDO_SHORT } from './regionUtils';
-import { SIDO_MAP_EN, SIDO_SHORT_EN } from '../i18n/regions/sido';
+import { SIDO_MAP } from './regionUtils';
+import { SIDO_MAP_EN } from '../i18n/regions/sido';
 import { SIGUNGU_NAMES_EN } from '../i18n/regions/en';
 
 // Metro city codes — group all districts into one
@@ -18,7 +18,7 @@ interface SigunGroup {
 
 function getSigunNameKo(sido: string, firstName: string): string {
   if (METRO_CODES.has(sido)) {
-    return SIDO_SHORT[sido] || firstName;
+    return SIDO_MAP[sido] || firstName;
   }
   if (firstName.includes(' ')) {
     return firstName.split(' ')[0]; // "수원시 장안구" → "수원시"
@@ -28,7 +28,7 @@ function getSigunNameKo(sido: string, firstName: string): string {
 
 function getSigunNameEn(sido: string, code: string, nameKo: string): string {
   if (METRO_CODES.has(sido)) {
-    return SIDO_SHORT_EN[sido] || nameKo;
+    return SIDO_MAP_EN[sido] || nameKo;
   }
   // For compound cities, derive from Korean name
   // Map known city names

@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Locale, TranslationStrings } from './types';
 import { I18nContext } from './context';
+import { applyPostpositions } from './postposition';
 import ko from './ko';
 import en from './en';
 
@@ -45,6 +46,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
           str = str.replace(`{${k}}`, String(v));
         }
       }
+      if (locale === 'ko') str = applyPostpositions(str);
       return str;
     },
     [locale],
