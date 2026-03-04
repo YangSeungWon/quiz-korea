@@ -146,6 +146,29 @@ export default function QuizMap({
 
     // Apply stored zoom transform and set up zoom behavior
     g.attr('transform', zoomTransformRef.current.toString());
+    let miniProj: d3.GeoProjection | null = null;
+
+    function updateMinimapViewport(transform: d3.ZoomTransform) {
+      const mm = mainSvg.select('.minimap');
+      if (mm.empty() || !miniProj) return;
+      if (transform.k <= 1) {
+        mm.style('opacity', 0);
+        return;
+      }
+      mm.style('opacity', 1);
+      const inv = projection.invert!;
+      const tl = miniProj(inv([-transform.x / transform.k, -transform.y / transform.k])!);
+      const br = miniProj(inv([
+        (-transform.x + mainWidth) / transform.k,
+        (-transform.y + mainHeight) / transform.k,
+      ])!);
+      if (tl && br) {
+        mm.select('.mini-viewport')
+          .attr('x', tl[0]).attr('y', tl[1])
+          .attr('width', br[0] - tl[0]).attr('height', br[1] - tl[1]);
+      }
+    }
+
     const zoom = d3.zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 4])
       .extent([[0, 0], [mainWidth, mainHeight]])
@@ -159,6 +182,7 @@ export default function QuizMap({
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
         zoomTransformRef.current = event.transform;
+        updateMinimapViewport(event.transform);
       });
     svg.call(zoom);
     if (zoomTransformRef.current !== d3.zoomIdentity) {
@@ -332,6 +356,50 @@ export default function QuizMap({
         .on('mouseleave.label', () => {
           tooltip.selectAll('*').remove();
         });
+    }
+
+    // Minimap: visible only when zoomed in
+    {
+      const MINI_W = 100;
+      const MINI_H = Math.round(MINI_W * mainHeight / mainWidth);
+      const miniPadding = 4;
+      const miniG = mainSvg.append('g')
+        .attr('class', 'minimap')
+        .attr('transform', `translate(8,${mainHeight - MINI_H - 8})`)
+        .style('opacity', 0)
+        .style('pointer-events', 'none');
+
+      miniG.append('rect')
+        .attr('width', MINI_W).attr('height', MINI_H)
+        .attr('fill', 'white').attr('fill-opacity', 0.9)
+        .attr('stroke', '#9ca3af').attr('stroke-width', 0.5)
+        .attr('rx', 3);
+
+      miniProj = d3.geoMercator().fitExtent(
+        [[miniPadding, miniPadding], [MINI_W - miniPadding, MINI_H - miniPadding]],
+        geoData,
+      );
+      const miniPath = d3.geoPath().projection(miniProj);
+
+      miniG.selectAll('path')
+        .data(geoData.features)
+        .join('path')
+        .attr('d', (d) => miniPath(d) ?? '')
+        .attr('fill', '#d1d5db')
+        .attr('stroke', '#9ca3af')
+        .attr('stroke-width', 0.15);
+
+      miniG.append('rect')
+        .attr('class', 'mini-viewport')
+        .attr('fill', 'rgba(96, 165, 250, 0.25)')
+        .attr('stroke', '#3b82f6')
+        .attr('stroke-width', 1)
+        .attr('rx', 1);
+
+      // Show minimap if already zoomed (e.g. restored zoom state)
+      if (zoomTransformRef.current.k > 1) {
+        updateMinimapViewport(zoomTransformRef.current);
+      }
     }
 
     // Render inset maps for dense metro cores
