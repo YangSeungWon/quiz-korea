@@ -128,6 +128,15 @@ export default function LandingPage() {
           >
             Korea_District
           </a>
+          {', '}
+          <a
+            href="https://github.com/southkorea/southkorea-maps"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline"
+          >
+            southkorea-maps
+          </a>
         </footer>
       </div>
     </div>
