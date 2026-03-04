@@ -12,7 +12,7 @@ function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
 
 // Inset zones: dense cores where sigungu are too small to click (north→south order)
 const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [number, number, number, number]; color: string }[] = [
-  { label: '수도권', labelEn: 'Capital', bbox: [126.56, 37.22, 127.25, 37.75], color: '#4f46e5' },
+  { label: '수도권', labelEn: 'Capital', bbox: [126.46, 37.22, 127.25, 37.75], color: '#4f46e5' },
   { label: '대구', labelEn: 'Daegu', bbox: [128.47, 35.77, 128.73, 35.99], color: '#059669' },
   { label: '부산', labelEn: 'Busan', bbox: [128.96, 35.05, 129.21, 35.28], color: '#dc2626' },
 ];
@@ -36,8 +36,8 @@ function computeInsetLayout(width: number, height: number, showInsets: boolean, 
     const panelW = Math.max(240, Math.min(480, Math.floor(width * 0.4)));
     mainWidth = width - panelW;
     mainHeight = height;
-    const topH = Math.floor(height * 0.55 * 0.9);
-    const botH = Math.floor(height * 0.45 * 0.9);
+    const topH = Math.floor(height * 0.55);
+    const botH = height - topH;
     const halfW = Math.floor(panelW / 2);
     boxes.push({ x: mainWidth, y: 0, w: panelW, h: topH });           // 수도권
     boxes.push({ x: mainWidth, y: topH, w: halfW, h: botH });          // 대구
@@ -295,10 +295,11 @@ export default function QuizMap({
         .data(geoData.features)
         .join('path')
         .attr('class', 'region')
+        .attr('data-code', (d: RegionFeature) => getRegionCode(d))
         .attr('d', pathAttr(path))
         .attr('fill', getNormalFill)
         .attr('stroke', hasMesh ? 'none' : COLORS.stroke)
-        .attr('stroke-width', hasMesh ? 0 : 0.8)
+        .attr('stroke-width', hasMesh ? 0 : 1.2)
         .style('cursor', 'pointer')
         .style('transition', 'fill 0.15s ease')
         .on('click', (_, d: RegionFeature) => {
@@ -316,7 +317,7 @@ export default function QuizMap({
         .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
           const code = getRegionCode(d);
           const el = d3.select(event.currentTarget as Element);
-          if (!hasMesh) el.attr('stroke', COLORS.stroke).attr('stroke-width', 0.8);
+          if (!hasMesh) el.attr('stroke', COLORS.stroke).attr('stroke-width', 1.2);
           if (code === wrongFlashCode) return;
           if (answeredCodes.has(code)) {
             el.attr('fill', getAnsweredFill(answeredCodes, code));
@@ -335,7 +336,7 @@ export default function QuizMap({
           .attr('d', path(borderMesh) ?? '')
           .attr('fill', 'none')
           .attr('stroke', COLORS.stroke)
-          .attr('stroke-width', 0.8)
+          .attr('stroke-width', 1.2)
           .style('pointer-events', 'none');
       }
     }
@@ -435,8 +436,7 @@ export default function QuizMap({
 
     // Render inset maps for dense metro cores
     if (effectiveInsets) {
-      const insetPad = 4;
-      const labelH = 18;
+      const insetPad = 0;
 
       INSET_ZONES.forEach((zone, i) => {
         const zoneFeatures = geoData.features.filter((f) => featureOverlapsBbox(f, zone.bbox));
@@ -458,18 +458,6 @@ export default function QuizMap({
           .attr('stroke-width', 2.5)
           .attr('rx', 3);
 
-        // Zone label
-        const labelText = locale === 'en' ? zone.labelEn : zone.label;
-        insetG
-          .append('text')
-          .attr('x', boxW / 2)
-          .attr('y', labelH)
-          .attr('text-anchor', 'middle')
-          .attr('font-size', '13px')
-          .attr('font-weight', '600')
-          .attr('fill', zone.color)
-          .text(labelText);
-
         // Independent projection fitted to zone bbox
         const [minLon, minLat, maxLon, maxLat] = zone.bbox;
         const bboxGeoJSON: RegionCollection = {
@@ -483,7 +471,7 @@ export default function QuizMap({
 
         const insetProj = d3.geoMercator().fitExtent(
           [
-            [insetPad, labelH + insetPad],
+            [insetPad, insetPad],
             [boxW - insetPad, boxH - insetPad],
           ],
           bboxGeoJSON,
@@ -510,7 +498,7 @@ export default function QuizMap({
           .attr('d', pathAttr(insetPath))
           .attr('fill', getNormalFill)
           .attr('stroke', COLORS.stroke)
-          .attr('stroke-width', 1)
+          .attr('stroke-width', 1.5)
           .style('cursor', 'pointer')
           .style('transition', 'fill 0.15s ease')
           .on('click', (_, d: RegionFeature) => {
@@ -519,16 +507,21 @@ export default function QuizMap({
           .on('mouseenter', (event: MouseEvent, d: RegionFeature) => {
             const code = getRegionCode(d);
             const el = d3.select(event.currentTarget as Element);
-            el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 1);
+            el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 2);
             if (!answeredCodes.has(code) && code !== targetRegionCode && code !== wrongFlashCode) {
               el.attr('fill', COLORS.hover);
+            }
+            // Highlight on main map too
+            const mainEl = g.select(`path.region[data-code="${code}"]`);
+            if (!mainEl.empty() && !answeredCodes.has(code) && code !== targetRegionCode && code !== wrongFlashCode) {
+              mainEl.attr('fill', COLORS.hover);
             }
             onRegionHover?.(getRegionCode(d));
           })
           .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
             const code = getRegionCode(d);
             const el = d3.select(event.currentTarget as Element);
-            el.attr('stroke', COLORS.stroke).attr('stroke-width', 1);
+            el.attr('stroke', COLORS.stroke).attr('stroke-width', 1.5);
             if (code === wrongFlashCode) return;
             if (answeredCodes.has(code)) {
               el.attr('fill', getAnsweredFill(answeredCodes, code));
@@ -537,8 +530,30 @@ export default function QuizMap({
             } else {
               el.attr('fill', COLORS.unanswered);
             }
+            // Unhighlight on main map too
+            const mainEl = g.select(`path.region[data-code="${code}"]`);
+            if (!mainEl.empty()) {
+              if (answeredCodes.has(code)) mainEl.attr('fill', getAnsweredFill(answeredCodes, code));
+              else if (code === targetRegionCode) mainEl.attr('fill', COLORS.target);
+              else mainEl.attr('fill', COLORS.unanswered);
+            }
             onRegionHover?.(null);
           });
+
+        // Zone label overlay
+        const labelText = locale === 'en' ? zone.labelEn : zone.label;
+        insetG
+          .append('text')
+          .attr('x', 6)
+          .attr('y', 14)
+          .attr('font-size', '11px')
+          .attr('font-weight', '700')
+          .attr('fill', zone.color)
+          .attr('stroke', 'white')
+          .attr('stroke-width', 3)
+          .attr('paint-order', 'stroke')
+          .style('pointer-events', 'none')
+          .text(labelText);
 
         // Learn mode labels for inset regions
         if (showLabels) {
