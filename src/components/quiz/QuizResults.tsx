@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useI18n } from '../../i18n/useI18n';
+import type { QuizMode, AdminLevel } from '../../types';
+import type { TranslationStrings } from '../../i18n/types';
 
 interface QuizResultsProps {
   totalRegions: number;
   answered: Map<string, number>;
   elapsedTime: string;
+  mode: QuizMode;
+  adminLevel: AdminLevel;
   onRetry: () => void;
   onBack: () => void;
   onClose?: () => void;
@@ -14,6 +18,8 @@ export default function QuizResults({
   totalRegions,
   answered,
   elapsedTime,
+  mode,
+  adminLevel,
   onRetry,
   onBack,
   onClose,
@@ -71,7 +77,15 @@ export default function QuizResults({
         <div className="flex flex-col gap-3">
           <button
             onClick={async () => {
-              const text = `${t('results.shareText')}\n${firstTryCount}/${totalRegions} | ${elapsedTime}\nquiz-korea.ysw.kr`;
+              const modeKeys: Record<QuizMode, keyof TranslationStrings> = {
+                pin: 'landing.pinQuiz',
+                type: 'landing.typeQuiz',
+                'pin-hard': 'landing.pinHard',
+                'type-hard': 'landing.typeHard',
+              };
+              const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun';
+              const modeLine = `${t(modeKeys[mode])} · ${t(levelKey)} ${totalRegions}`;
+              const text = `${t('results.shareText')}\n${modeLine}\n${firstTryCount}/${totalRegions} | ${elapsedTime}\nquiz-korea.ysw.kr`;
               if (navigator.share) {
                 try {
                   await navigator.share({ text });

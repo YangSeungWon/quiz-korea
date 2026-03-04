@@ -226,6 +226,8 @@ export default function QuizSession() {
                   totalRegions={state.totalRegions}
                   answered={state.answered}
                   elapsedTime={elapsedTime}
+                  mode={mode}
+                  adminLevel={adminLevel}
                   onRetry={handleRetry}
                   onBack={handleBack}
                 />
