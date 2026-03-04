@@ -1,4 +1,6 @@
-import type { Topology } from 'topojson-specification';
+import * as topojson from 'topojson-client';
+import type { Topology, GeometryCollection } from 'topojson-specification';
+import type { MultiLineString } from 'geojson';
 import type { RegionCollection, RegionFeature } from '../types';
 import { SIDO_MAP } from './regionUtils';
 import { SIDO_MAP_EN } from '../i18n/regions/sido';
@@ -43,10 +45,20 @@ function getSigunNameEn(sido: string, code: string, nameKo: string): string {
   return SIGUNGU_NAMES_EN[code] || SIDO_MAP_EN[code] || nameKo;
 }
 
+function getGroupKey(code: string, name: string): string {
+  const sido = code.substring(0, 2);
+  if (METRO_CODES.has(sido)) return sido;
+  if (name.includes(' ')) return sido + ':' + name.split(' ')[0];
+  return code;
+}
+
 export function buildSigunData(
-  _topoData: Topology,
+  topoData: Topology,
   geoData: RegionCollection,
-): { geoData: RegionCollection; groups: SigunGroup[] } {
+): { geoData: RegionCollection; groups: SigunGroup[]; borderMesh: MultiLineString } {
+  const objectKey = Object.keys(topoData.objects)[0];
+  const geometries = (topoData.objects[objectKey] as GeometryCollection).geometries;
+
   // Build groups
   const groupMap = new Map<string, SigunGroup>();
 
@@ -54,15 +66,7 @@ export function buildSigunData(
     const code = f.properties.SIG_CD || f.properties.CTPRVN_CD || f.properties.code || '';
     const name = f.properties.SIG_KOR_NM || f.properties.CTP_KOR_NM || f.properties.name || '';
     const sido = code.substring(0, 2);
-
-    let groupKey: string;
-    if (METRO_CODES.has(sido)) {
-      groupKey = sido;
-    } else if (name.includes(' ')) {
-      groupKey = sido + ':' + name.split(' ')[0];
-    } else {
-      groupKey = code;
-    }
+    const groupKey = getGroupKey(code, name);
 
     if (!groupMap.has(groupKey)) {
       const sigunName = getSigunNameKo(sido, name);
@@ -80,7 +84,6 @@ export function buildSigunData(
   const groups = Array.from(groupMap.values());
 
   // Combine individual feature geometries directly (no topojson.merge).
-  // Internal boundaries between sub-regions remain visible but all geometry is correct.
   const features: RegionFeature[] = groups.map((group) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const allPolygons: any[] = [];
@@ -108,9 +111,25 @@ export function buildSigunData(
     } as RegionFeature;
   });
 
+  // Build border mesh: only boundaries between different sigun groups + outer edges
+  const geoToGroup = new Map<object, string>();
+  geometries.forEach((geom, i) => {
+    const f = geoData.features[i];
+    const code = f.properties.SIG_CD || f.properties.CTPRVN_CD || f.properties.code || '';
+    const name = f.properties.SIG_KOR_NM || f.properties.CTP_KOR_NM || f.properties.name || '';
+    geoToGroup.set(geom, getGroupKey(code, name));
+  });
+
+  const borderMesh = topojson.mesh(
+    topoData,
+    topoData.objects[objectKey] as GeometryCollection,
+    (a, b) => a === b || geoToGroup.get(a) !== geoToGroup.get(b),
+  );
+
   return {
     geoData: { type: 'FeatureCollection', features },
     groups,
+    borderMesh,
   };
 }
 

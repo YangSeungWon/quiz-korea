@@ -35,7 +35,7 @@ export default function QuizSession() {
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
   const sidoFilter = searchParams.get('filter') || undefined;
 
-  const { geoData, topoData, loading, error } = useMapData(adminLevel);
+  const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);
   const { state, currentRegion, progress, start, answerCorrect, answerWrong, reset } =
     useQuizEngine();
   const { formatted: elapsedTime } = useTimer(state.phase);
@@ -162,6 +162,7 @@ export default function QuizSession() {
         <QuizMap
           geoData={filteredGeoData!}
           topoData={topoData}
+          borderMesh={borderMesh}
           displayMode={displayMode}
           width={width}
           height={height}

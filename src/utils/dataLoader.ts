@@ -20,8 +20,8 @@ export async function loadKoreaMapData(level: AdminLevel): Promise<MapData> {
     const geoData = feature(topology, topology.objects[objectKey]) as RegionCollection;
 
     if (level === 'sigun') {
-      const { geoData: sigunGeo } = buildSigunData(topology, geoData);
-      return { geoData: sigunGeo, topoData: topology };
+      const { geoData: sigunGeo, borderMesh } = buildSigunData(topology, geoData);
+      return { geoData: sigunGeo, topoData: topology, borderMesh };
     }
 
     return { geoData, topoData: topology };

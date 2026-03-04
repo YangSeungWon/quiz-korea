@@ -1,4 +1,4 @@
-import type { Feature, FeatureCollection, Polygon, MultiPolygon } from 'geojson';
+import type { Feature, FeatureCollection, Polygon, MultiPolygon, MultiLineString } from 'geojson';
 import type { Topology } from 'topojson-specification';
 
 export type { Locale } from '../i18n/types';
@@ -58,6 +58,7 @@ export type QuizAction =
 export interface MapData {
   geoData: RegionCollection;
   topoData: Topology;
+  borderMesh?: MultiLineString;
 }
 
 // Quiz config derived from URL

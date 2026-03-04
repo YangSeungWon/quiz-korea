@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
+import type { MultiLineString } from 'geojson';
 import type { RegionCollection, RegionFeature, MapDisplayMode, Locale } from '../types';
 import { getRegionCode, getDisplayName } from '../utils/regionUtils';
 import { SIDO_SHORT_EN } from '../i18n/regions/sido';
@@ -54,6 +55,7 @@ function computeSvgHeight(width: number, height: number, showInsets: boolean, di
 interface QuizMapProps {
   geoData: RegionCollection;
   topoData: Topology;
+  borderMesh?: MultiLineString | null;
   displayMode: MapDisplayMode;
   width: number;
   height: number;
@@ -100,6 +102,7 @@ function getInsetLabel(code: string, locale: Locale): string {
 export default function QuizMap({
   geoData,
   topoData,
+  borderMesh,
   displayMode,
   width,
   height,
@@ -228,13 +231,15 @@ export default function QuizMap({
         });
     } else {
       // Normal mode: full map with borders
-      g.selectAll('path')
+      const hasMesh = !!borderMesh;
+      g.selectAll('path.region')
         .data(geoData.features)
         .join('path')
+        .attr('class', 'region')
         .attr('d', pathAttr(path))
         .attr('fill', getNormalFill)
-        .attr('stroke', COLORS.stroke)
-        .attr('stroke-width', 0.5)
+        .attr('stroke', hasMesh ? 'none' : COLORS.stroke)
+        .attr('stroke-width', hasMesh ? 0 : 0.5)
         .style('cursor', 'pointer')
         .style('transition', 'fill 0.15s ease')
         .on('click', (_, d: RegionFeature) => {
@@ -243,7 +248,7 @@ export default function QuizMap({
         .on('mouseenter', (event: MouseEvent, d: RegionFeature) => {
           const code = getRegionCode(d);
           const el = d3.select(event.currentTarget as Element);
-          el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 1.5);
+          if (!hasMesh) el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 1.5);
           if (!answeredCodes.has(code) && code !== targetRegionCode && code !== wrongFlashCode) {
             el.attr('fill', COLORS.hover);
           }
@@ -252,7 +257,7 @@ export default function QuizMap({
         .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
           const code = getRegionCode(d);
           const el = d3.select(event.currentTarget as Element);
-          el.attr('stroke', COLORS.stroke).attr('stroke-width', 0.5);
+          if (!hasMesh) el.attr('stroke', COLORS.stroke).attr('stroke-width', 0.5);
           if (code === wrongFlashCode) return;
           if (answeredCodes.has(code)) {
             el.attr('fill', getAnsweredFill(answeredCodes, code));
@@ -263,6 +268,17 @@ export default function QuizMap({
           }
           onRegionHover?.(null);
         });
+
+      // Separate border mesh layer (sigun mode: inter-group boundaries only)
+      if (borderMesh) {
+        g.append('path')
+          .datum(borderMesh)
+          .attr('d', path(borderMesh) ?? '')
+          .attr('fill', 'none')
+          .attr('stroke', COLORS.stroke)
+          .attr('stroke-width', 0.5)
+          .style('pointer-events', 'none');
+      }
     }
 
     // Show labels on hover in learn mode
@@ -437,7 +453,7 @@ export default function QuizMap({
         }
       });
     }
-  }, [geoData, topoData, displayMode, width, height, showInsets, locale, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels]);
+  }, [geoData, topoData, borderMesh, displayMode, width, height, showInsets, locale, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels]);
 
   const computedHeight = computeSvgHeight(width, height, showInsets, displayMode);
 

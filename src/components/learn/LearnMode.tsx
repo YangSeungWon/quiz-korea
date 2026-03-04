@@ -15,7 +15,7 @@ export default function LearnMode() {
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
   const sidoFilter = searchParams.get('filter') || undefined;
 
-  const { geoData, topoData, loading, error } = useMapData(adminLevel);
+  const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);
   const { containerRef, width, height } = useResponsiveSize();
   const [hoveredName, setHoveredName] = useState<string | null>(null);
   const showInsets = adminLevel === 'sigungu' && !sidoFilter;
@@ -93,6 +93,7 @@ export default function LearnMode() {
         <QuizMap
           geoData={filteredGeoData}
           topoData={topoData}
+          borderMesh={borderMesh}
           displayMode="normal"
           width={width}
           height={height}
