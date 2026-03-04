@@ -68,6 +68,7 @@ interface QuizMapProps {
   onRegionClick?: (code: string) => void;
   onRegionHover?: (code: string | null) => void;
   showLabels?: boolean;
+  resetZoom?: boolean;
 }
 
 const COLORS = {
@@ -114,19 +115,25 @@ export default function QuizMap({
   onRegionClick,
   onRegionHover,
   showLabels = false,
+  resetZoom = false,
 }: QuizMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const zoomTransformRef = useRef(d3.zoomIdentity);
   const prevGeoDataRef = useRef(geoData);
+  const prevResetZoomRef = useRef(resetZoom);
 
   useEffect(() => {
     if (!svgRef.current || !geoData || width === 0 || height === 0) return;
 
-    // Reset zoom when data or size changes
+    // Reset zoom when data changes or resetZoom prop becomes true
     if (prevGeoDataRef.current !== geoData) {
       zoomTransformRef.current = d3.zoomIdentity;
       prevGeoDataRef.current = geoData;
     }
+    if (resetZoom && !prevResetZoomRef.current) {
+      zoomTransformRef.current = d3.zoomIdentity;
+    }
+    prevResetZoomRef.current = resetZoom;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
@@ -460,7 +467,7 @@ export default function QuizMap({
         }
       });
     }
-  }, [geoData, topoData, borderMesh, displayMode, width, height, showInsets, locale, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels]);
+  }, [geoData, topoData, borderMesh, displayMode, width, height, showInsets, locale, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels, resetZoom]);
 
   const computedHeight = computeSvgHeight(width, height, showInsets, displayMode);
 

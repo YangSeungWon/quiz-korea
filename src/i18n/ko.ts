@@ -43,6 +43,8 @@ const ko: TranslationStrings = {
   'results.time': '시간',
   'results.retry': '다시 도전',
   'results.backToModes': '모드 선택으로',
+  'results.hideOverlay': '지도 보기',
+  'results.showOverlay': '결과 보기',
 };
 
 export default ko;

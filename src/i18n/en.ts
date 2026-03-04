@@ -43,6 +43,8 @@ const en: TranslationStrings = {
   'results.time': 'Time',
   'results.retry': 'Try Again',
   'results.backToModes': 'Back to Modes',
+  'results.hideOverlay': 'View Map',
+  'results.showOverlay': 'Show Results',
 };
 
 export default en;

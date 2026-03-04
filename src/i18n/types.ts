@@ -48,4 +48,6 @@ export interface TranslationStrings {
   'results.time': string;
   'results.retry': string;
   'results.backToModes': string;
+  'results.hideOverlay': string;
+  'results.showOverlay': string;
 }
