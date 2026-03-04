@@ -1,7 +1,7 @@
 import type { Locale } from '../i18n/types';
 import type { RegionCollection, RegionFeature, QuizRegion } from '../types';
 import { SIDO_MAP_EN, SIDO_SHORT_EN, SIDO_SHORT_FORMS_EN } from '../i18n/regions/sido';
-import { SIGUNGU_NAMES_EN, DUPLICATE_NAMES_EN } from '../i18n/regions/en';
+import { SIGUNGU_NAMES_EN } from '../i18n/regions/en';
 
 // Extract code from feature properties (fallback chain)
 export function getRegionCode(feature: RegionFeature): string {
@@ -112,10 +112,7 @@ export const SIDO_SHORT: Record<string, string> = {
   '50': '제주',
 };
 
-// Sigungu names that exist in multiple sido — only these get prefixed
-const DUPLICATE_NAMES = new Set(['중구', '동구', '서구', '남구', '북구', '강서구', '고성군']);
-
-// Get display name: prefix with sido short name only when the name is ambiguous
+// Get display name: prefix with sido short name for all sigungu features
 export function getDisplayName(feature: RegionFeature, locale: Locale = 'ko'): string {
   // Sigun merged features have their own name
   if (feature.properties.SIGUN_NAME_EN && locale === 'en') {
@@ -125,22 +122,18 @@ export function getDisplayName(feature: RegionFeature, locale: Locale = 'ko'): s
   if (locale === 'en') {
     const code = getRegionCode(feature);
     const enName = SIGUNGU_NAMES_EN[code];
-    if (enName && DUPLICATE_NAMES_EN.has(enName)) {
-      if (code.length >= 2) {
-        const prefix = SIDO_SHORT_EN[code.substring(0, 2)];
-        if (prefix) return `${prefix} ${enName}`;
-      }
+    if (enName && code.length >= 2) {
+      const prefix = SIDO_SHORT_EN[code.substring(0, 2)];
+      if (prefix) return `${prefix} ${enName}`;
     }
     return enName || SIDO_MAP_EN[code] || getRegionName(feature);
   }
 
   const name = getRegionName(feature);
-  if (DUPLICATE_NAMES.has(name)) {
-    const code = feature.properties.SIG_CD || getRegionCode(feature);
-    if (code.length >= 2) {
-      const prefix = SIDO_SHORT[code.substring(0, 2)];
-      if (prefix) return `${prefix} ${name}`;
-    }
+  const code = feature.properties.SIG_CD || getRegionCode(feature);
+  if (code.length >= 4) {
+    const prefix = SIDO_SHORT[code.substring(0, 2)];
+    if (prefix) return `${prefix} ${name}`;
   }
   return name;
 }
