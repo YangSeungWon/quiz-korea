@@ -22,9 +22,19 @@ function featureOverlapsBbox(feature: RegionFeature, bbox: readonly [number, num
   return fMaxLon >= bbox[0] && fMinLon <= bbox[2] && fMaxLat >= bbox[1] && fMinLat <= bbox[3];
 }
 
+// Mercator aspect ratio (w/h) for a geographic bbox
+function bboxAspect(bbox: readonly [number, number, number, number]): number {
+  const [minLon, minLat, maxLon, maxLat] = bbox;
+  const w = (maxLon - minLon) * Math.PI / 180;
+  const toRad = Math.PI / 180;
+  const h = Math.log(Math.tan(Math.PI / 4 + maxLat * toRad / 2))
+          - Math.log(Math.tan(Math.PI / 4 + minLat * toRad / 2));
+  return w / h;
+}
+
 interface InsetBox { x: number; y: number; w: number; h: number }
 
-// Layout: 수도권 wide on top, 대구+부산 split below
+// Layout: 수도권 wide on top, 대구+부산 split below — sized to match bbox aspect ratios
 function computeInsetLayout(width: number, height: number, showInsets: boolean, displayMode: MapDisplayMode) {
   const effectiveInsets = showInsets && displayMode !== 'outline-only';
   const insetRight = effectiveInsets && width >= 700;
@@ -32,25 +42,36 @@ function computeInsetLayout(width: number, height: number, showInsets: boolean, 
   const boxes: InsetBox[] = [];
   let mainWidth: number, mainHeight: number;
 
+  const aspCapital = bboxAspect(INSET_ZONES[0].bbox);
+  const aspDaegu = bboxAspect(INSET_ZONES[1].bbox);
+  const aspBusan = bboxAspect(INSET_ZONES[2].bbox);
+
   if (insetRight) {
-    const panelW = Math.max(240, Math.min(480, Math.floor(width * 0.4)));
+    const panelW = Math.max(280, Math.min(520, Math.floor(width * 0.45)));
     mainWidth = width - panelW;
     mainHeight = height;
-    const topH = Math.floor(height * 0.55);
-    const botH = height - topH;
-    const halfW = Math.floor(panelW / 2);
-    boxes.push({ x: mainWidth, y: 0, w: panelW, h: topH });           // 수도권
-    boxes.push({ x: mainWidth, y: topH, w: halfW, h: botH });          // 대구
-    boxes.push({ x: mainWidth + halfW, y: topH, w: panelW - halfW, h: botH }); // 부산
+
+    const idealTopH = panelW / aspCapital;
+    const idealBotH = panelW / (aspDaegu + aspBusan);
+    const scale = Math.min(1, height / (idealTopH + idealBotH));
+    const topH = Math.floor(idealTopH * scale);
+    const botH = Math.floor(idealBotH * scale);
+    const daeguW = Math.floor(panelW * aspDaegu / (aspDaegu + aspBusan));
+
+    boxes.push({ x: mainWidth, y: 0, w: panelW, h: topH });                      // 수도권
+    boxes.push({ x: mainWidth, y: topH, w: daeguW, h: botH });                    // 대구
+    boxes.push({ x: mainWidth + daeguW, y: topH, w: panelW - daeguW, h: botH });  // 부산
   } else if (insetBottom) {
     mainWidth = width;
     mainHeight = Math.floor(width * 1.3);
-    const topRowH = Math.floor(width * 0.35 * 2 * 0.9);
-    const botRowH = Math.floor(width * 0.25 * 2 * 0.9);
-    const halfW = Math.floor(width / 2);
-    boxes.push({ x: 0, y: mainHeight, w: width, h: topRowH });         // 수도권
-    boxes.push({ x: 0, y: mainHeight + topRowH, w: halfW, h: botRowH }); // 대구
-    boxes.push({ x: halfW, y: mainHeight + topRowH, w: width - halfW, h: botRowH }); // 부산
+
+    const topRowH = Math.floor(width / aspCapital);
+    const botRowH = Math.floor(width / (aspDaegu + aspBusan));
+    const daeguW = Math.floor(width * aspDaegu / (aspDaegu + aspBusan));
+
+    boxes.push({ x: 0, y: mainHeight, w: width, h: topRowH });                    // 수도권
+    boxes.push({ x: 0, y: mainHeight + topRowH, w: daeguW, h: botRowH });         // 대구
+    boxes.push({ x: daeguW, y: mainHeight + topRowH, w: width - daeguW, h: botRowH }); // 부산
   } else {
     mainWidth = width;
     mainHeight = height;
@@ -129,6 +150,21 @@ export default function QuizMap({
   const zoomTransformRef = useRef(d3.zoomIdentity);
   const prevGeoDataRef = useRef(geoData);
   const prevResetZoomRef = useRef(resetZoom);
+
+  // Refs for props that change frequently (fills, callbacks) to avoid full SVG rebuild
+  const answeredCodesRef = useRef(answeredCodes);
+  const wrongFlashCodeRef = useRef(wrongFlashCode);
+  const targetRegionCodeRef = useRef(targetRegionCode);
+  const onRegionClickRef = useRef(onRegionClick);
+  const onRegionHoverRef = useRef(onRegionHover);
+  answeredCodesRef.current = answeredCodes;
+  wrongFlashCodeRef.current = wrongFlashCode;
+  targetRegionCodeRef.current = targetRegionCode;
+  onRegionClickRef.current = onRegionClick;
+  onRegionHoverRef.current = onRegionHover;
+
+  // In outline-only mode, target change needs structural rebuild
+  const structuralTargetCode = displayMode === 'outline-only' ? targetRegionCode : undefined;
 
   useEffect(() => {
     if (!svgRef.current || !geoData || width === 0 || height === 0) return;
@@ -248,9 +284,9 @@ export default function QuizMap({
     // Helper: get fill color in normal style (used for main normal mode + insets)
     const getNormalFill = (d: RegionFeature): string => {
       const code = getRegionCode(d);
-      if (code === wrongFlashCode) return COLORS.wrongFlash;
-      if (answeredCodes.has(code)) return getAnsweredFill(answeredCodes, code);
-      if (code === targetRegionCode) return COLORS.target;
+      if (code === wrongFlashCodeRef.current) return COLORS.wrongFlash;
+      if (answeredCodesRef.current.has(code)) return getAnsweredFill(answeredCodesRef.current, code);
+      if (code === targetRegionCodeRef.current) return COLORS.target;
       return COLORS.unanswered;
     };
 
@@ -279,14 +315,14 @@ export default function QuizMap({
         .attr('d', pathAttr(path))
         .attr('fill', (d: RegionFeature) => {
           const code = getRegionCode(d);
-          if (code === wrongFlashCode) return COLORS.wrongFlash;
-          if (answeredCodes.has(code)) return getAnsweredFill(answeredCodes, code);
+          if (code === wrongFlashCodeRef.current) return COLORS.wrongFlash;
+          if (answeredCodesRef.current.has(code)) return getAnsweredFill(answeredCodesRef.current, code);
           return 'transparent';
         })
         .attr('stroke', 'none')
         .style('cursor', 'pointer')
         .on('click', (_, d: RegionFeature) => {
-          onRegionClick?.(getRegionCode(d));
+          onRegionClickRef.current?.(getRegionCode(d));
         });
     } else {
       // Normal mode: full map with borders
@@ -303,30 +339,30 @@ export default function QuizMap({
         .style('cursor', 'pointer')
         .style('transition', 'fill 0.15s ease')
         .on('click', (_, d: RegionFeature) => {
-          onRegionClick?.(getRegionCode(d));
+          onRegionClickRef.current?.(getRegionCode(d));
         })
         .on('mouseenter', (event: MouseEvent, d: RegionFeature) => {
           const code = getRegionCode(d);
           const el = d3.select(event.currentTarget as Element);
           if (!hasMesh) el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 1.5);
-          if (!answeredCodes.has(code) && code !== targetRegionCode && code !== wrongFlashCode) {
+          if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
             el.attr('fill', COLORS.hover);
           }
-          onRegionHover?.(getRegionCode(d));
+          onRegionHoverRef.current?.(getRegionCode(d));
         })
         .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
           const code = getRegionCode(d);
           const el = d3.select(event.currentTarget as Element);
           if (!hasMesh) el.attr('stroke', COLORS.stroke).attr('stroke-width', 1.2);
-          if (code === wrongFlashCode) return;
-          if (answeredCodes.has(code)) {
-            el.attr('fill', getAnsweredFill(answeredCodes, code));
-          } else if (code === targetRegionCode) {
+          if (code === wrongFlashCodeRef.current) return;
+          if (answeredCodesRef.current.has(code)) {
+            el.attr('fill', getAnsweredFill(answeredCodesRef.current, code));
+          } else if (code === targetRegionCodeRef.current) {
             el.attr('fill', COLORS.target);
           } else {
             el.attr('fill', COLORS.unanswered);
           }
-          onRegionHover?.(null);
+          onRegionHoverRef.current?.(null);
         });
 
       // Separate border mesh layer (sigun mode: inter-group boundaries only)
@@ -446,7 +482,7 @@ export default function QuizMap({
 
         const insetG = svg.append('g').attr('class', 'inset-group').attr('transform', `translate(${x},${y})`);
 
-        // Background box with matching zone color
+        // White background (below regions)
         insetG
           .append('rect')
           .attr('x', 1)
@@ -454,8 +490,7 @@ export default function QuizMap({
           .attr('width', boxW - 2)
           .attr('height', boxH - 2)
           .attr('fill', 'white')
-          .attr('stroke', zone.color)
-          .attr('stroke-width', 2.5)
+          .attr('stroke', 'none')
           .attr('rx', 3);
 
         // Independent projection fitted to zone bbox
@@ -502,30 +537,30 @@ export default function QuizMap({
           .style('cursor', 'pointer')
           .style('transition', 'fill 0.15s ease')
           .on('click', (_, d: RegionFeature) => {
-            onRegionClick?.(getRegionCode(d));
+            onRegionClickRef.current?.(getRegionCode(d));
           })
           .on('mouseenter', (event: MouseEvent, d: RegionFeature) => {
             const code = getRegionCode(d);
             const el = d3.select(event.currentTarget as Element);
             el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 2);
-            if (!answeredCodes.has(code) && code !== targetRegionCode && code !== wrongFlashCode) {
+            if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
               el.attr('fill', COLORS.hover);
             }
             // Highlight on main map too
             const mainEl = g.select(`path.region[data-code="${code}"]`);
-            if (!mainEl.empty() && !answeredCodes.has(code) && code !== targetRegionCode && code !== wrongFlashCode) {
+            if (!mainEl.empty() && !answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
               mainEl.attr('fill', COLORS.hover);
             }
-            onRegionHover?.(getRegionCode(d));
+            onRegionHoverRef.current?.(getRegionCode(d));
           })
           .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
             const code = getRegionCode(d);
             const el = d3.select(event.currentTarget as Element);
             el.attr('stroke', COLORS.stroke).attr('stroke-width', 1.5);
-            if (code === wrongFlashCode) return;
-            if (answeredCodes.has(code)) {
-              el.attr('fill', getAnsweredFill(answeredCodes, code));
-            } else if (code === targetRegionCode) {
+            if (code === wrongFlashCodeRef.current) return;
+            if (answeredCodesRef.current.has(code)) {
+              el.attr('fill', getAnsweredFill(answeredCodesRef.current, code));
+            } else if (code === targetRegionCodeRef.current) {
               el.attr('fill', COLORS.target);
             } else {
               el.attr('fill', COLORS.unanswered);
@@ -533,12 +568,25 @@ export default function QuizMap({
             // Unhighlight on main map too
             const mainEl = g.select(`path.region[data-code="${code}"]`);
             if (!mainEl.empty()) {
-              if (answeredCodes.has(code)) mainEl.attr('fill', getAnsweredFill(answeredCodes, code));
-              else if (code === targetRegionCode) mainEl.attr('fill', COLORS.target);
+              if (answeredCodesRef.current.has(code)) mainEl.attr('fill', getAnsweredFill(answeredCodesRef.current, code));
+              else if (code === targetRegionCodeRef.current) mainEl.attr('fill', COLORS.target);
               else mainEl.attr('fill', COLORS.unanswered);
             }
-            onRegionHover?.(null);
+            onRegionHoverRef.current?.(null);
           });
+
+        // Border frame on top of regions
+        insetG
+          .append('rect')
+          .attr('x', 1)
+          .attr('y', 1)
+          .attr('width', boxW - 2)
+          .attr('height', boxH - 2)
+          .attr('fill', 'none')
+          .attr('stroke', zone.color)
+          .attr('stroke-width', 2.5)
+          .attr('rx', 3)
+          .style('pointer-events', 'none');
 
         // Zone label overlay
         const labelText = locale === 'en' ? zone.labelEn : zone.label;
@@ -587,7 +635,37 @@ export default function QuizMap({
         }
       });
     }
-  }, [geoData, topoData, borderMesh, displayMode, width, height, showInsets, locale, targetRegionCode, answeredCodes, wrongFlashCode, onRegionClick, onRegionHover, showLabels, resetZoom]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoData, topoData, borderMesh, displayMode, width, height, showInsets, locale, structuralTargetCode, showLabels, resetZoom]);
+
+  // Lightweight fill-update effect: only changes fill colors without rebuilding SVG
+  useEffect(() => {
+    if (!svgRef.current || displayMode === 'outline-only') return;
+    const svg = d3.select(svgRef.current);
+
+    // Update main map regions
+    svg.selectAll<SVGPathElement, RegionFeature>('path.region').each(function (d) {
+      const code = getRegionCode(d);
+      let fill: string;
+      if (code === wrongFlashCode) fill = COLORS.wrongFlash;
+      else if (answeredCodes.has(code)) fill = getAnsweredFill(answeredCodes, code);
+      else if (displayMode === 'borderless') fill = 'transparent';
+      else if (code === targetRegionCode) fill = COLORS.target;
+      else fill = COLORS.unanswered;
+      d3.select(this).attr('fill', fill);
+    });
+
+    // Update inset regions
+    svg.selectAll<SVGPathElement, RegionFeature>('path.inset-region').each(function (d) {
+      const code = getRegionCode(d);
+      let fill: string;
+      if (code === wrongFlashCode) fill = COLORS.wrongFlash;
+      else if (answeredCodes.has(code)) fill = getAnsweredFill(answeredCodes, code);
+      else if (code === targetRegionCode) fill = COLORS.target;
+      else fill = COLORS.unanswered;
+      d3.select(this).attr('fill', fill);
+    });
+  }, [answeredCodes, wrongFlashCode, targetRegionCode, displayMode]);
 
   const computedHeight = computeSvgHeight(width, height, showInsets, displayMode);
 
