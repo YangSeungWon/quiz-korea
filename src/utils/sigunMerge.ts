@@ -88,6 +88,13 @@ export function buildSigunData(
     const toMerge = group.indices.map((i) => geometries[i]);
     const merged = topojson.merge(topoData, toMerge as Parameters<typeof topojson.merge>[1]);
 
+    // Remove holes (inner rings) from merged polygons — they're rivers/gaps between districts
+    if (merged.type === 'MultiPolygon') {
+      merged.coordinates = merged.coordinates.map((poly) => [poly[0]]);
+    } else if (merged.type === 'Polygon') {
+      merged.coordinates = [merged.coordinates[0]];
+    }
+
     return {
       type: 'Feature' as const,
       geometry: merged,
