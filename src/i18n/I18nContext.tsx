@@ -17,11 +17,11 @@ function detectLocale(): Locale {
   const stored = localStorage.getItem('locale');
   if (stored === 'en' || stored === 'ko') return stored;
 
-  // 3. Browser language
-  const browserLang = navigator.language;
-  if (browserLang.startsWith('ko')) return 'ko';
+  // 3. Browser language (check primary + all preferred languages)
+  if (navigator.language.startsWith('ko')) return 'ko';
+  if (navigator.languages?.some((l) => l.startsWith('ko'))) return 'ko';
 
-  return 'ko';
+  return 'en';
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
