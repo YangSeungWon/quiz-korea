@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
+import { usePageMeta } from '../../hooks/usePageMeta';
 import RegionPicker from './RegionPicker';
 import QuizCard from './QuizCard';
 import LanguageToggle from '../LanguageToggle';
@@ -24,6 +25,7 @@ const COUNT_OPTIONS = [16, 32, 64, 0] as const; // 0 = all
 export default function LandingPage() {
   const navigate = useNavigate();
   const { t } = useI18n();
+  usePageMeta({ title: t('seo.home.title'), description: t('seo.home.desc'), path: '/' });
   const [region, setRegion] = useState<RegionSelection | null>(null);
   const [count, setCount] = useState(0); // 0 = all
 

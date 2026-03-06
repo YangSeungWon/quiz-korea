@@ -8,6 +8,7 @@ import { extractRegions } from '../../utils/regionUtils';
 import { matchesRegionName } from '../../utils/regionUtils';
 import { shuffle } from '../../utils/quizEngine';
 import { useI18n } from '../../i18n/useI18n';
+import { usePageMeta } from '../../hooks/usePageMeta';
 import QuizMap from '../../maps/QuizMap';
 import QuizProgress from './QuizProgress';
 import QuizPrompt from './QuizPrompt';
@@ -36,6 +37,14 @@ export default function QuizSession() {
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
   const sidoFilter = searchParams.get('filter') || undefined;
   const countParam = parseInt(searchParams.get('count') || '0', 10) || 0;
+
+  const seoTitleKey = `seo.quiz.${mode}.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings;
+  const seoDescKey = `seo.quiz.${mode}.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings;
+  usePageMeta({
+    title: t(seoTitleKey),
+    description: t(seoDescKey),
+    path: `/quiz/${mode}?level=${adminLevel}`,
+  });
 
   const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);
   const { state, currentRegion, progress, start, answerCorrect, answerWrong, reset } =

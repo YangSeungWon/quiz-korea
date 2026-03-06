@@ -4,6 +4,7 @@ import { useMapData } from '../../hooks/useMapData';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
 import { getDisplayName } from '../../utils/regionUtils';
 import { useI18n } from '../../i18n/useI18n';
+import { usePageMeta } from '../../hooks/usePageMeta';
 import QuizMap from '../../maps/QuizMap';
 import LanguageToggle from '../LanguageToggle';
 import type { AdminLevel } from '../../types';
@@ -14,6 +15,14 @@ export default function LearnMode() {
   const { locale, t } = useI18n();
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
   const sidoFilter = searchParams.get('filter') || undefined;
+
+  const seoTitleKey = `seo.learn.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings;
+  const seoDescKey = `seo.learn.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings;
+  usePageMeta({
+    title: t(seoTitleKey),
+    description: t(seoDescKey),
+    path: `/learn?level=${adminLevel}`,
+  });
 
   const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);
   const { containerRef, width, height } = useResponsiveSize();

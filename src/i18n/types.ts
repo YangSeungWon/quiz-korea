@@ -39,6 +39,30 @@ export interface TranslationStrings {
   'learn.title': string;
   'learn.hoverHint': string;
 
+  // SEO
+  'seo.home.title': string;
+  'seo.home.desc': string;
+  'seo.quiz.pin.sido.title': string;
+  'seo.quiz.pin.sido.desc': string;
+  'seo.quiz.pin.sigungu.title': string;
+  'seo.quiz.pin.sigungu.desc': string;
+  'seo.quiz.type.sido.title': string;
+  'seo.quiz.type.sido.desc': string;
+  'seo.quiz.type.sigungu.title': string;
+  'seo.quiz.type.sigungu.desc': string;
+  'seo.quiz.pin-hard.sido.title': string;
+  'seo.quiz.pin-hard.sido.desc': string;
+  'seo.quiz.pin-hard.sigungu.title': string;
+  'seo.quiz.pin-hard.sigungu.desc': string;
+  'seo.quiz.type-hard.sido.title': string;
+  'seo.quiz.type-hard.sido.desc': string;
+  'seo.quiz.type-hard.sigungu.title': string;
+  'seo.quiz.type-hard.sigungu.desc': string;
+  'seo.learn.sido.title': string;
+  'seo.learn.sido.desc': string;
+  'seo.learn.sigungu.title': string;
+  'seo.learn.sigungu.desc': string;
+
   // Results
   'results.title': string;
   'results.perfect': string;
