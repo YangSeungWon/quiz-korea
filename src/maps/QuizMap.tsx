@@ -341,7 +341,8 @@ export default function QuizMap({
         .on('click', (_, d: RegionFeature) => {
           onRegionClickRef.current?.(getRegionCode(d));
         })
-        .on('mouseenter', (event: MouseEvent, d: RegionFeature) => {
+        .on('pointerenter', (event: PointerEvent, d: RegionFeature) => {
+          if (event.pointerType === 'touch') return;
           const code = getRegionCode(d);
           const el = d3.select(event.currentTarget as Element);
           if (!hasMesh) el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 1.5);
@@ -350,7 +351,8 @@ export default function QuizMap({
           }
           onRegionHoverRef.current?.(getRegionCode(d));
         })
-        .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
+        .on('pointerleave', (event: PointerEvent, d: RegionFeature) => {
+          if (event.pointerType === 'touch') return;
           const code = getRegionCode(d);
           const el = d3.select(event.currentTarget as Element);
           if (!hasMesh) el.attr('stroke', COLORS.stroke).attr('stroke-width', 1.2);
@@ -401,7 +403,8 @@ export default function QuizMap({
       const tooltip = g.append('g').attr('class', 'tooltip').style('pointer-events', 'none');
 
       g.selectAll('path.region, path:not(.region)')
-        .on('mouseenter.label', (_event: MouseEvent, d: unknown) => {
+        .on('pointerenter.label', (event: PointerEvent, d: unknown) => {
+          if (event.pointerType === 'touch') return;
           const feature = d as RegionFeature;
           const name = getDisplayName(feature, locale);
           const centroid = path.centroid(feature as d3.GeoPermissibleObjects);
@@ -421,7 +424,7 @@ export default function QuizMap({
             .attr('paint-order', 'stroke')
             .text(name);
         })
-        .on('mouseleave.label', () => {
+        .on('pointerleave.label', () => {
           tooltip.selectAll('*').remove();
         });
     }
@@ -539,7 +542,8 @@ export default function QuizMap({
           .on('click', (_, d: RegionFeature) => {
             onRegionClickRef.current?.(getRegionCode(d));
           })
-          .on('mouseenter', (event: MouseEvent, d: RegionFeature) => {
+          .on('pointerenter', (event: PointerEvent, d: RegionFeature) => {
+            if (event.pointerType === 'touch') return;
             const code = getRegionCode(d);
             const el = d3.select(event.currentTarget as Element);
             el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 2);
@@ -553,7 +557,8 @@ export default function QuizMap({
             }
             onRegionHoverRef.current?.(getRegionCode(d));
           })
-          .on('mouseleave', (event: MouseEvent, d: RegionFeature) => {
+          .on('pointerleave', (event: PointerEvent, d: RegionFeature) => {
+            if (event.pointerType === 'touch') return;
             const code = getRegionCode(d);
             const el = d3.select(event.currentTarget as Element);
             el.attr('stroke', COLORS.stroke).attr('stroke-width', 1.5);
@@ -609,7 +614,8 @@ export default function QuizMap({
 
           clippedG
             .selectAll('path.inset-region')
-            .on('mouseenter.label', (_event: MouseEvent, d: unknown) => {
+            .on('pointerenter.label', (event: PointerEvent, d: unknown) => {
+              if (event.pointerType === 'touch') return;
               const feature = d as RegionFeature;
               const name = getDisplayName(feature, locale);
               const centroid = insetPath.centroid(feature as d3.GeoPermissibleObjects);
@@ -629,7 +635,7 @@ export default function QuizMap({
                 .attr('paint-order', 'stroke')
                 .text(name);
             })
-            .on('mouseleave.label', () => {
+            .on('pointerleave.label', () => {
               insetTooltip.selectAll('*').remove();
             });
         }
