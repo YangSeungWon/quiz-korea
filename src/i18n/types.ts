@@ -14,6 +14,7 @@ export interface TranslationStrings {
   'landing.typeHardDesc': string;
   'landing.learnMode': string;
   'landing.learnModeDesc': string;
+  'landing.modeSelect': string;
   'landing.dataSource': string;
 
   // Region picker

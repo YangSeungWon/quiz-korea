@@ -95,6 +95,7 @@ export default function LandingPage() {
 
         {region && (
           <>
+            <div className="text-xs font-medium text-gray-400 mb-2">{t('landing.modeSelect')}</div>
             <div className="grid grid-cols-2 gap-3 mb-4">
               {MODE_KEYS.map((key, i) => (
                 <QuizCard

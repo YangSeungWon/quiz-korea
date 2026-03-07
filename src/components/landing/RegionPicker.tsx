@@ -41,89 +41,76 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
   const { geoData } = useMapData('sigungu');
   const sidoList = useMemo(() => (geoData ? getSidoList(geoData, locale) : []), [geoData, locale]);
   const sigunCount = useMemo(() => (geoData ? getSigunCount(geoData) : 0), [geoData]);
+  const sigunguCount = geoData ? geoData.features.length : 0;
   const shortNames = locale === 'en' ? SHORT_NAMES_EN : SHORT_NAMES_KO;
-
-  const isSido = value?.level === 'sido';
-  const isSigun = value?.level === 'sigun' && !value.filter;
-  const isAllSigungu = value?.level === 'sigungu' && !value.filter;
 
   const selectedBtn = 'bg-blue-500 text-white';
   const unselectedBtn = 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600';
 
+  const levels: { key: AdminLevel; label: string; count: number | string }[] = [
+    { key: 'sido', label: t('picker.sido'), count: 17 },
+    { key: 'sigun', label: t('picker.sigun'), count: sigunCount || '' },
+    { key: 'sigungu', label: t('picker.sigungu'), count: sigunguCount || '' },
+  ];
+
+  const showFilter = value && (value.level === 'sigun' || value.level === 'sigungu');
+
+  const allLabel = value?.level === 'sigun'
+    ? t('picker.allSigun', { count: sigunCount || '' })
+    : t('picker.allSigungu', { count: sigunguCount || '' });
+
+  const isAllSelected = value && !value.filter;
+
   return (
     <div className="space-y-3">
-      {/* Sido */}
-      <div>
-        <div className="text-xs font-medium text-gray-400 mb-1.5">{t('picker.sido')}</div>
-        <button
-          onClick={() => onChange({ level: 'sido' })}
-          className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isSido ? selectedBtn : unselectedBtn
-          }`}
-        >
-          {t('picker.allSido')}
-        </button>
+      {/* Step 1: Level selection */}
+      <div className="grid grid-cols-3 gap-2">
+        {levels.map((l) => {
+          const isSelected = value?.level === l.key;
+          return (
+            <button
+              key={l.key}
+              onClick={() => onChange({ level: l.key })}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isSelected ? selectedBtn : unselectedBtn
+              }`}
+            >
+              {l.label} {l.count}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Sigun */}
-      <div>
-        <div className="text-xs font-medium text-gray-400 mb-1.5">{t('picker.sigun')}</div>
-        <button
-          onClick={() => onChange({ level: 'sigun' })}
-          className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1.5 ${
-            isSigun && !value?.filter ? selectedBtn : unselectedBtn
-          }`}
-        >
-          {t('picker.allSigun', { count: sigunCount || '' })}
-        </button>
-        <div className="grid grid-cols-6 gap-1.5">
-          {sidoList.map((s) => {
-            const isSelected = value?.level === 'sigun' && value.filter === s.code;
-            return (
-              <button
-                key={s.code}
-                onClick={() => onChange({ level: 'sigun', filter: s.code })}
-                title={s.name}
-                className={`px-1 py-1.5 rounded text-xs font-medium transition-colors ${
-                  isSelected ? selectedBtn : unselectedBtn
-                }`}
-              >
-                {shortNames[s.code] || s.name}
-              </button>
-            );
-          })}
+      {/* Step 2: Sub-filter (sigun/sigungu only) */}
+      {showFilter && (
+        <div>
+          <button
+            onClick={() => onChange({ level: value.level })}
+            className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1.5 ${
+              isAllSelected ? selectedBtn : unselectedBtn
+            }`}
+          >
+            {allLabel}
+          </button>
+          <div className="grid grid-cols-6 gap-1.5">
+            {sidoList.map((s) => {
+              const isFilterSelected = value.filter === s.code;
+              return (
+                <button
+                  key={s.code}
+                  onClick={() => onChange({ level: value.level, filter: s.code })}
+                  title={s.name}
+                  className={`px-1 py-1.5 rounded text-xs font-medium transition-colors ${
+                    isFilterSelected ? selectedBtn : unselectedBtn
+                  }`}
+                >
+                  {shortNames[s.code] || s.name}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
-
-      {/* Sigungu */}
-      <div>
-        <div className="text-xs font-medium text-gray-400 mb-1.5">{t('picker.sigungu')}</div>
-        <button
-          onClick={() => onChange({ level: 'sigungu' })}
-          className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1.5 ${
-            isAllSigungu ? selectedBtn : unselectedBtn
-          }`}
-        >
-          {t('picker.allSigungu', { count: geoData ? geoData.features.length : '' })}
-        </button>
-        <div className="grid grid-cols-6 gap-1.5">
-          {sidoList.map((s) => {
-            const isSelected = value?.level === 'sigungu' && value.filter === s.code;
-            return (
-              <button
-                key={s.code}
-                onClick={() => onChange({ level: 'sigungu', filter: s.code })}
-                title={s.name}
-                className={`px-1 py-1.5 rounded text-xs font-medium transition-colors ${
-                  isSelected ? selectedBtn : unselectedBtn
-                }`}
-              >
-                {shortNames[s.code] || s.name}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

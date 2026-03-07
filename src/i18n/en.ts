@@ -13,6 +13,7 @@ const en: TranslationStrings = {
   'landing.typeHardDesc': 'Identify the region from its outline alone.',
   'landing.learnMode': 'Learn Mode',
   'landing.learnModeDesc': 'Freely explore the map and learn region names.',
+  'landing.modeSelect': 'Select Mode',
   'landing.dataSource': 'Data source',
 
   'seo.home.title': 'Korea Geography Quiz - Provinces & Districts Map Quiz',

@@ -13,6 +13,7 @@ const ko: TranslationStrings = {
   'landing.typeHardDesc': '윤곽선만 보고 지역 이름을 맞추세요.',
   'landing.learnMode': '학습 모드',
   'landing.learnModeDesc': '자유롭게 지도를 탐색하며 지역 이름을 익히세요.',
+  'landing.modeSelect': '모드 선택',
   'landing.dataSource': '데이터 출처',
 
   'seo.home.title': '한국 지리 퀴즈 - 시도/시군구 지도 퀴즈',
