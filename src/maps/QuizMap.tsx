@@ -337,8 +337,8 @@ export default function QuizMap({
 
     const path = geoPath().projection(projection);
 
-    // Context layer: surrounding regions in gray for geographic context
-    if (contextGeoData) {
+    // Context layer: surrounding regions in gray for geographic context (not in borderless)
+    if (contextGeoData && displayMode !== 'borderless') {
       g.selectAll('path.context')
         .data(contextGeoData.features)
         .join('path')
@@ -372,7 +372,7 @@ export default function QuizMap({
           .attr('d', path(outerBoundary) ?? '')
           .attr('fill', 'none')
           .attr('stroke', COLORS.outlineStroke)
-          .attr('stroke-width', 1.5);
+          .attr('stroke-width', 0.8);
       } catch {
         // Fallback: just draw without internal borders
       }
@@ -607,9 +607,9 @@ export default function QuizMap({
           .attr('class', 'inset-region')
           .attr('data-code', (d: RegionFeature) => getRegionCode(d))
           .attr('d', pathAttr(insetPath))
-          .attr('fill', getNormalFill)
-          .attr('stroke', COLORS.stroke)
-          .attr('stroke-width', 1.5)
+          .attr('fill', displayMode === 'borderless' ? 'transparent' : getNormalFill)
+          .attr('stroke', displayMode === 'borderless' ? 'none' : COLORS.stroke)
+          .attr('stroke-width', displayMode === 'borderless' ? 0 : 1.5)
           .style('cursor', 'pointer')
           .on('click', (_, d: RegionFeature) => {
             onRegionClickRef.current?.(getRegionCode(d));
