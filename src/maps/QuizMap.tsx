@@ -197,13 +197,22 @@ export default function QuizMap({
   // In outline-only mode, target change needs structural rebuild
   const structuralTargetCode = displayMode === 'outline-only' ? targetRegionCode : undefined;
 
-  // Filter inset zones to only those with enough features to be useful
-  const activeInsetZones = useMemo(() => {
-    if (!showInsets || !geoData || displayMode === 'outline-only') return [] as InsetZone[];
-    return INSET_ZONES.filter(zone => {
-      if (zone.sigunguOnly && adminLevel !== 'sigungu') return false;
-      return geoData.features.filter(f => featureOverlapsBbox(f, zone.bbox)).length > 2;
-    });
+  // Pre-compute zone→features mapping and active zones in one pass
+  const { activeInsetZones, zoneFeaturesMap } = useMemo(() => {
+    if (!showInsets || !geoData || displayMode === 'outline-only') {
+      return { activeInsetZones: [] as InsetZone[], zoneFeaturesMap: new Map<InsetZone, RegionFeature[]>() };
+    }
+    const map = new Map<InsetZone, RegionFeature[]>();
+    const active: InsetZone[] = [];
+    for (const zone of INSET_ZONES) {
+      if (zone.sigunguOnly && adminLevel !== 'sigungu') continue;
+      const features = geoData.features.filter(f => featureOverlapsBbox(f, zone.bbox));
+      if (features.length > 2) {
+        map.set(zone, features);
+        active.push(zone);
+      }
+    }
+    return { activeInsetZones: active, zoneFeaturesMap: map };
   }, [showInsets, geoData, displayMode, adminLevel]);
 
   useEffect(() => {
@@ -525,7 +534,7 @@ export default function QuizMap({
       const insetPad = 0;
 
       activeInsetZones.forEach((zone, i) => {
-        const zoneFeatures = geoData.features.filter((f) => featureOverlapsBbox(f, zone.bbox));
+        const zoneFeatures = zoneFeaturesMap.get(zone) || [];
         if (zoneFeatures.length === 0 || !boxes[i]) return;
 
         const { x, y, w: boxW, h: boxH } = boxes[i];
@@ -691,7 +700,7 @@ export default function QuizMap({
     }
     regionElsRef.current = elIndex;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geoData, topoData, borderMesh, displayMode, width, height, activeInsetZones, locale, structuralTargetCode, showLabels, resetZoom]);
+  }, [geoData, topoData, borderMesh, displayMode, width, height, activeInsetZones, zoneFeaturesMap, locale, structuralTargetCode, showLabels, resetZoom]);
 
   // Lightweight fill-update effect: O(1) per code via element index
   useEffect(() => {
