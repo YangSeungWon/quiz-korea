@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useRef } from 'react';
-import * as d3 from 'd3';
+import { select } from 'd3-selection';
+import { geoBounds, geoMercator, geoPath } from 'd3-geo';
+import type { GeoPath, GeoProjection, GeoPermissibleObjects } from 'd3-geo';
+import { zoom as d3Zoom, zoomIdentity } from 'd3-zoom';
+import type { ZoomTransform } from 'd3-zoom';
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { MultiLineString } from 'geojson';
 import type { RegionCollection, RegionFeature, MapDisplayMode, Locale, AdminLevel } from '../types';
 import { getRegionCode, getDisplayName } from '../utils/regionUtils';
 // Helper to avoid D3 generics mismatch on .attr('d', path)
-function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
+function pathAttr(path: GeoPath): (d: RegionFeature) => string {
   return (d: RegionFeature) => path(d) ?? '';
 }
 
@@ -18,7 +22,7 @@ const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [nu
 ];
 
 function featureOverlapsBbox(feature: RegionFeature, bbox: readonly [number, number, number, number]): boolean {
-  const [[fMinLon, fMinLat], [fMaxLon, fMaxLat]] = d3.geoBounds(feature);
+  const [[fMinLon, fMinLat], [fMaxLon, fMaxLat]] = geoBounds(feature);
   return fMaxLon >= bbox[0] && fMinLon <= bbox[2] && fMaxLat >= bbox[1] && fMinLat <= bbox[3];
 }
 
@@ -173,7 +177,7 @@ export default function QuizMap({
   resetZoom = false,
 }: QuizMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const zoomTransformRef = useRef(d3.zoomIdentity);
+  const zoomTransformRef = useRef(zoomIdentity);
   const prevGeoDataRef = useRef(geoData);
   const prevResetZoomRef = useRef(resetZoom);
 
@@ -206,15 +210,15 @@ export default function QuizMap({
 
     // Reset zoom when data changes or resetZoom prop becomes true
     if (prevGeoDataRef.current !== geoData) {
-      zoomTransformRef.current = d3.zoomIdentity;
+      zoomTransformRef.current = zoomIdentity;
       prevGeoDataRef.current = geoData;
     }
     if (resetZoom && !prevResetZoomRef.current) {
-      zoomTransformRef.current = d3.zoomIdentity;
+      zoomTransformRef.current = zoomIdentity;
     }
     prevResetZoomRef.current = resetZoom;
 
-    const svg = d3.select(svgRef.current);
+    const svg = select(svgRef.current);
     svg.selectAll('*').remove();
 
     const { effectiveInsets, mainWidth, mainHeight, boxes } =
@@ -229,9 +233,9 @@ export default function QuizMap({
 
     // Apply stored zoom transform and set up zoom behavior
     g.attr('transform', zoomTransformRef.current.toString());
-    let miniProj: d3.GeoProjection | null = null;
+    let miniProj: GeoProjection | null = null;
 
-    function updateMinimapViewport(transform: d3.ZoomTransform) {
+    function updateMinimapViewport(transform: ZoomTransform) {
       const mm = mainSvg.select('.minimap');
       if (mm.empty() || !miniProj) return;
       if (transform.k <= 1) {
@@ -252,7 +256,7 @@ export default function QuizMap({
       }
     }
 
-    const zoom = d3.zoom<SVGSVGElement, unknown>()
+    const zoom = d3Zoom<SVGSVGElement, unknown>()
       .scaleExtent([1, 4])
       .extent([[0, 0], [mainWidth, mainHeight]])
       .translateExtent([[0, 0], [mainWidth, mainHeight]])
@@ -268,10 +272,10 @@ export default function QuizMap({
         updateMinimapViewport(event.transform);
       });
     svg.call(zoom);
-    if (zoomTransformRef.current !== d3.zoomIdentity) {
+    if (zoomTransformRef.current !== zoomIdentity) {
       svg.call(zoom.transform, zoomTransformRef.current);
     }
-    const projection = d3.geoMercator();
+    const projection = geoMercator();
 
     if (displayMode === 'outline-only' && targetRegionCode) {
       // Show only the target region, fitted to viewport
@@ -291,7 +295,7 @@ export default function QuizMap({
           singleCollection,
         );
 
-        const path = d3.geoPath().projection(projection);
+        const path = geoPath().projection(projection);
 
         g.selectAll('path')
           .data([targetFeature])
@@ -314,7 +318,7 @@ export default function QuizMap({
       geoData,
     );
 
-    const path = d3.geoPath().projection(projection);
+    const path = geoPath().projection(projection);
 
     // Helper: get fill color in normal style (used for main normal mode + insets)
     const getNormalFill = (d: RegionFeature): string => {
@@ -379,7 +383,7 @@ export default function QuizMap({
         .on('pointerenter', (event: PointerEvent, d: RegionFeature) => {
           if (event.pointerType === 'touch') return;
           const code = getRegionCode(d);
-          const el = d3.select(event.currentTarget as Element);
+          const el = select(event.currentTarget as Element);
           if (!hasMesh) el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 1.5);
           if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
             el.attr('fill', COLORS.hover);
@@ -389,7 +393,7 @@ export default function QuizMap({
         .on('pointerleave', (event: PointerEvent, d: RegionFeature) => {
           if (event.pointerType === 'touch') return;
           const code = getRegionCode(d);
-          const el = d3.select(event.currentTarget as Element);
+          const el = select(event.currentTarget as Element);
           if (!hasMesh) el.attr('stroke', COLORS.stroke).attr('stroke-width', 1.2);
           if (code === wrongFlashCodeRef.current) return;
           if (answeredCodesRef.current.has(code)) {
@@ -442,7 +446,7 @@ export default function QuizMap({
           if (event.pointerType === 'touch') return;
           const feature = d as RegionFeature;
           const name = getDisplayName(feature, locale);
-          const centroid = path.centroid(feature as d3.GeoPermissibleObjects);
+          const centroid = path.centroid(feature as GeoPermissibleObjects);
 
           tooltip.selectAll('*').remove();
           tooltip
@@ -481,11 +485,11 @@ export default function QuizMap({
         .attr('stroke', '#9ca3af').attr('stroke-width', 0.5)
         .attr('rx', 3);
 
-      miniProj = d3.geoMercator().fitExtent(
+      miniProj = geoMercator().fitExtent(
         [[miniPadding, miniPadding], [MINI_W - miniPadding, MINI_H - miniPadding]],
         geoData,
       );
-      const miniPath = d3.geoPath().projection(miniProj);
+      const miniPath = geoPath().projection(miniProj);
 
       miniG.selectAll('path')
         .data(geoData.features)
@@ -542,14 +546,14 @@ export default function QuizMap({
           } as unknown as RegionFeature],
         };
 
-        const insetProj = d3.geoMercator().fitExtent(
+        const insetProj = geoMercator().fitExtent(
           [
             [insetPad, insetPad],
             [boxW - insetPad, boxH - insetPad],
           ],
           bboxGeoJSON,
         );
-        const insetPath = d3.geoPath().projection(insetProj);
+        const insetPath = geoPath().projection(insetProj);
 
         // Clip regions to bbox area
         const clipId = `inset-clip-${i}`;
@@ -653,7 +657,7 @@ export default function QuizMap({
               if (event.pointerType === 'touch') return;
               const feature = d as RegionFeature;
               const name = getDisplayName(feature, locale);
-              const centroid = insetPath.centroid(feature as d3.GeoPermissibleObjects);
+              const centroid = insetPath.centroid(feature as GeoPermissibleObjects);
 
               insetTooltip.selectAll('*').remove();
               insetTooltip
@@ -682,7 +686,7 @@ export default function QuizMap({
   // Lightweight fill-update effect: only changes fill colors without rebuilding SVG
   useEffect(() => {
     if (!svgRef.current || displayMode === 'outline-only') return;
-    const svg = d3.select(svgRef.current);
+    const svg = select(svgRef.current);
 
     // Update main map regions
     svg.selectAll<SVGPathElement, RegionFeature>('path.region').each(function (d) {
@@ -693,7 +697,7 @@ export default function QuizMap({
       else if (displayMode === 'borderless') fill = 'transparent';
       else if (code === targetRegionCode) fill = COLORS.target;
       else fill = COLORS.unanswered;
-      d3.select(this).attr('fill', fill);
+      select(this).attr('fill', fill);
     });
 
     // Update inset regions
@@ -704,7 +708,7 @@ export default function QuizMap({
       else if (answeredCodes.has(code)) fill = getAnsweredFill(answeredCodes, code);
       else if (code === targetRegionCode) fill = COLORS.target;
       else fill = COLORS.unanswered;
-      d3.select(this).attr('fill', fill);
+      select(this).attr('fill', fill);
     });
   }, [answeredCodes, wrongFlashCode, targetRegionCode, displayMode]);
 
