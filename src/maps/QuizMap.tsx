@@ -618,36 +618,42 @@ export default function QuizMap({
             const el = this as SVGPathElement;
             const code = getRegionCode(d);
             indexEl(code, el);
+            const isBorderless = displayMode === 'borderless';
             el.addEventListener('pointerenter', (event: PointerEvent) => {
               if (event.pointerType === 'touch') return;
-              el.setAttribute('stroke', COLORS.strokeHover);
-              el.setAttribute('stroke-width', '2');
-              if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
-                el.setAttribute('fill', COLORS.hover);
+              if (!isBorderless) {
+                el.setAttribute('stroke', COLORS.strokeHover);
+                el.setAttribute('stroke-width', '2');
+                if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
+                  el.setAttribute('fill', COLORS.hover);
+                }
               }
               const mainEl = svgRef.current?.querySelector(`path.region[data-code="${code}"]`) as SVGPathElement | null;
               if (mainEl && !answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
-                mainEl.setAttribute('fill', COLORS.hover);
+                mainEl.setAttribute('fill', isBorderless ? 'transparent' : COLORS.hover);
               }
               onRegionHoverRef.current?.(code);
             });
             el.addEventListener('pointerleave', (event: PointerEvent) => {
               if (event.pointerType === 'touch') return;
-              el.setAttribute('stroke', COLORS.stroke);
-              el.setAttribute('stroke-width', '1.5');
+              if (!isBorderless) {
+                el.setAttribute('stroke', COLORS.stroke);
+                el.setAttribute('stroke-width', '1.5');
+              }
               if (code === wrongFlashCodeRef.current) return;
+              const restoreFill = isBorderless ? 'transparent' : unansweredFill;
               if (answeredCodesRef.current.has(code)) {
                 el.setAttribute('fill', getAnsweredFill(answeredCodesRef.current, code));
               } else if (code === targetRegionCodeRef.current) {
                 el.setAttribute('fill', COLORS.target);
               } else {
-                el.setAttribute('fill', unansweredFill);
+                el.setAttribute('fill', restoreFill);
               }
               const mainEl = svgRef.current?.querySelector(`path.region[data-code="${code}"]`) as SVGPathElement | null;
               if (mainEl) {
                 if (answeredCodesRef.current.has(code)) mainEl.setAttribute('fill', getAnsweredFill(answeredCodesRef.current, code));
                 else if (code === targetRegionCodeRef.current) mainEl.setAttribute('fill', COLORS.target);
-                else mainEl.setAttribute('fill', unansweredFill);
+                else mainEl.setAttribute('fill', restoreFill);
               }
               onRegionHoverRef.current?.(null);
             });
