@@ -108,6 +108,7 @@ export default function LearnMode() {
           width={width}
           height={height}
           showInsets={showInsets}
+          adminLevel={adminLevel}
           locale={locale}
           answeredCodes={emptyAnsweredCodes}
           wrongFlashCode={null}

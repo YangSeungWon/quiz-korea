@@ -83,24 +83,14 @@ export function buildSigunData(
 
   const groups = Array.from(groupMap.values());
 
-  // Combine individual feature geometries directly (no topojson.merge).
+  // Merge geometries using topojson.merge to dissolve shared arcs
   const features: RegionFeature[] = groups.map((group) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const allPolygons: any[] = [];
-    for (const idx of group.indices) {
-      const geom = geoData.features[idx].geometry;
-      if (geom.type === 'Polygon') {
-        allPolygons.push(geom.coordinates);
-      } else if (geom.type === 'MultiPolygon') {
-        for (const poly of geom.coordinates) {
-          allPolygons.push(poly);
-        }
-      }
-    }
+    const mergedGeo = topojson.merge(topoData, group.indices.map(i => geometries[i]) as any);
 
     return {
       type: 'Feature' as const,
-      geometry: { type: 'MultiPolygon' as const, coordinates: allPolygons },
+      geometry: mergedGeo,
       properties: {
         code: group.code,
         name: group.nameKo,

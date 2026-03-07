@@ -3,18 +3,18 @@ import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { MultiLineString } from 'geojson';
-import type { RegionCollection, RegionFeature, MapDisplayMode, Locale } from '../types';
+import type { RegionCollection, RegionFeature, MapDisplayMode, Locale, AdminLevel } from '../types';
 import { getRegionCode, getDisplayName } from '../utils/regionUtils';
 // Helper to avoid D3 generics mismatch on .attr('d', path)
 function pathAttr(path: d3.GeoPath): (d: RegionFeature) => string {
   return (d: RegionFeature) => path(d) ?? '';
 }
 
-// Inset zones: dense cores where sigungu are too small to click (north→south order)
-const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [number, number, number, number]; color: string }[] = [
+// Inset zones: dense cores where regions are too small to click (north→south order)
+const INSET_ZONES: readonly { label: string; labelEn: string; bbox: readonly [number, number, number, number]; color: string; sigunguOnly?: boolean }[] = [
   { label: '수도권', labelEn: 'Capital', bbox: [126.46, 37.22, 127.25, 37.75], color: '#4f46e5' },
-  { label: '대구', labelEn: 'Daegu', bbox: [128.47, 35.77, 128.73, 35.99], color: '#059669' },
-  { label: '부산', labelEn: 'Busan', bbox: [128.96, 35.05, 129.21, 35.28], color: '#dc2626' },
+  { label: '대구', labelEn: 'Daegu', bbox: [128.47, 35.77, 128.73, 35.99], color: '#059669', sigunguOnly: true },
+  { label: '부산', labelEn: 'Busan', bbox: [128.96, 35.05, 129.21, 35.28], color: '#dc2626', sigunguOnly: true },
 ];
 
 function featureOverlapsBbox(feature: RegionFeature, bbox: readonly [number, number, number, number]): boolean {
@@ -119,6 +119,7 @@ interface QuizMapProps {
   width: number;
   height: number;
   showInsets?: boolean;
+  adminLevel?: AdminLevel;
   locale?: Locale;
   targetRegionCode?: string | null;
   answeredCodes: Map<string, number>;
@@ -161,6 +162,7 @@ export default function QuizMap({
   width,
   height,
   showInsets = false,
+  adminLevel = 'sigungu',
   locale = 'ko',
   targetRegionCode,
   answeredCodes,
@@ -193,10 +195,11 @@ export default function QuizMap({
   // Filter inset zones to only those with enough features to be useful
   const activeInsetZones = useMemo(() => {
     if (!showInsets || !geoData || displayMode === 'outline-only') return [] as InsetZone[];
-    return INSET_ZONES.filter(zone =>
-      geoData.features.filter(f => featureOverlapsBbox(f, zone.bbox)).length > 2
-    );
-  }, [showInsets, geoData, displayMode]);
+    return INSET_ZONES.filter(zone => {
+      if (zone.sigunguOnly && adminLevel !== 'sigungu') return false;
+      return geoData.features.filter(f => featureOverlapsBbox(f, zone.bbox)).length > 2;
+    });
+  }, [showInsets, geoData, displayMode, adminLevel]);
 
   useEffect(() => {
     if (!svgRef.current || !geoData || width === 0 || height === 0) return;

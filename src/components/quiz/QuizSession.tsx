@@ -176,6 +176,7 @@ export default function QuizSession() {
           width={width}
           height={height}
           showInsets={showInsets}
+          adminLevel={adminLevel}
           locale={locale}
           targetRegionCode={
             !isFinished && (displayMode === 'outline-only' || (mode === 'type' && currentRegion))
