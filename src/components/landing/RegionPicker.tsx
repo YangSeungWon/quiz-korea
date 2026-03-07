@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useMapData } from '../../hooks/useMapData';
 import { getSidoList } from '../../utils/regionUtils';
-import { getSigunCount } from '../../utils/sigunMerge';
+import { getSigunCount, METRO_CODES } from '../../utils/sigunMerge';
 import { useI18n } from '../../i18n/useI18n';
 import { SHORT_NAMES_EN } from '../../i18n/regions/sido';
 import type { AdminLevel } from '../../types';
@@ -93,7 +93,9 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
             {allLabel}
           </button>
           <div className="grid grid-cols-6 gap-1.5">
-            {sidoList.map((s) => {
+            {sidoList
+              .filter((s) => value.level !== 'sigun' || !METRO_CODES.has(s.code))
+              .map((s) => {
               const isFilterSelected = value.filter === s.code;
               return (
                 <button
