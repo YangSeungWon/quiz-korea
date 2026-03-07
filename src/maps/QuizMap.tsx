@@ -344,9 +344,9 @@ export default function QuizMap({
         .join('path')
         .attr('class', 'context')
         .attr('d', pathAttr(path))
-        .attr('fill', '#f9fafb')
-        .attr('stroke', '#e5e7eb')
-        .attr('stroke-width', 0.5)
+        .attr('fill', '#f3f4f6')
+        .attr('stroke', '#d1d5db')
+        .attr('stroke-width', 0.8)
         .style('pointer-events', 'none');
     }
 

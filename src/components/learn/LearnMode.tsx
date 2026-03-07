@@ -104,7 +104,7 @@ export default function LearnMode() {
           geoData={filteredGeoData}
           contextGeoData={sidoFilter ? geoData : null}
           topoData={topoData}
-          borderMesh={borderMesh}
+          borderMesh={sidoFilter ? null : borderMesh}
           displayMode="normal"
           width={width}
           height={height}

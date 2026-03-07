@@ -172,7 +172,7 @@ export default function QuizSession() {
           geoData={filteredGeoData!}
           contextGeoData={sidoFilter ? geoData : null}
           topoData={topoData}
-          borderMesh={borderMesh}
+          borderMesh={sidoFilter ? null : borderMesh}
           displayMode={isFinished ? 'normal' : displayMode}
           width={width}
           height={height}
