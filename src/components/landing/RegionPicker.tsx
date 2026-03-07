@@ -44,7 +44,7 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
   const shortNames = locale === 'en' ? SHORT_NAMES_EN : SHORT_NAMES_KO;
 
   const isSido = value?.level === 'sido';
-  const isSigun = value?.level === 'sigun';
+  const isSigun = value?.level === 'sigun' && !value.filter;
   const isAllSigungu = value?.level === 'sigungu' && !value.filter;
 
   const selectedBtn = 'bg-blue-500 text-white';
@@ -70,12 +70,29 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
         <div className="text-xs font-medium text-gray-400 mb-1.5">{t('picker.sigun')}</div>
         <button
           onClick={() => onChange({ level: 'sigun' })}
-          className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-            isSigun ? selectedBtn : unselectedBtn
+          className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-1.5 ${
+            isSigun && !value?.filter ? selectedBtn : unselectedBtn
           }`}
         >
           {t('picker.allSigun', { count: sigunCount || '' })}
         </button>
+        <div className="grid grid-cols-6 gap-1.5">
+          {sidoList.map((s) => {
+            const isSelected = value?.level === 'sigun' && value.filter === s.code;
+            return (
+              <button
+                key={s.code}
+                onClick={() => onChange({ level: 'sigun', filter: s.code })}
+                title={s.name}
+                className={`px-1 py-1.5 rounded text-xs font-medium transition-colors ${
+                  isSelected ? selectedBtn : unselectedBtn
+                }`}
+              >
+                {shortNames[s.code] || s.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Sigungu */}
