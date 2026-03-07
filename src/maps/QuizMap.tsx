@@ -177,6 +177,7 @@ export default function QuizMap({
   resetZoom = false,
 }: QuizMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const regionElsRef = useRef<Map<string, SVGPathElement[]>>(new Map());
   const zoomTransformRef = useRef(zoomIdentity);
   const prevGeoDataRef = useRef(geoData);
   const prevResetZoomRef = useRef(resetZoom);
@@ -220,6 +221,11 @@ export default function QuizMap({
 
     const svg = select(svgRef.current);
     svg.selectAll('*').remove();
+    const elIndex = new Map<string, SVGPathElement[]>();
+    const indexEl = (code: string, el: SVGPathElement) => {
+      const arr = elIndex.get(code);
+      if (arr) arr.push(el); else elIndex.set(code, [el]);
+    };
 
     const { effectiveInsets, mainWidth, mainHeight, boxes } =
       computeInsetLayout(width, height, activeInsetZones);
@@ -362,7 +368,8 @@ export default function QuizMap({
         .style('cursor', 'pointer')
         .on('click', (_, d: RegionFeature) => {
           onRegionClickRef.current?.(getRegionCode(d));
-        });
+        })
+        .each(function (d: RegionFeature) { indexEl(getRegionCode(d), this as SVGPathElement); });
     } else {
       // Normal mode: full map with borders
       const hasMesh = !!borderMesh;
@@ -404,7 +411,8 @@ export default function QuizMap({
             el.attr('fill', COLORS.unanswered);
           }
           onRegionHoverRef.current?.(null);
-        });
+        })
+        .each(function (d: RegionFeature) { indexEl(getRegionCode(d), this as SVGPathElement); });
 
       // Separate border mesh layer (sigun mode: inter-group boundaries only)
       if (borderMesh) {
@@ -584,6 +592,7 @@ export default function QuizMap({
           .each(function (d: RegionFeature) {
             const el = this as SVGPathElement;
             const code = getRegionCode(d);
+            indexEl(code, el);
             el.addEventListener('pointerenter', (event: PointerEvent) => {
               if (event.pointerType === 'touch') return;
               el.setAttribute('stroke', COLORS.strokeHover);
@@ -680,36 +689,32 @@ export default function QuizMap({
         }
       });
     }
+    regionElsRef.current = elIndex;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geoData, topoData, borderMesh, displayMode, width, height, activeInsetZones, locale, structuralTargetCode, showLabels, resetZoom]);
 
-  // Lightweight fill-update effect: only changes fill colors without rebuilding SVG
+  // Lightweight fill-update effect: O(1) per code via element index
   useEffect(() => {
-    if (!svgRef.current || displayMode === 'outline-only') return;
-    const svg = select(svgRef.current);
+    if (displayMode === 'outline-only') return;
+    const elIndex = regionElsRef.current;
+    const isBorderless = displayMode === 'borderless';
 
-    // Update main map regions
-    svg.selectAll<SVGPathElement, RegionFeature>('path.region').each(function (d) {
-      const code = getRegionCode(d);
-      let fill: string;
-      if (code === wrongFlashCode) fill = COLORS.wrongFlash;
-      else if (answeredCodes.has(code)) fill = getAnsweredFill(answeredCodes, code);
-      else if (displayMode === 'borderless') fill = 'transparent';
-      else if (code === targetRegionCode) fill = COLORS.target;
-      else fill = COLORS.unanswered;
-      select(this).attr('fill', fill);
-    });
-
-    // Update inset regions
-    svg.selectAll<SVGPathElement, RegionFeature>('path.inset-region').each(function (d) {
-      const code = getRegionCode(d);
+    for (const [code, els] of elIndex) {
       let fill: string;
       if (code === wrongFlashCode) fill = COLORS.wrongFlash;
       else if (answeredCodes.has(code)) fill = getAnsweredFill(answeredCodes, code);
       else if (code === targetRegionCode) fill = COLORS.target;
       else fill = COLORS.unanswered;
-      select(this).attr('fill', fill);
-    });
+
+      for (const el of els) {
+        // Borderless main-map regions stay transparent unless answered/targeted
+        if (isBorderless && el.classList.contains('region') && fill === COLORS.unanswered) {
+          el.setAttribute('fill', 'transparent');
+        } else {
+          el.setAttribute('fill', fill);
+        }
+      }
+    }
   }, [answeredCodes, wrongFlashCode, targetRegionCode, displayMode]);
 
   const computedHeight = computeSvgHeight(width, height, activeInsetZones);
