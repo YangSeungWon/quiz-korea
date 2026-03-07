@@ -568,51 +568,51 @@ export default function QuizMap({
           .data(zoneFeatures)
           .join('path')
           .attr('class', 'inset-region')
+          .attr('data-code', (d: RegionFeature) => getRegionCode(d))
           .attr('d', pathAttr(insetPath))
           .attr('fill', getNormalFill)
           .attr('stroke', COLORS.stroke)
           .attr('stroke-width', 1.5)
           .style('cursor', 'pointer')
-          .style('transition', 'fill 0.15s ease')
           .on('click', (_, d: RegionFeature) => {
             onRegionClickRef.current?.(getRegionCode(d));
           })
-          .on('pointerenter', (event: PointerEvent, d: RegionFeature) => {
-            if (event.pointerType === 'touch') return;
+          .each(function (d: RegionFeature) {
+            const el = this as SVGPathElement;
             const code = getRegionCode(d);
-            const el = d3.select(event.currentTarget as Element);
-            el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 2);
-            if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
-              el.attr('fill', COLORS.hover);
-            }
-            // Highlight on main map too
-            const mainEl = g.select(`path.region[data-code="${code}"]`);
-            if (!mainEl.empty() && !answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
-              mainEl.attr('fill', COLORS.hover);
-            }
-            onRegionHoverRef.current?.(getRegionCode(d));
-          })
-          .on('pointerleave', (event: PointerEvent, d: RegionFeature) => {
-            if (event.pointerType === 'touch') return;
-            const code = getRegionCode(d);
-            const el = d3.select(event.currentTarget as Element);
-            el.attr('stroke', COLORS.stroke).attr('stroke-width', 1.5);
-            if (code === wrongFlashCodeRef.current) return;
-            if (answeredCodesRef.current.has(code)) {
-              el.attr('fill', getAnsweredFill(answeredCodesRef.current, code));
-            } else if (code === targetRegionCodeRef.current) {
-              el.attr('fill', COLORS.target);
-            } else {
-              el.attr('fill', COLORS.unanswered);
-            }
-            // Unhighlight on main map too
-            const mainEl = g.select(`path.region[data-code="${code}"]`);
-            if (!mainEl.empty()) {
-              if (answeredCodesRef.current.has(code)) mainEl.attr('fill', getAnsweredFill(answeredCodesRef.current, code));
-              else if (code === targetRegionCodeRef.current) mainEl.attr('fill', COLORS.target);
-              else mainEl.attr('fill', COLORS.unanswered);
-            }
-            onRegionHoverRef.current?.(null);
+            el.addEventListener('pointerenter', (event: PointerEvent) => {
+              if (event.pointerType === 'touch') return;
+              el.setAttribute('stroke', COLORS.strokeHover);
+              el.setAttribute('stroke-width', '2');
+              if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
+                el.setAttribute('fill', COLORS.hover);
+              }
+              const mainEl = svgRef.current?.querySelector(`path.region[data-code="${code}"]`) as SVGPathElement | null;
+              if (mainEl && !answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
+                mainEl.setAttribute('fill', COLORS.hover);
+              }
+              onRegionHoverRef.current?.(code);
+            });
+            el.addEventListener('pointerleave', (event: PointerEvent) => {
+              if (event.pointerType === 'touch') return;
+              el.setAttribute('stroke', COLORS.stroke);
+              el.setAttribute('stroke-width', '1.5');
+              if (code === wrongFlashCodeRef.current) return;
+              if (answeredCodesRef.current.has(code)) {
+                el.setAttribute('fill', getAnsweredFill(answeredCodesRef.current, code));
+              } else if (code === targetRegionCodeRef.current) {
+                el.setAttribute('fill', COLORS.target);
+              } else {
+                el.setAttribute('fill', COLORS.unanswered);
+              }
+              const mainEl = svgRef.current?.querySelector(`path.region[data-code="${code}"]`) as SVGPathElement | null;
+              if (mainEl) {
+                if (answeredCodesRef.current.has(code)) mainEl.setAttribute('fill', getAnsweredFill(answeredCodesRef.current, code));
+                else if (code === targetRegionCodeRef.current) mainEl.setAttribute('fill', COLORS.target);
+                else mainEl.setAttribute('fill', COLORS.unanswered);
+              }
+              onRegionHoverRef.current?.(null);
+            });
           });
 
         // Border frame on top of regions
