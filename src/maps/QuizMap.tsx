@@ -117,6 +117,7 @@ function computeSvgHeight(width: number, height: number, zones: readonly InsetZo
 
 interface QuizMapProps {
   geoData: RegionCollection;
+  contextGeoData?: RegionCollection | null;
   topoData: Topology;
   borderMesh?: MultiLineString | null;
   displayMode: MapDisplayMode;
@@ -160,6 +161,7 @@ function getAnsweredFill(answeredCodes: Map<string, number>, code: string): stri
 
 export default function QuizMap({
   geoData,
+  contextGeoData,
   topoData,
   borderMesh,
   displayMode,
@@ -335,13 +337,27 @@ export default function QuizMap({
 
     const path = geoPath().projection(projection);
 
+    // Context layer: surrounding regions in gray for geographic context
+    if (contextGeoData) {
+      g.selectAll('path.context')
+        .data(contextGeoData.features)
+        .join('path')
+        .attr('class', 'context')
+        .attr('d', pathAttr(path))
+        .attr('fill', '#f9fafb')
+        .attr('stroke', '#e5e7eb')
+        .attr('stroke-width', 0.5)
+        .style('pointer-events', 'none');
+    }
+
     // Helper: get fill color in normal style (used for main normal mode + insets)
+    const unansweredFill = COLORS.unanswered;
     const getNormalFill = (d: RegionFeature): string => {
       const code = getRegionCode(d);
       if (code === wrongFlashCodeRef.current) return COLORS.wrongFlash;
       if (answeredCodesRef.current.has(code)) return getAnsweredFill(answeredCodesRef.current, code);
       if (code === targetRegionCodeRef.current) return COLORS.target;
-      return COLORS.unanswered;
+      return unansweredFill;
     };
 
     if (displayMode === 'borderless') {
@@ -417,7 +433,7 @@ export default function QuizMap({
           } else if (code === targetRegionCodeRef.current) {
             el.attr('fill', COLORS.target);
           } else {
-            el.attr('fill', COLORS.unanswered);
+            el.attr('fill', unansweredFill);
           }
           onRegionHoverRef.current?.(null);
         })
@@ -625,13 +641,13 @@ export default function QuizMap({
               } else if (code === targetRegionCodeRef.current) {
                 el.setAttribute('fill', COLORS.target);
               } else {
-                el.setAttribute('fill', COLORS.unanswered);
+                el.setAttribute('fill', unansweredFill);
               }
               const mainEl = svgRef.current?.querySelector(`path.region[data-code="${code}"]`) as SVGPathElement | null;
               if (mainEl) {
                 if (answeredCodesRef.current.has(code)) mainEl.setAttribute('fill', getAnsweredFill(answeredCodesRef.current, code));
                 else if (code === targetRegionCodeRef.current) mainEl.setAttribute('fill', COLORS.target);
-                else mainEl.setAttribute('fill', COLORS.unanswered);
+                else mainEl.setAttribute('fill', unansweredFill);
               }
               onRegionHoverRef.current?.(null);
             });
@@ -700,7 +716,7 @@ export default function QuizMap({
     }
     regionElsRef.current = elIndex;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geoData, topoData, borderMesh, displayMode, width, height, activeInsetZones, zoneFeaturesMap, locale, structuralTargetCode, showLabels, resetZoom]);
+  }, [geoData, contextGeoData, topoData, borderMesh, displayMode, width, height, activeInsetZones, zoneFeaturesMap, locale, structuralTargetCode, showLabels, resetZoom]);
 
   // Lightweight fill-update effect: O(1) per code via element index
   useEffect(() => {
@@ -717,7 +733,7 @@ export default function QuizMap({
 
       for (const el of els) {
         // Borderless main-map regions stay transparent unless answered/targeted
-        if (isBorderless && el.classList.contains('region') && fill === COLORS.unanswered) {
+        if (isBorderless && el.classList.contains('region') && fill !== COLORS.wrongFlash && !answeredCodes.has(code) && code !== targetRegionCode) {
           el.setAttribute('fill', 'transparent');
         } else {
           el.setAttribute('fill', fill);

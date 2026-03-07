@@ -102,6 +102,7 @@ export default function LearnMode() {
       <div ref={containerRef} className="flex-1 min-h-0 flex items-start justify-center pb-4">
         <QuizMap
           geoData={filteredGeoData}
+          contextGeoData={sidoFilter ? geoData : null}
           topoData={topoData}
           borderMesh={borderMesh}
           displayMode="normal"
