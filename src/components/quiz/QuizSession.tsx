@@ -144,7 +144,7 @@ export default function QuizSession() {
   const isFinished = state.phase === 'finished';
   const displayMode = getDisplayMode(mode);
   const isPinMode = mode === 'pin' || mode === 'pin-hard';
-  const showInsets = adminLevel === 'sigungu' && !sidoFilter;
+  const showInsets = (adminLevel === 'sigungu' || adminLevel === 'sigun') && !sidoFilter;
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden relative">

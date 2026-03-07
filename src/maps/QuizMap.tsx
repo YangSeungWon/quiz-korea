@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
 import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
@@ -33,45 +33,69 @@ function bboxAspect(bbox: readonly [number, number, number, number]): number {
 }
 
 interface InsetBox { x: number; y: number; w: number; h: number }
+type InsetZone = typeof INSET_ZONES[number];
 
-// Layout: 수도권 wide on top, 대구+부산 split below — sized to match bbox aspect ratios
-function computeInsetLayout(width: number, height: number, showInsets: boolean, displayMode: MapDisplayMode) {
-  const effectiveInsets = showInsets && displayMode !== 'outline-only';
+// Layout inset panels dynamically for any number of active zones
+function computeInsetLayout(width: number, height: number, zones: readonly InsetZone[]) {
+  const effectiveInsets = zones.length > 0;
   const insetRight = effectiveInsets && width >= 700;
   const insetBottom = effectiveInsets && !insetRight;
   const boxes: InsetBox[] = [];
   let mainWidth: number, mainHeight: number;
-
-  const aspCapital = bboxAspect(INSET_ZONES[0].bbox);
-  const aspDaegu = bboxAspect(INSET_ZONES[1].bbox);
-  const aspBusan = bboxAspect(INSET_ZONES[2].bbox);
 
   if (insetRight) {
     const panelW = Math.max(280, Math.min(520, Math.floor(width * 0.45)));
     mainWidth = width - panelW;
     mainHeight = height;
 
-    const idealTopH = panelW / aspCapital;
-    const idealBotH = panelW / (aspDaegu + aspBusan);
-    const scale = Math.min(1, height / (idealTopH + idealBotH));
-    const topH = Math.floor(idealTopH * scale);
-    const botH = Math.floor(idealBotH * scale);
-    const daeguW = Math.floor(panelW * aspDaegu / (aspDaegu + aspBusan));
+    if (zones.length === 1) {
+      const asp = bboxAspect(zones[0].bbox);
+      const h = Math.min(Math.floor(panelW / asp), height);
+      boxes.push({ x: mainWidth, y: 0, w: panelW, h });
+    } else {
+      // First zone on top row, remaining zones split horizontally on bottom row
+      const asp0 = bboxAspect(zones[0].bbox);
+      const restAspects = zones.slice(1).map(z => bboxAspect(z.bbox));
+      const totalRestAsp = restAspects.reduce((a, b) => a + b, 0);
+      const idealTopH = panelW / asp0;
+      const idealBotH = panelW / totalRestAsp;
+      const scale = Math.min(1, height / (idealTopH + idealBotH));
+      const topH = Math.floor(idealTopH * scale);
+      const botH = Math.floor(idealBotH * scale);
 
-    boxes.push({ x: mainWidth, y: 0, w: panelW, h: topH });                      // 수도권
-    boxes.push({ x: mainWidth, y: topH, w: daeguW, h: botH });                    // 대구
-    boxes.push({ x: mainWidth + daeguW, y: topH, w: panelW - daeguW, h: botH });  // 부산
+      boxes.push({ x: mainWidth, y: 0, w: panelW, h: topH });
+      let xOff = 0;
+      for (let j = 0; j < restAspects.length; j++) {
+        const isLast = j === restAspects.length - 1;
+        const w = isLast ? panelW - xOff : Math.floor(panelW * restAspects[j] / totalRestAsp);
+        boxes.push({ x: mainWidth + xOff, y: topH, w, h: botH });
+        xOff += w;
+      }
+    }
   } else if (insetBottom) {
     mainWidth = width;
     mainHeight = Math.floor(width * 1.3);
 
-    const topRowH = Math.floor(width / aspCapital);
-    const botRowH = Math.floor(width / (aspDaegu + aspBusan));
-    const daeguW = Math.floor(width * aspDaegu / (aspDaegu + aspBusan));
+    if (zones.length === 1) {
+      const asp = bboxAspect(zones[0].bbox);
+      const h = Math.floor(width / asp);
+      boxes.push({ x: 0, y: mainHeight, w: width, h });
+    } else {
+      const asp0 = bboxAspect(zones[0].bbox);
+      const restAspects = zones.slice(1).map(z => bboxAspect(z.bbox));
+      const totalRestAsp = restAspects.reduce((a, b) => a + b, 0);
+      const topRowH = Math.floor(width / asp0);
+      const botRowH = Math.floor(width / totalRestAsp);
 
-    boxes.push({ x: 0, y: mainHeight, w: width, h: topRowH });                    // 수도권
-    boxes.push({ x: 0, y: mainHeight + topRowH, w: daeguW, h: botRowH });         // 대구
-    boxes.push({ x: daeguW, y: mainHeight + topRowH, w: width - daeguW, h: botRowH }); // 부산
+      boxes.push({ x: 0, y: mainHeight, w: width, h: topRowH });
+      let xOff = 0;
+      for (let j = 0; j < restAspects.length; j++) {
+        const isLast = j === restAspects.length - 1;
+        const w = isLast ? width - xOff : Math.floor(width * restAspects[j] / totalRestAsp);
+        boxes.push({ x: xOff, y: mainHeight + topRowH, w, h: botRowH });
+        xOff += w;
+      }
+    }
   } else {
     mainWidth = width;
     mainHeight = height;
@@ -80,9 +104,9 @@ function computeInsetLayout(width: number, height: number, showInsets: boolean, 
   return { effectiveInsets, insetRight, insetBottom, mainWidth, mainHeight, boxes };
 }
 
-function computeSvgHeight(width: number, height: number, showInsets: boolean, displayMode: MapDisplayMode) {
+function computeSvgHeight(width: number, height: number, zones: readonly InsetZone[]) {
   if (width === 0 || height === 0) return height;
-  const { insetBottom, mainHeight, boxes } = computeInsetLayout(width, height, showInsets, displayMode);
+  const { insetBottom, mainHeight, boxes } = computeInsetLayout(width, height, zones);
   if (!insetBottom) return height;
   return boxes.reduce((max, b) => Math.max(max, b.y + b.h), mainHeight);
 }
@@ -166,6 +190,14 @@ export default function QuizMap({
   // In outline-only mode, target change needs structural rebuild
   const structuralTargetCode = displayMode === 'outline-only' ? targetRegionCode : undefined;
 
+  // Filter inset zones to only those with enough features to be useful
+  const activeInsetZones = useMemo(() => {
+    if (!showInsets || !geoData || displayMode === 'outline-only') return [] as InsetZone[];
+    return INSET_ZONES.filter(zone =>
+      geoData.features.filter(f => featureOverlapsBbox(f, zone.bbox)).length > 2
+    );
+  }, [showInsets, geoData, displayMode]);
+
   useEffect(() => {
     if (!svgRef.current || !geoData || width === 0 || height === 0) return;
 
@@ -183,7 +215,7 @@ export default function QuizMap({
     svg.selectAll('*').remove();
 
     const { effectiveInsets, mainWidth, mainHeight, boxes } =
-      computeInsetLayout(width, height, showInsets, displayMode);
+      computeInsetLayout(width, height, activeInsetZones);
 
     // Nested SVG clips main map content; zoom is on parent SVG
     const mainSvg = svg.append('svg')
@@ -381,7 +413,7 @@ export default function QuizMap({
 
     // Draw bbox rectangles on main map to show inset coverage areas
     if (effectiveInsets) {
-      INSET_ZONES.forEach((zone) => {
+      activeInsetZones.forEach((zone) => {
         const [minLon, minLat, maxLon, maxLat] = zone.bbox;
         const tl = projection([minLon, maxLat]);
         const br = projection([maxLon, minLat]);
@@ -477,7 +509,7 @@ export default function QuizMap({
     if (effectiveInsets) {
       const insetPad = 0;
 
-      INSET_ZONES.forEach((zone, i) => {
+      activeInsetZones.forEach((zone, i) => {
         const zoneFeatures = geoData.features.filter((f) => featureOverlapsBbox(f, zone.bbox));
         if (zoneFeatures.length === 0 || !boxes[i]) return;
 
@@ -642,7 +674,7 @@ export default function QuizMap({
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geoData, topoData, borderMesh, displayMode, width, height, showInsets, locale, structuralTargetCode, showLabels, resetZoom]);
+  }, [geoData, topoData, borderMesh, displayMode, width, height, activeInsetZones, locale, structuralTargetCode, showLabels, resetZoom]);
 
   // Lightweight fill-update effect: only changes fill colors without rebuilding SVG
   useEffect(() => {
@@ -673,7 +705,7 @@ export default function QuizMap({
     });
   }, [answeredCodes, wrongFlashCode, targetRegionCode, displayMode]);
 
-  const computedHeight = computeSvgHeight(width, height, showInsets, displayMode);
+  const computedHeight = computeSvgHeight(width, height, activeInsetZones);
 
   return (
     <svg

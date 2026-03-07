@@ -28,7 +28,7 @@ export default function LearnMode() {
   const { containerRef, width, height } = useResponsiveSize();
   const [hoveredName, setHoveredName] = useState<string | null>(null);
   const emptyAnsweredCodes = useMemo(() => new Map<string, number>(), []);
-  const showInsets = adminLevel === 'sigungu' && !sidoFilter;
+  const showInsets = (adminLevel === 'sigungu' || adminLevel === 'sigun') && !sidoFilter;
 
   const filteredGeoData = useMemo(() => {
     if (!geoData || !sidoFilter) return geoData;
