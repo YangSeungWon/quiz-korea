@@ -238,26 +238,65 @@ export default function QuizMap({
       if (arr) arr.push(el); else elIndex.set(code, [el]);
     };
 
-    // Detect touch drag to suppress hover during panning
-    let isDragging = false;
+    // Touch tap detection: block pointerenter during gesture, apply hover on tap
     let pointerStart: { x: number; y: number } | null = null;
-    const DRAG_THRESHOLD = 8;
-    svg.on('pointerdown.drag-detect', (event: PointerEvent) => {
+    const TAP_THRESHOLD = 8;
+    svg.on('pointerdown.tap', (event: PointerEvent) => {
       if (event.pointerType !== 'touch') return;
       pointerStart = { x: event.clientX, y: event.clientY };
-      isDragging = false;
     });
-    svg.on('pointermove.drag-detect', (event: PointerEvent) => {
+    svg.on('pointerup.tap', (event: PointerEvent) => {
       if (event.pointerType !== 'touch' || !pointerStart) return;
       const dx = event.clientX - pointerStart.x;
       const dy = event.clientY - pointerStart.y;
-      if (dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD) isDragging = true;
-    });
-    svg.on('pointerup.drag-detect pointercancel.drag-detect', (event: PointerEvent) => {
-      if (event.pointerType !== 'touch') return;
+      const wasTap = dx * dx + dy * dy < TAP_THRESHOLD * TAP_THRESHOLD;
       pointerStart = null;
-      isDragging = false;
+      if (!wasTap) return;
+      // Find region under finger
+      const target = document.elementFromPoint(event.clientX, event.clientY) as SVGPathElement | null;
+      const code = target?.getAttribute('data-code');
+      if (!code || !target) return;
+      clearPreviousHover(code);
+      const isInset = target.classList.contains('inset-region');
+      // Apply hover highlight
+      if (isInset) {
+        target.setAttribute('stroke', COLORS.strokeHover);
+        target.setAttribute('stroke-width', '2');
+      } else if (!borderMesh) {
+        target.setAttribute('stroke', COLORS.strokeHover);
+        target.setAttribute('stroke-width', '1.5');
+      }
+      if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
+        target.setAttribute('fill', COLORS.hover);
+        // Sync main map element for inset taps
+        if (isInset) {
+          const mainEl = svgRef.current?.querySelector(`path.region[data-code="${code}"]`) as SVGPathElement | null;
+          if (mainEl) mainEl.setAttribute('fill', COLORS.hover);
+        }
+      }
+      onRegionHoverRef.current?.(code);
+      // Show label tooltip on tap (learn mode)
+      if (showLabels) {
+        const feature = geoData.features.find(f => getRegionCode(f) === code);
+        if (feature) {
+          const tooltip = g.select('.tooltip');
+          if (!tooltip.empty()) {
+            const k = zoomTransformRef.current.k;
+            const centroid = path.centroid(feature as GeoPermissibleObjects);
+            tooltip.selectAll('*').remove();
+            tooltip.append('text')
+              .attr('x', centroid[0]).attr('y', centroid[1])
+              .attr('text-anchor', 'middle').attr('dy', '-0.5em')
+              .attr('font-size', `${13 / k}px`).attr('font-weight', '600')
+              .attr('fill', '#1f2937')
+              .attr('stroke', 'white').attr('stroke-width', 3 / k)
+              .attr('paint-order', 'stroke')
+              .text(getDisplayName(feature, locale));
+          }
+        }
+      }
     });
+    svg.on('pointercancel.tap', () => { pointerStart = null; });
 
     // Track active hover for touch devices (no pointerleave on touch)
     let activeHoverCode: string | null = null;
@@ -447,8 +486,7 @@ export default function QuizMap({
         .attr('stroke', 'none')
         .style('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
-        .on('click', (event: PointerEvent, d: RegionFeature) => {
-          if (event.pointerType === 'touch' && isDragging) return;
+        .on('click', (_, d: RegionFeature) => {
           onRegionClickRef.current?.(getRegionCode(d));
         })
         .each(function (d: RegionFeature) { indexEl(getRegionCode(d), this as SVGPathElement); });
@@ -467,12 +505,11 @@ export default function QuizMap({
         .style('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
         .style('transition', 'fill 0.15s ease')
-        .on('click', (event: PointerEvent, d: RegionFeature) => {
-          if (event.pointerType === 'touch' && isDragging) return;
+        .on('click', (_, d: RegionFeature) => {
           onRegionClickRef.current?.(getRegionCode(d));
         })
         .on('pointerenter', (event: PointerEvent, d: RegionFeature) => {
-          if (event.pointerType === 'touch' && isDragging) return;
+          if (event.pointerType === 'touch') return;
           const code = getRegionCode(d);
           clearPreviousHover(code);
           const el = select(event.currentTarget as Element);
@@ -537,7 +574,7 @@ export default function QuizMap({
 
       g.selectAll('path.region, path:not(.region)')
         .on('pointerenter.label', (event: PointerEvent, d: unknown) => {
-          if (event.pointerType === 'touch' && isDragging) return;
+          if (event.pointerType === 'touch') return;
           const feature = d as RegionFeature;
           const name = getDisplayName(feature, locale);
           const centroid = path.centroid(feature as GeoPermissibleObjects);
@@ -674,8 +711,7 @@ export default function QuizMap({
           .attr('stroke', displayMode === 'borderless' ? 'none' : COLORS.stroke)
           .attr('stroke-width', displayMode === 'borderless' ? 0 : 1.5)
           .style('cursor', 'pointer')
-          .on('click', (event: PointerEvent, d: RegionFeature) => {
-            if (event.pointerType === 'touch' && isDragging) return;
+          .on('click', (_, d: RegionFeature) => {
             onRegionClickRef.current?.(getRegionCode(d));
           })
           .each(function (d: RegionFeature) {
@@ -683,7 +719,7 @@ export default function QuizMap({
             const code = getRegionCode(d);
             indexEl(code, el);
             el.addEventListener('pointerenter', (event: PointerEvent) => {
-              if (event.pointerType === 'touch' && isDragging) return;
+              if (event.pointerType === 'touch') return;
               clearPreviousHover(code);
               el.setAttribute('stroke', COLORS.strokeHover);
               el.setAttribute('stroke-width', '2');
@@ -753,7 +789,7 @@ export default function QuizMap({
           clippedG
             .selectAll('path.inset-region')
             .on('pointerenter.label', (event: PointerEvent, d: unknown) => {
-              if (event.pointerType === 'touch' && isDragging) return;
+              if (event.pointerType === 'touch') return;
               const feature = d as RegionFeature;
               const name = getDisplayName(feature, locale);
               const centroid = insetPath.centroid(feature as GeoPermissibleObjects);
