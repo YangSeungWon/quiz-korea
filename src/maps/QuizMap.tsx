@@ -180,6 +180,7 @@ export default function QuizMap({
 }: QuizMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const regionElsRef = useRef<Map<string, SVGPathElement[]>>(new Map());
+  const activeHoverCodeRef = useRef<string | null>(null);
   const zoomTransformRef = useRef(zoomIdentity);
   const prevGeoDataRef = useRef(geoData);
   const prevResetZoomRef = useRef(resetZoom);
@@ -238,15 +239,24 @@ export default function QuizMap({
       if (arr) arr.push(el); else elIndex.set(code, [el]);
     };
 
-    // Touch tap detection: block pointerenter during gesture, apply hover on tap
-    let pointerStart: { x: number; y: number } | null = null;
+    // Touch tap detection: apply hover on tap, ignore drag/pinch
+    let pointerStart: { id: number; x: number; y: number } | null = null;
+    let activeTouches = 0;
     const TAP_THRESHOLD = 8;
     svg.on('pointerdown.tap', (event: PointerEvent) => {
       if (event.pointerType !== 'touch') return;
-      pointerStart = { x: event.clientX, y: event.clientY };
+      activeTouches++;
+      if (activeTouches === 1) {
+        pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      } else {
+        // Multi-touch (pinch zoom) — cancel tap detection
+        pointerStart = null;
+      }
     });
     svg.on('pointerup.tap', (event: PointerEvent) => {
-      if (event.pointerType !== 'touch' || !pointerStart) return;
+      if (event.pointerType !== 'touch') return;
+      activeTouches = Math.max(0, activeTouches - 1);
+      if (!pointerStart || event.pointerId !== pointerStart.id) return;
       const dx = event.clientX - pointerStart.x;
       const dy = event.clientY - pointerStart.y;
       const wasTap = dx * dx + dy * dy < TAP_THRESHOLD * TAP_THRESHOLD;
@@ -296,7 +306,11 @@ export default function QuizMap({
         }
       }
     });
-    svg.on('pointercancel.tap', () => { pointerStart = null; });
+    svg.on('pointercancel.tap', (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') return;
+      activeTouches = Math.max(0, activeTouches - 1);
+      if (pointerStart?.id === event.pointerId) pointerStart = null;
+    });
 
     // Track active hover for touch devices (no pointerleave on touch)
     let activeHoverCode: string | null = null;
@@ -328,6 +342,7 @@ export default function QuizMap({
         onRegionHoverRef.current?.(null);
       }
       activeHoverCode = newCode;
+      activeHoverCodeRef.current = newCode;
     };
 
     const { effectiveInsets, mainWidth, mainHeight, boxes } =
@@ -826,7 +841,11 @@ export default function QuizMap({
     const elIndex = regionElsRef.current;
     const isBorderless = displayMode === 'borderless';
 
+    const hovered = activeHoverCodeRef.current;
     for (const [code, els] of elIndex) {
+      // Preserve touch hover highlight
+      if (code === hovered && code !== wrongFlashCode && !answeredCodes.has(code)) continue;
+
       let fill: string;
       if (code === wrongFlashCode) fill = COLORS.wrongFlash;
       else if (answeredCodes.has(code)) fill = getAnsweredFill(answeredCodes, code);

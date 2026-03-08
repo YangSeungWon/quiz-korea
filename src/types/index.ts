@@ -52,6 +52,7 @@ export type QuizAction =
   | { type: 'ANSWER_CORRECT' }
   | { type: 'ANSWER_WRONG' }
   | { type: 'CLEAR_FLASH' }
+  | { type: 'SET_FLASH'; code: string }
   | { type: 'RESET' };
 
 // Map data from hook

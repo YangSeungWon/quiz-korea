@@ -57,6 +57,9 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
     case 'CLEAR_FLASH':
       return { ...state, wrongFlashCode: null };
 
+    case 'SET_FLASH':
+      return { ...state, wrongFlashCode: action.code };
+
     case 'RESET':
       return initialState;
 
@@ -78,8 +81,20 @@ export function useQuizEngine() {
 
   const answerWrong = useCallback(() => {
     dispatch({ type: 'ANSWER_WRONG' });
-    setTimeout(() => dispatch({ type: 'CLEAR_FLASH' }), 400);
-  }, []);
+    // Blink 3 times (0.6s) when wrongCount reaches 3
+    // ANSWER_WRONG sets wrongFlashCode if >= 3; read it after dispatch
+    const flashCode = state.currentWrongCount + 1 >= 3 ? state.queue[state.currentIndex]?.code : null;
+    if (flashCode) {
+      const step = 300;
+      for (let i = 1; i <= 5; i++) {
+        setTimeout(() => dispatch(i % 2 === 1
+          ? { type: 'CLEAR_FLASH' }
+          : { type: 'SET_FLASH', code: flashCode }
+        ), step * i);
+      }
+      setTimeout(() => dispatch({ type: 'CLEAR_FLASH' }), 1200);
+    }
+  }, [state.currentWrongCount, state.queue, state.currentIndex]);
 
   const reset = useCallback(() => {
     dispatch({ type: 'RESET' });
