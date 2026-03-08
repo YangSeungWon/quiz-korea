@@ -201,7 +201,7 @@ export default function QuizMap({
 
   // Pre-compute zone→features mapping and active zones in one pass
   const { activeInsetZones, zoneFeaturesMap } = useMemo(() => {
-    if (!showInsets || !geoData || displayMode === 'outline-only' || displayMode === 'borderless') {
+    if (!showInsets || !geoData || displayMode === 'outline-only' || displayMode === 'borderless' || width < 700) {
       return { activeInsetZones: [] as InsetZone[], zoneFeaturesMap: new Map<InsetZone, RegionFeature[]>() };
     }
     const map = new Map<InsetZone, RegionFeature[]>();
@@ -215,7 +215,7 @@ export default function QuizMap({
       }
     }
     return { activeInsetZones: active, zoneFeaturesMap: map };
-  }, [showInsets, geoData, displayMode, adminLevel]);
+  }, [showInsets, geoData, displayMode, adminLevel, width]);
 
   useEffect(() => {
     if (!svgRef.current || !geoData || width === 0 || height === 0) return;
@@ -236,6 +236,38 @@ export default function QuizMap({
     const indexEl = (code: string, el: SVGPathElement) => {
       const arr = elIndex.get(code);
       if (arr) arr.push(el); else elIndex.set(code, [el]);
+    };
+
+    // Track active hover for touch devices (no pointerleave on touch)
+    let activeHoverCode: string | null = null;
+    const clearPreviousHover = (newCode: string | null) => {
+      if (activeHoverCode && activeHoverCode !== newCode) {
+        const prevEls = elIndex.get(activeHoverCode);
+        if (prevEls) {
+          for (const el of prevEls) {
+            if (el.classList.contains('inset-region')) {
+              el.setAttribute('stroke', COLORS.stroke);
+              el.setAttribute('stroke-width', '1.5');
+            } else {
+              el.setAttribute('stroke', borderMesh ? 'none' : COLORS.stroke);
+              el.setAttribute('stroke-width', borderMesh ? '0' : '1.2');
+            }
+            const code = activeHoverCode!;
+            if (code === wrongFlashCodeRef.current) continue;
+            if (answeredCodesRef.current.has(code)) {
+              el.setAttribute('fill', getAnsweredFill(answeredCodesRef.current, code));
+            } else if (code === targetRegionCodeRef.current) {
+              el.setAttribute('fill', COLORS.target);
+            } else if (displayMode === 'borderless' && el.classList.contains('region')) {
+              el.setAttribute('fill', 'transparent');
+            } else {
+              el.setAttribute('fill', COLORS.unanswered);
+            }
+          }
+        }
+        onRegionHoverRef.current?.(null);
+      }
+      activeHoverCode = newCode;
     };
 
     const { effectiveInsets, mainWidth, mainHeight, boxes } =
@@ -347,6 +379,7 @@ export default function QuizMap({
         .attr('fill', '#f3f4f6')
         .attr('stroke', '#d1d5db')
         .attr('stroke-width', 0.8)
+        .style('vector-effect', 'non-scaling-stroke')
         .style('pointer-events', 'none');
     }
 
@@ -372,7 +405,8 @@ export default function QuizMap({
           .attr('d', path(outerBoundary) ?? '')
           .attr('fill', 'none')
           .attr('stroke', COLORS.outlineStroke)
-          .attr('stroke-width', 0.8);
+          .attr('stroke-width', 0.8)
+          .style('vector-effect', 'non-scaling-stroke');
       } catch {
         // Fallback: just draw without internal borders
       }
@@ -390,6 +424,7 @@ export default function QuizMap({
           return 'transparent';
         })
         .attr('stroke', 'none')
+        .style('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
         .on('click', (_, d: RegionFeature) => {
           onRegionClickRef.current?.(getRegionCode(d));
@@ -407,14 +442,15 @@ export default function QuizMap({
         .attr('fill', getNormalFill)
         .attr('stroke', hasMesh ? 'none' : COLORS.stroke)
         .attr('stroke-width', hasMesh ? 0 : 1.2)
+        .style('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
         .style('transition', 'fill 0.15s ease')
         .on('click', (_, d: RegionFeature) => {
           onRegionClickRef.current?.(getRegionCode(d));
         })
         .on('pointerenter', (event: PointerEvent, d: RegionFeature) => {
-          if (event.pointerType === 'touch') return;
           const code = getRegionCode(d);
+          clearPreviousHover(code);
           const el = select(event.currentTarget as Element);
           if (!hasMesh) el.attr('stroke', COLORS.strokeHover).attr('stroke-width', 1.5);
           if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
@@ -447,6 +483,7 @@ export default function QuizMap({
           .attr('fill', 'none')
           .attr('stroke', COLORS.stroke)
           .attr('stroke-width', 1.2)
+          .style('vector-effect', 'non-scaling-stroke')
           .style('pointer-events', 'none');
       }
     }
@@ -475,8 +512,7 @@ export default function QuizMap({
       const tooltip = g.append('g').attr('class', 'tooltip').style('pointer-events', 'none');
 
       g.selectAll('path.region, path:not(.region)')
-        .on('pointerenter.label', (event: PointerEvent, d: unknown) => {
-          if (event.pointerType === 'touch') return;
+        .on('pointerenter.label', (_event: PointerEvent, d: unknown) => {
           const feature = d as RegionFeature;
           const name = getDisplayName(feature, locale);
           const centroid = path.centroid(feature as GeoPermissibleObjects);
@@ -496,7 +532,8 @@ export default function QuizMap({
             .attr('paint-order', 'stroke')
             .text(name);
         })
-        .on('pointerleave.label', () => {
+        .on('pointerleave.label', (event: PointerEvent) => {
+          if (event.pointerType === 'touch') return;
           tooltip.selectAll('*').remove();
         });
     }
@@ -618,8 +655,8 @@ export default function QuizMap({
             const el = this as SVGPathElement;
             const code = getRegionCode(d);
             indexEl(code, el);
-            el.addEventListener('pointerenter', (event: PointerEvent) => {
-              if (event.pointerType === 'touch') return;
+            el.addEventListener('pointerenter', (_event: PointerEvent) => {
+              clearPreviousHover(code);
               el.setAttribute('stroke', COLORS.strokeHover);
               el.setAttribute('stroke-width', '2');
               if (!answeredCodesRef.current.has(code) && code !== targetRegionCodeRef.current && code !== wrongFlashCodeRef.current) {
@@ -687,8 +724,7 @@ export default function QuizMap({
 
           clippedG
             .selectAll('path.inset-region')
-            .on('pointerenter.label', (event: PointerEvent, d: unknown) => {
-              if (event.pointerType === 'touch') return;
+            .on('pointerenter.label', (_event: PointerEvent, d: unknown) => {
               const feature = d as RegionFeature;
               const name = getDisplayName(feature, locale);
               const centroid = insetPath.centroid(feature as GeoPermissibleObjects);
@@ -708,7 +744,8 @@ export default function QuizMap({
                 .attr('paint-order', 'stroke')
                 .text(name);
             })
-            .on('pointerleave.label', () => {
+            .on('pointerleave.label', (event: PointerEvent) => {
+              if (event.pointerType === 'touch') return;
               insetTooltip.selectAll('*').remove();
             });
         }
