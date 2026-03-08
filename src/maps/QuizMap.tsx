@@ -240,14 +240,20 @@ export default function QuizMap({
     };
 
     // Touch tap detection: apply hover on tap, ignore drag/pinch
-    let pointerStart: { id: number; x: number; y: number } | null = null;
+    let pointerStart: { id: number; x: number; y: number; target: SVGPathElement; code: string } | null = null;
     let activeTouches = 0;
     const TAP_THRESHOLD = 8;
     svg.on('pointerdown.tap', (event: PointerEvent) => {
       if (event.pointerType !== 'touch') return;
       activeTouches++;
       if (activeTouches === 1) {
-        pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        const target = event.target as SVGPathElement;
+        const code = target?.getAttribute?.('data-code');
+        if (code) {
+          pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, target, code };
+        } else {
+          pointerStart = null;
+        }
       } else {
         // Multi-touch (pinch zoom) — cancel tap detection
         pointerStart = null;
@@ -260,12 +266,9 @@ export default function QuizMap({
       const dx = event.clientX - pointerStart.x;
       const dy = event.clientY - pointerStart.y;
       const wasTap = dx * dx + dy * dy < TAP_THRESHOLD * TAP_THRESHOLD;
+      const { target, code } = pointerStart;
       pointerStart = null;
       if (!wasTap) return;
-      // Find region under finger
-      const target = document.elementFromPoint(event.clientX, event.clientY) as SVGPathElement | null;
-      const code = target?.getAttribute('data-code');
-      if (!code || !target) return;
       clearPreviousHover(code);
       const isInset = target.classList.contains('inset-region');
       // Apply hover highlight
