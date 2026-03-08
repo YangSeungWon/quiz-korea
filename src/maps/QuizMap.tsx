@@ -238,6 +238,27 @@ export default function QuizMap({
       if (arr) arr.push(el); else elIndex.set(code, [el]);
     };
 
+    // Detect touch drag to suppress hover during panning
+    let isDragging = false;
+    let pointerStart: { x: number; y: number } | null = null;
+    const DRAG_THRESHOLD = 8;
+    svg.on('pointerdown.drag-detect', (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') return;
+      pointerStart = { x: event.clientX, y: event.clientY };
+      isDragging = false;
+    });
+    svg.on('pointermove.drag-detect', (event: PointerEvent) => {
+      if (event.pointerType !== 'touch' || !pointerStart) return;
+      const dx = event.clientX - pointerStart.x;
+      const dy = event.clientY - pointerStart.y;
+      if (dx * dx + dy * dy > DRAG_THRESHOLD * DRAG_THRESHOLD) isDragging = true;
+    });
+    svg.on('pointerup.drag-detect pointercancel.drag-detect', (event: PointerEvent) => {
+      if (event.pointerType !== 'touch') return;
+      pointerStart = null;
+      isDragging = false;
+    });
+
     // Track active hover for touch devices (no pointerleave on touch)
     let activeHoverCode: string | null = null;
     const clearPreviousHover = (newCode: string | null) => {
@@ -306,7 +327,7 @@ export default function QuizMap({
     }
 
     const zoom = d3Zoom<SVGSVGElement, unknown>()
-      .scaleExtent([1, 4])
+      .scaleExtent([1, 6])
       .extent([[0, 0], [mainWidth, mainHeight]])
       .translateExtent([[0, 0], [mainWidth, mainHeight]])
       .filter((event) => {
@@ -426,7 +447,8 @@ export default function QuizMap({
         .attr('stroke', 'none')
         .style('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
-        .on('click', (_, d: RegionFeature) => {
+        .on('click', (event: PointerEvent, d: RegionFeature) => {
+          if (event.pointerType === 'touch' && isDragging) return;
           onRegionClickRef.current?.(getRegionCode(d));
         })
         .each(function (d: RegionFeature) { indexEl(getRegionCode(d), this as SVGPathElement); });
@@ -445,10 +467,12 @@ export default function QuizMap({
         .style('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
         .style('transition', 'fill 0.15s ease')
-        .on('click', (_, d: RegionFeature) => {
+        .on('click', (event: PointerEvent, d: RegionFeature) => {
+          if (event.pointerType === 'touch' && isDragging) return;
           onRegionClickRef.current?.(getRegionCode(d));
         })
         .on('pointerenter', (event: PointerEvent, d: RegionFeature) => {
+          if (event.pointerType === 'touch' && isDragging) return;
           const code = getRegionCode(d);
           clearPreviousHover(code);
           const el = select(event.currentTarget as Element);
@@ -512,11 +536,13 @@ export default function QuizMap({
       const tooltip = g.append('g').attr('class', 'tooltip').style('pointer-events', 'none');
 
       g.selectAll('path.region, path:not(.region)')
-        .on('pointerenter.label', (_event: PointerEvent, d: unknown) => {
+        .on('pointerenter.label', (event: PointerEvent, d: unknown) => {
+          if (event.pointerType === 'touch' && isDragging) return;
           const feature = d as RegionFeature;
           const name = getDisplayName(feature, locale);
           const centroid = path.centroid(feature as GeoPermissibleObjects);
 
+          const k = zoomTransformRef.current.k;
           tooltip.selectAll('*').remove();
           tooltip
             .append('text')
@@ -524,11 +550,11 @@ export default function QuizMap({
             .attr('y', centroid[1])
             .attr('text-anchor', 'middle')
             .attr('dy', '-0.5em')
-            .attr('font-size', '13px')
+            .attr('font-size', `${13 / k}px`)
             .attr('font-weight', '600')
             .attr('fill', '#1f2937')
             .attr('stroke', 'white')
-            .attr('stroke-width', 3)
+            .attr('stroke-width', 3 / k)
             .attr('paint-order', 'stroke')
             .text(name);
         })
@@ -648,14 +674,16 @@ export default function QuizMap({
           .attr('stroke', displayMode === 'borderless' ? 'none' : COLORS.stroke)
           .attr('stroke-width', displayMode === 'borderless' ? 0 : 1.5)
           .style('cursor', 'pointer')
-          .on('click', (_, d: RegionFeature) => {
+          .on('click', (event: PointerEvent, d: RegionFeature) => {
+            if (event.pointerType === 'touch' && isDragging) return;
             onRegionClickRef.current?.(getRegionCode(d));
           })
           .each(function (d: RegionFeature) {
             const el = this as SVGPathElement;
             const code = getRegionCode(d);
             indexEl(code, el);
-            el.addEventListener('pointerenter', (_event: PointerEvent) => {
+            el.addEventListener('pointerenter', (event: PointerEvent) => {
+              if (event.pointerType === 'touch' && isDragging) return;
               clearPreviousHover(code);
               el.setAttribute('stroke', COLORS.strokeHover);
               el.setAttribute('stroke-width', '2');
@@ -724,7 +752,8 @@ export default function QuizMap({
 
           clippedG
             .selectAll('path.inset-region')
-            .on('pointerenter.label', (_event: PointerEvent, d: unknown) => {
+            .on('pointerenter.label', (event: PointerEvent, d: unknown) => {
+              if (event.pointerType === 'touch' && isDragging) return;
               const feature = d as RegionFeature;
               const name = getDisplayName(feature, locale);
               const centroid = insetPath.centroid(feature as GeoPermissibleObjects);
