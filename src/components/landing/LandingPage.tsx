@@ -130,18 +130,21 @@ export default function LandingPage() {
                 description={t('landing.pinQuizDesc')}
                 onClick={() => handleModeClick('pin')}
                 selected={selectedMode === 'pin'}
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>}
               />
               <QuizCard
                 title={t('landing.typeQuiz')}
                 description={t('landing.typeQuizDesc')}
                 onClick={() => handleModeClick('type')}
                 selected={selectedMode === 'type'}
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M7 16h10"/></svg>}
               />
               <QuizCard
                 title={t('landing.learnMode')}
                 description={t('landing.learnModeDesc')}
                 onClick={() => handleModeClick('learn')}
                 selected={selectedMode === 'learn'}
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
               />
             </div>
 
