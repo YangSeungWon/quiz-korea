@@ -15,17 +15,6 @@ import QuizPrompt from './QuizPrompt';
 import QuizResults from './QuizResults';
 import type { QuizMode, AdminLevel, MapDisplayMode } from '../../types';
 
-function getDisplayMode(mode: QuizMode): MapDisplayMode {
-  switch (mode) {
-    case 'pin-hard':
-      return 'borderless';
-    case 'type-hard':
-      return 'outline-only';
-    default:
-      return 'normal';
-  }
-}
-
 export default function QuizSession() {
   const { mode: modeParam } = useParams<{ mode: string }>();
   const [searchParams] = useSearchParams();
@@ -37,6 +26,16 @@ export default function QuizSession() {
   const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
   const sidoFilter = searchParams.get('filter') || undefined;
   const countParam = parseInt(searchParams.get('count') || '0', 10) || 0;
+
+  // Option query params
+  const borderless = searchParams.get('borderless') === '1';
+  const noAccum = searchParams.get('noaccum') === '1';
+  const outline = searchParams.get('outline') === '1';
+
+  const displayMode: MapDisplayMode =
+    mode === 'pin' && borderless ? 'borderless' :
+    mode === 'type' && outline ? 'outline-only' :
+    'normal';
 
   const seoTitleKey = `seo.quiz.${mode}.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings;
   const seoDescKey = `seo.quiz.${mode}.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings;
@@ -52,6 +51,54 @@ export default function QuizSession() {
   const { formatted: elapsedTime } = useTimer(state.phase);
   const { containerRef, width, height } = useResponsiveSize();
   const [showResults, setShowResults] = useState(true);
+
+  // noAccum: visibleAnswered with 1-second fadeout
+  const [visibleAnswered, setVisibleAnswered] = useState<Map<string, number>>(new Map());
+  const fadeTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  // Track newly answered codes for noAccum mode
+  const prevAnsweredSize = useRef(0);
+  useEffect(() => {
+    if (!noAccum) return;
+    if (state.answered.size > prevAnsweredSize.current) {
+      // Find the newly added code
+      for (const [code, mistakes] of state.answered) {
+        if (!visibleAnswered.has(code)) {
+          setVisibleAnswered(prev => {
+            const next = new Map(prev);
+            next.set(code, mistakes);
+            return next;
+          });
+          // Schedule removal after 1 second
+          const timer = setTimeout(() => {
+            setVisibleAnswered(prev => {
+              const next = new Map(prev);
+              next.delete(code);
+              return next;
+            });
+            fadeTimers.current.delete(code);
+          }, 1000);
+          fadeTimers.current.set(code, timer);
+        }
+      }
+    }
+    prevAnsweredSize.current = state.answered.size;
+  }, [noAccum, state.answered, visibleAnswered]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      for (const timer of fadeTimers.current.values()) clearTimeout(timer);
+    };
+  }, []);
+
+  // Reset visibleAnswered when quiz resets
+  useEffect(() => {
+    if (state.phase === 'ready') {
+      setVisibleAnswered(new Map());
+      prevAnsweredSize.current = 0;
+    }
+  }, [state.phase]);
 
   const regions = useMemo(() => {
     if (!geoData) return [];
@@ -92,7 +139,8 @@ export default function QuizSession() {
   const handlePinAnswer = useCallback(
     (clickedCode: string) => {
       if (!currentRegion || state.phase !== 'playing') return;
-      if (state.answered.has(clickedCode)) return; // already answered
+      // In noAccum mode, skip the already-answered guard so re-clicking is an error
+      if (!noAccum && state.answered.has(clickedCode)) return;
 
       if (clickedCode === currentRegion.code) {
         answerCorrect();
@@ -100,7 +148,7 @@ export default function QuizSession() {
         answerWrong();
       }
     },
-    [currentRegion, state.phase, state.answered, answerCorrect, answerWrong],
+    [currentRegion, state.phase, state.answered, noAccum, answerCorrect, answerWrong],
   );
 
   const handleTypeAnswer = useCallback(
@@ -142,9 +190,14 @@ export default function QuizSession() {
   }
 
   const isFinished = state.phase === 'finished';
-  const displayMode = getDisplayMode(mode);
-  const isPinMode = mode === 'pin' || mode === 'pin-hard';
+  const isPinMode = mode === 'pin';
   const showInsets = (adminLevel === 'sigungu' || adminLevel === 'sigun') && !sidoFilter;
+
+  const answeredCodes = isFinished
+    ? state.answered
+    : noAccum
+      ? visibleAnswered
+      : state.answered;
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden relative">
@@ -184,7 +237,7 @@ export default function QuizSession() {
               ? currentRegion?.code ?? null
               : null
           }
-          answeredCodes={state.answered}
+          answeredCodes={answeredCodes}
           wrongFlashCode={state.wrongFlashCode}
           onRegionClick={!isFinished && isPinMode ? handlePinAnswer : undefined}
           resetZoom={isFinished}

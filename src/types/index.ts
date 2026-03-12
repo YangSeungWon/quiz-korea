@@ -7,7 +7,7 @@ export type { Locale } from '../i18n/types';
 export type AdminLevel = 'sido' | 'sigun' | 'sigungu';
 
 // Quiz modes matching Seterra
-export type QuizMode = 'pin' | 'type' | 'pin-hard' | 'type-hard';
+export type QuizMode = 'pin' | 'type';
 
 // Map display modes
 export type MapDisplayMode = 'normal' | 'borderless' | 'outline-only';

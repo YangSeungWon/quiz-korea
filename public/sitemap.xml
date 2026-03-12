@@ -52,48 +52,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin-hard?level=sido</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin-hard?level=sido&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin-hard?level=sido&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin-hard?level=sigun</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin-hard?level=sigun&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin-hard?level=sigun&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin-hard?level=sigungu</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin-hard?level=sigungu&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin-hard?level=sigungu&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type-hard?level=sido</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type-hard?level=sido&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type-hard?level=sido&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type-hard?level=sigun</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type-hard?level=sigun&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type-hard?level=sigun&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type-hard?level=sigungu</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type-hard?level=sigungu&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type-hard?level=sigungu&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://quiz-korea.ysw.kr/learn?level=sido</loc>
     <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn?level=sido&amp;lang=ko" />
     <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn?level=sido&amp;lang=en" />

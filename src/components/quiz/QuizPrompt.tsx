@@ -19,7 +19,7 @@ export default function QuizPrompt({
 
   if (!currentRegion) return null;
 
-  const isTypeMode = mode === 'type' || mode === 'type-hard';
+  const isTypeMode = mode === 'type';
 
   return (
     <div className="text-center py-3 px-4">

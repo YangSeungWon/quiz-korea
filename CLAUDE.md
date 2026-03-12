@@ -19,10 +19,10 @@ Korean geography quiz SPA (Seterra-style). React 19 + TypeScript + D3.js + Tailw
 
 Routes via react-router-dom v7 (`BrowserRouter` in `App.tsx`):
 - `/` → `LandingPage` (mode selector)
-- `/quiz/:mode` → `QuizSession` (pin, type, pin-hard, type-hard)
+- `/quiz/:mode` → `QuizSession` (pin, type)
 - `/learn` → `LearnMode` (free exploration)
 
-Query params: `?level=sido|sigungu&filter=<sidoCode>`
+Query params: `?level=sido|sigungu&filter=<sidoCode>&borderless=1&noaccum=1&outline=1`
 
 GitHub Pages SPA routing: `public/404.html` encodes the path into a query string, and a script in `index.html` restores it on load.
 
@@ -31,15 +31,19 @@ GitHub Pages SPA routing: `public/404.html` encodes the path into a query string
 | Mode | Prompt | Map Display |
 |------|--------|-------------|
 | `pin` | "Click on X" | Full map with borders |
+| `pin` + `?borderless=1` | "Click on X" | Country outline only (borderless) |
+| `pin` + `?noaccum=1` | "Click on X" | Correct answers fade after 1s, re-clickable |
 | `type` | Type input | Full map, target highlighted blue |
-| `pin-hard` | "Click on X" | Country outline only (borderless) |
-| `type-hard` | Type input | Single region outline only |
+| `type` + `?outline=1` | Type input | Single region outline only |
 | Learn | Hover to see names | Full map with labels |
+
+Options are toggles on the landing page, passed as query params.
 
 ### Core Mechanics
 
 - All regions in the queue (17 sido or ~250 sigungu)
-- Wrong answers recycled to back half of queue
+- Wrong answers stay on current question until correct (no recycling)
+- 3+ wrong on same question → answer blinks red 3 times (300ms intervals)
 - Scoring: `100 * totalRegions / (totalRegions + wrongAttempts)`
 - Elapsed timer (not countdown)
 - Type mode accepts short forms: "서울" → "서울특별시", etc.
@@ -48,7 +52,7 @@ GitHub Pages SPA routing: `public/404.html` encodes the path into a query string
 
 1. **Geographic data**: `useMapData(adminLevel)` returns `{ geoData, topoData }` — fetches TopoJSON from `public/data/korea-{sido|sigungu}.json`, converts to GeoJSON
 2. **Region extraction**: `regionUtils.extractRegions(geoData, sidoFilter)` → `QuizRegion[]`
-3. **Quiz state**: `useQuizEngine` hook — `useReducer` with actions START, ANSWER_CORRECT, ANSWER_WRONG, RESET
+3. **Quiz state**: `useQuizEngine` hook — `useReducer` with actions START, ANSWER_CORRECT, ANSWER_WRONG, CLEAR_FLASH, SET_FLASH, RESET
 
 ### D3 + React Integration Pattern
 

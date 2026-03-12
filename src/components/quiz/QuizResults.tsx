@@ -82,8 +82,6 @@ export default function QuizResults({
               const modeKeys: Record<QuizMode, keyof TranslationStrings> = {
                 pin: 'landing.pinQuiz',
                 type: 'landing.typeQuiz',
-                'pin-hard': 'landing.pinHard',
-                'type-hard': 'landing.typeHard',
               };
               const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun';
               const modeLine = `${t(modeKeys[mode])} · ${t(levelKey)}${isSubset ? ` ${totalRegions}` : ''}`;
