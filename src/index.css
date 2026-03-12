@@ -17,3 +17,9 @@ body {
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
 }
+
+@keyframes ripple {
+  0% { opacity: 0.6; transform: scale(0.97); }
+  50% { opacity: 0; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.02); }
+}

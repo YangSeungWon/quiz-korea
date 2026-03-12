@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
@@ -12,11 +12,7 @@ interface RegionSelection {
   filter?: string;
 }
 
-const MODE_KEYS: QuizMode[] = ['pin', 'type'];
-const MODE_I18N = [
-  { title: 'landing.pinQuiz', desc: 'landing.pinQuizDesc' },
-  { title: 'landing.typeQuiz', desc: 'landing.typeQuizDesc' },
-] as const;
+type SelectedMode = QuizMode | 'learn';
 
 const COUNT_OPTIONS = [16, 32, 64, 0] as const; // 0 = all
 
@@ -26,7 +22,7 @@ export default function LandingPage() {
   usePageMeta({ title: t('seo.home.title'), description: t('seo.home.desc'), path: '/' });
   const [region, setRegion] = useState<RegionSelection | null>(null);
   const [count, setCount] = useState(0); // 0 = all
-  const [selectedMode, setSelectedMode] = useState<QuizMode | null>(null);
+  const [selectedMode, setSelectedMode] = useState<SelectedMode | null>(null);
 
   // Option toggles
   const [borderless, setBorderless] = useState(false);
@@ -36,8 +32,22 @@ export default function LandingPage() {
   // Show count picker for levels with many regions
   const showCountPicker = region && region.level !== 'sido' && !region.filter;
 
+  // Difficulty level based on checked options
+  const difficultyCount = useMemo(() => {
+    if (selectedMode === 'pin') return (borderless ? 1 : 0) + (noAccum ? 1 : 0);
+    if (selectedMode === 'type') return outline ? 1 : 0;
+    return 0;
+  }, [selectedMode, borderless, noAccum, outline]);
+
   const handleStart = useCallback(() => {
     if (!region || !selectedMode) return;
+    if (selectedMode === 'learn') {
+      const params = new URLSearchParams({ level: region.level });
+      if (region.filter) params.set('filter', region.filter);
+      if (count > 0) params.set('count', String(count));
+      navigate(`/learn?${params.toString()}`);
+      return;
+    }
     const params = new URLSearchParams({ level: region.level });
     if (region.filter) params.set('filter', region.filter);
     if (count > 0) params.set('count', String(count));
@@ -52,7 +62,7 @@ export default function LandingPage() {
   }, [region, selectedMode, count, borderless, noAccum, outline, navigate]);
 
   const handleModeClick = useCallback(
-    (mode: QuizMode) => {
+    (mode: SelectedMode) => {
       if (selectedMode === mode) {
         setSelectedMode(null);
       } else {
@@ -65,17 +75,13 @@ export default function LandingPage() {
     [selectedMode],
   );
 
-  const buildLearnParams = useCallback(() => {
-    if (!region) return '';
-    const params = new URLSearchParams({ level: region.level });
-    if (region.filter) params.set('filter', region.filter);
-    if (count > 0) params.set('count', String(count));
-    return params.toString();
-  }, [region, count]);
-
-  const handleLearnClick = useCallback(() => {
-    navigate(`/learn?${buildLearnParams()}`);
-  }, [navigate, buildLearnParams]);
+  const startLabel = selectedMode === 'learn'
+    ? t('landing.learnMode')
+    : selectedMode === 'pin'
+      ? t('landing.pinQuiz')
+      : selectedMode === 'type'
+        ? t('landing.typeQuiz')
+        : '';
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -119,23 +125,27 @@ export default function LandingPage() {
           <>
             <div className="text-xs font-medium text-gray-400 mb-2">{t('landing.modeSelect')}</div>
             <div className="grid grid-cols-3 gap-3 mb-4">
-              {MODE_KEYS.map((key, i) => (
-                <QuizCard
-                  key={key}
-                  title={t(MODE_I18N[i].title)}
-                  description={t(MODE_I18N[i].desc)}
-                  onClick={() => handleModeClick(key)}
-                  selected={selectedMode === key}
-                />
-              ))}
+              <QuizCard
+                title={t('landing.pinQuiz')}
+                description={t('landing.pinQuizDesc')}
+                onClick={() => handleModeClick('pin')}
+                selected={selectedMode === 'pin'}
+              />
+              <QuizCard
+                title={t('landing.typeQuiz')}
+                description={t('landing.typeQuizDesc')}
+                onClick={() => handleModeClick('type')}
+                selected={selectedMode === 'type'}
+              />
               <QuizCard
                 title={t('landing.learnMode')}
                 description={t('landing.learnModeDesc')}
-                onClick={handleLearnClick}
+                onClick={() => handleModeClick('learn')}
+                selected={selectedMode === 'learn'}
               />
             </div>
 
-            {/* Options + start for selected mode */}
+            {/* Options for pin mode */}
             {selectedMode === 'pin' && (
               <div className="mb-4 bg-white border border-blue-200 rounded-xl p-4 space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -156,15 +166,10 @@ export default function LandingPage() {
                   />
                   <span className="text-sm text-gray-700">{t('landing.optNoAccum')}</span>
                 </label>
-                <button
-                  onClick={handleStart}
-                  className="w-full bg-blue-500 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
-                >
-                  {t('landing.pinQuiz')}
-                </button>
               </div>
             )}
 
+            {/* Options for type mode */}
             {selectedMode === 'type' && (
               <div className="mb-4 bg-white border border-blue-200 rounded-xl p-4 space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -176,13 +181,26 @@ export default function LandingPage() {
                   />
                   <span className="text-sm text-gray-700">{t('landing.optOutline')}</span>
                 </label>
-                <button
-                  onClick={handleStart}
-                  className="w-full bg-blue-500 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
-                >
-                  {t('landing.typeQuiz')}
-                </button>
               </div>
+            )}
+
+            {/* Unified start button */}
+            {selectedMode && (
+              <button
+                onClick={handleStart}
+                className={`relative w-full text-white py-3 rounded-xl font-semibold transition-colors overflow-hidden ${
+                  difficultyCount >= 2
+                    ? 'bg-red-500 hover:bg-red-600'
+                    : difficultyCount === 1
+                      ? 'bg-orange-500 hover:bg-orange-600'
+                      : selectedMode === 'learn'
+                        ? 'bg-green-500 hover:bg-green-600'
+                        : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+              >
+                <span className="absolute inset-0 animate-[ripple_2s_ease-in-out_infinite] rounded-xl border-2 border-white/30" />
+                <span className="relative">{startLabel}</span>
+              </button>
             )}
           </>
         )}
