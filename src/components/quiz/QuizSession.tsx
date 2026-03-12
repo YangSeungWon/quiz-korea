@@ -52,51 +52,38 @@ export default function QuizSession() {
   const { containerRef, width, height } = useResponsiveSize();
   const [showResults, setShowResults] = useState(true);
 
-  // noAccum: visibleAnswered with 1-second fadeout
+  // noAccum: visibleAnswered with 1-second fadeout — only show the latest answer
   const [visibleAnswered, setVisibleAnswered] = useState<Map<string, number>>(new Map());
-  const fadeTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const fadeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const prevAnsweredKeys = useRef<Set<string>>(new Set());
 
-  // Track newly answered codes for noAccum mode
-  const prevAnsweredSize = useRef(0);
   useEffect(() => {
     if (!noAccum) return;
-    if (state.answered.size > prevAnsweredSize.current) {
-      // Find the newly added code
-      for (const [code, mistakes] of state.answered) {
-        if (!visibleAnswered.has(code)) {
-          setVisibleAnswered(prev => {
-            const next = new Map(prev);
-            next.set(code, mistakes);
-            return next;
-          });
-          // Schedule removal after 1 second
-          const timer = setTimeout(() => {
-            setVisibleAnswered(prev => {
-              const next = new Map(prev);
-              next.delete(code);
-              return next;
-            });
-            fadeTimers.current.delete(code);
-          }, 1000);
-          fadeTimers.current.set(code, timer);
-        }
+    // Find the single newly added code
+    for (const [code, mistakes] of state.answered) {
+      if (!prevAnsweredKeys.current.has(code)) {
+        prevAnsweredKeys.current.add(code);
+        // Show only this one
+        setVisibleAnswered(new Map([[code, mistakes]]));
+        // Clear previous timer
+        if (fadeTimer.current) clearTimeout(fadeTimer.current);
+        fadeTimer.current = setTimeout(() => {
+          setVisibleAnswered(new Map());
+        }, 1000);
       }
     }
-    prevAnsweredSize.current = state.answered.size;
-  }, [noAccum, state.answered, visibleAnswered]);
+  }, [noAccum, state.answered]);
 
-  // Cleanup timers on unmount
+  // Cleanup timer on unmount
   useEffect(() => {
-    return () => {
-      for (const timer of fadeTimers.current.values()) clearTimeout(timer);
-    };
+    return () => { if (fadeTimer.current) clearTimeout(fadeTimer.current); };
   }, []);
 
   // Reset visibleAnswered when quiz resets
   useEffect(() => {
     if (state.phase === 'ready') {
       setVisibleAnswered(new Map());
-      prevAnsweredSize.current = 0;
+      prevAnsweredKeys.current = new Set();
     }
   }, [state.phase]);
 
