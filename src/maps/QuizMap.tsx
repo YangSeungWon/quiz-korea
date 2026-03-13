@@ -481,8 +481,8 @@ export default function QuizMap({
         const outerBoundary = topojson.mesh(topoData, geometries, (a, b) => {
           const aProps = a.properties as Record<string, unknown> | undefined;
           const bProps = b.properties as Record<string, unknown> | undefined;
-          const aCode = String(aProps?.SIG_CD ?? aProps?.CTPRVN_CD ?? aProps?.code ?? '');
-          const bCode = String(bProps?.SIG_CD ?? bProps?.CTPRVN_CD ?? bProps?.code ?? '');
+          const aCode = String(aProps?.CTPRVN_CD ?? aProps?.SIG_CD ?? aProps?.code ?? '');
+          const bCode = String(bProps?.CTPRVN_CD ?? bProps?.SIG_CD ?? bProps?.code ?? '');
           const aIn = activeCodes.has(aCode);
           const bIn = activeCodes.has(bCode);
           if (a === b) return aIn;
@@ -661,7 +661,7 @@ export default function QuizMap({
           const activeCodes = new Set(geoData.features.map(f => getRegionCode(f)));
           const merged = topojson.merge(topoData, geometries.geometries.filter(geo => {
             const p = geo.properties as Record<string, unknown> | undefined;
-            return activeCodes.has(String(p?.SIG_CD ?? p?.CTPRVN_CD ?? p?.code ?? ''));
+            return activeCodes.has(String(p?.CTPRVN_CD ?? p?.SIG_CD ?? p?.code ?? ''));
           }) as unknown as import('topojson-specification').Polygon[]);
           miniG.append('path')
             .attr('d', miniPath(merged) ?? '')
