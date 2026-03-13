@@ -477,26 +477,20 @@ export default function QuizMap({
     };
 
     if (displayMode === 'borderless') {
-      // Draw outer boundary of the active region set (filtered sido or full country)
+      // Merge active regions into a single polygon → draw only the outer boundary
       try {
         const objectKey = Object.keys(topoData.objects)[0];
         const geometries = topoData.objects[objectKey] as GeometryCollection;
         const activeCodes = new Set(geoData.features.map(f => getRegionCode(f)));
 
-        const outerBoundary = topojson.mesh(topoData, geometries, (a, b) => {
-          const aProps = a.properties as Record<string, unknown> | undefined;
-          const bProps = b.properties as Record<string, unknown> | undefined;
-          const aCode = String(aProps?.CTPRVN_CD ?? aProps?.SIG_CD ?? aProps?.code ?? '');
-          const bCode = String(bProps?.CTPRVN_CD ?? bProps?.SIG_CD ?? bProps?.code ?? '');
-          const aIn = activeCodes.has(aCode);
-          const bIn = activeCodes.has(bCode);
-          if (a === b) return aIn;
-          return aIn !== bIn;
-        });
+        const filtered = geometries.geometries.filter(geo => {
+          const p = geo.properties as Record<string, unknown> | undefined;
+          return activeCodes.has(String(p?.CTPRVN_CD ?? p?.SIG_CD ?? p?.code ?? ''));
+        }) as unknown as import('topojson-specification').Polygon[];
+        const merged = topojson.merge(topoData, filtered);
 
         g.append('path')
-          .datum(outerBoundary)
-          .attr('d', path(outerBoundary) ?? '')
+          .attr('d', path(merged) ?? '')
           .attr('fill', 'none')
           .attr('stroke', COLORS.outlineStroke)
           .attr('stroke-width', 0.8)
