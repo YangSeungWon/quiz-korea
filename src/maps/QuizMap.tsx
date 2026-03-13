@@ -483,9 +483,19 @@ export default function QuizMap({
         const geometries = topoData.objects[objectKey] as GeometryCollection;
         const activeCodes = new Set(geoData.features.map(f => getRegionCode(f)));
 
+        // Prefix match: sigun codes ("11","4111") match sigungu topology codes ("11110","41111")
+        const matchesActive = (topoCode: string) => {
+          if (activeCodes.has(topoCode)) return true;
+          for (let len = topoCode.length - 1; len >= 2; len--) {
+            if (activeCodes.has(topoCode.substring(0, len))) return true;
+          }
+          return false;
+        };
+
         const filtered = geometries.geometries.filter(geo => {
           const p = geo.properties as Record<string, unknown> | undefined;
-          return activeCodes.has(String(p?.CTPRVN_CD ?? p?.SIG_CD ?? p?.code ?? ''));
+          const code = String(p?.CTPRVN_CD ?? p?.SIG_CD ?? p?.code ?? '');
+          return matchesActive(code);
         }) as unknown as import('topojson-specification').Polygon[];
         const merged = topojson.merge(topoData, filtered);
 
@@ -664,9 +674,17 @@ export default function QuizMap({
           const objectKey = Object.keys(topoData.objects)[0];
           const geometries = topoData.objects[objectKey] as GeometryCollection;
           const activeCodes = new Set(geoData.features.map(f => getRegionCode(f)));
+          const matchesActive = (topoCode: string) => {
+            if (activeCodes.has(topoCode)) return true;
+            for (let len = topoCode.length - 1; len >= 2; len--) {
+              if (activeCodes.has(topoCode.substring(0, len))) return true;
+            }
+            return false;
+          };
           const merged = topojson.merge(topoData, geometries.geometries.filter(geo => {
             const p = geo.properties as Record<string, unknown> | undefined;
-            return activeCodes.has(String(p?.CTPRVN_CD ?? p?.SIG_CD ?? p?.code ?? ''));
+            const code = String(p?.CTPRVN_CD ?? p?.SIG_CD ?? p?.code ?? '');
+            return matchesActive(code);
           }) as unknown as import('topojson-specification').Polygon[]);
           miniG.append('path')
             .attr('d', miniPath(merged) ?? '')
