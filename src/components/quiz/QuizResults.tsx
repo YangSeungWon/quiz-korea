@@ -64,22 +64,38 @@ export default function QuizResults({
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         )}
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('results.title')}</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">{t('results.title')}</h2>
+
+        <div className="text-sm text-gray-500 mb-4">
+          {(() => {
+            const modeKeys: Record<QuizMode, keyof TranslationStrings> = {
+              pin: 'landing.pinQuiz',
+              type: 'landing.typeQuiz',
+            };
+            const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun';
+            const opts: string[] = [];
+            if (borderless) opts.push(t('landing.optBorderless'));
+            if (noAccum) opts.push(t('landing.optNoAccum'));
+            if (outline) opts.push(t('landing.optOutline'));
+            return (
+              <>
+                <span>{t(modeKeys[mode])} · {t(levelKey)}{isSubset ? ` ${totalRegions}` : ''}</span>
+                {opts.length > 0 && (
+                  <span className="text-gray-400"> [{opts.join(', ')}]</span>
+                )}
+              </>
+            );
+          })()}
+        </div>
 
         <div className="text-6xl font-bold text-blue-600 mb-2">
           {firstTryCount}/{totalRegions}
         </div>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <p className="text-gray-600 mb-4">{message}</p>
 
-        <div className="grid grid-cols-2 gap-4 mb-8 text-sm">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="text-xl font-bold text-green-500">{firstTryCount}</div>
-            <div className="text-gray-500">{t('results.firstTry')}</div>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="text-xl font-bold text-gray-900 font-mono">{elapsedTime}</div>
-            <div className="text-gray-500">{t('results.time')}</div>
-          </div>
+        <div className="bg-gray-50 rounded-lg p-3 mb-8 text-sm">
+          <div className="text-xl font-bold text-gray-900 font-mono">{elapsedTime}</div>
+          <div className="text-gray-500">{t('results.time')}</div>
         </div>
 
         <div className="flex flex-col gap-3">
