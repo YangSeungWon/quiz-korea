@@ -280,6 +280,9 @@ export default function QuizSession() {
                   mode={mode}
                   adminLevel={adminLevel}
                   isSubset={countParam > 0}
+                  borderless={borderless}
+                  noAccum={noAccum}
+                  outline={outline}
                   onRetry={handleRetry}
                   onBack={handleBack}
                 />

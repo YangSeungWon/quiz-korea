@@ -10,6 +10,9 @@ interface QuizResultsProps {
   mode: QuizMode;
   adminLevel: AdminLevel;
   isSubset: boolean;
+  borderless?: boolean;
+  noAccum?: boolean;
+  outline?: boolean;
   onRetry: () => void;
   onBack: () => void;
   onClose?: () => void;
@@ -22,6 +25,9 @@ export default function QuizResults({
   mode,
   adminLevel,
   isSubset,
+  borderless,
+  noAccum,
+  outline,
   onRetry,
   onBack,
   onClose,
@@ -84,7 +90,12 @@ export default function QuizResults({
                 type: 'landing.typeQuiz',
               };
               const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun';
-              const modeLine = `${t(modeKeys[mode])} · ${t(levelKey)}${isSubset ? ` ${totalRegions}` : ''}`;
+              const opts: string[] = [];
+              if (borderless) opts.push(t('landing.optBorderless'));
+              if (noAccum) opts.push(t('landing.optNoAccum'));
+              if (outline) opts.push(t('landing.optOutline'));
+              const optStr = opts.length > 0 ? ` [${opts.join(', ')}]` : '';
+              const modeLine = `${t(modeKeys[mode])} · ${t(levelKey)}${isSubset ? ` ${totalRegions}` : ''}${optStr}`;
               const text = `${t('results.shareText')}\n${modeLine}\n${firstTryCount}/${totalRegions} | ${elapsedTime}\nquiz-korea.ysw.kr`;
               if (navigator.share) {
                 try {
