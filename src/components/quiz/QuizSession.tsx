@@ -244,14 +244,33 @@ export default function QuizSession() {
 
       {isFinished && (
         <>
-          {/* Top center: watermark bar (always visible) */}
+          {/* Top bar (always visible) */}
           <div className="absolute top-4 left-0 right-0 flex justify-center z-20 pointer-events-none">
-            <div className="pointer-events-auto flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow">
+            <div className="pointer-events-auto flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow text-sm">
+              <button
+                onClick={handleBack}
+                className="text-gray-400 hover:text-gray-700 transition-colors"
+                title={t('results.backToModes')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <span className="text-gray-300">|</span>
+              <span className="text-xs text-gray-500">
+                {t(mode === 'pin' ? 'landing.pinQuiz' : 'landing.typeQuiz')} · {t(adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun')}
+                {(() => {
+                  const opts: string[] = [];
+                  if (borderless) opts.push(t('landing.optBorderless'));
+                  if (noAccum) opts.push(t('landing.optNoAccum'));
+                  if (outline) opts.push(t('landing.optOutline'));
+                  return opts.length > 0 ? ` [${opts.join(', ')}]` : '';
+                })()}
+              </span>
+              <span className="text-gray-300">|</span>
               <span className="text-lg font-bold text-blue-600">
                 {(() => { let c = 0; for (const m of state.answered.values()) if (m === 0) c++; return c; })()}/{state.totalRegions}
               </span>
               <span className="text-gray-300">|</span>
-              <span className="text-sm text-gray-500">{elapsedTime}</span>
+              <span className="text-gray-500">{elapsedTime}</span>
               <span className="text-gray-300">|</span>
               <span className="text-xs text-gray-400">quiz-korea.ysw.kr</span>
               {!showResults && (
@@ -259,7 +278,7 @@ export default function QuizSession() {
                   <span className="text-gray-300">|</span>
                   <button
                     onClick={() => setShowResults(true)}
-                    className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                    className="font-semibold text-blue-600 hover:text-blue-800 transition-colors"
                   >
                     {t('results.showOverlay')}
                   </button>

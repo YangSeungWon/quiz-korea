@@ -79,9 +79,9 @@ export default function QuizResults({
             if (outline) opts.push(t('landing.optOutline'));
             return (
               <>
-                <span>{t(modeKeys[mode])} · {t(levelKey)}{isSubset ? ` ${totalRegions}` : ''}</span>
+                <div>{t(modeKeys[mode])} · {t(levelKey)}{isSubset ? ` ${totalRegions}` : ''}</div>
                 {opts.length > 0 && (
-                  <span className="text-gray-400"> [{opts.join(', ')}]</span>
+                  <div className="text-gray-400">[{opts.join(', ')}]</div>
                 )}
               </>
             );
@@ -142,6 +142,7 @@ export default function QuizResults({
             {t('results.backToModes')}
           </button>
         </div>
+        <div className="mt-4 text-xs text-gray-300">quiz-korea.ysw.kr</div>
       </div>
     </div>
   );
