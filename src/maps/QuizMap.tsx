@@ -653,13 +653,39 @@ export default function QuizMap({
       );
       const miniPath = geoPath().projection(miniProj);
 
-      miniG.selectAll('path')
-        .data(geoData.features)
-        .join('path')
-        .attr('d', (d) => miniPath(d) ?? '')
-        .attr('fill', '#d1d5db')
-        .attr('stroke', '#9ca3af')
-        .attr('stroke-width', 0.15);
+      if (displayMode === 'borderless') {
+        // Borderless minimap: merged outer boundary only
+        try {
+          const objectKey = Object.keys(topoData.objects)[0];
+          const geometries = topoData.objects[objectKey] as GeometryCollection;
+          const activeCodes = new Set(geoData.features.map(f => getRegionCode(f)));
+          const merged = topojson.merge(topoData, geometries.geometries.filter(geo => {
+            const p = geo.properties as Record<string, unknown> | undefined;
+            return activeCodes.has(String(p?.SIG_CD ?? p?.CTPRVN_CD ?? p?.code ?? ''));
+          }) as unknown as import('topojson-specification').Polygon[]);
+          miniG.append('path')
+            .attr('d', miniPath(merged) ?? '')
+            .attr('fill', '#d1d5db')
+            .attr('stroke', '#9ca3af')
+            .attr('stroke-width', 0.3);
+        } catch {
+          // Fallback: draw individual features without stroke
+          miniG.selectAll('path')
+            .data(geoData.features)
+            .join('path')
+            .attr('d', (d) => miniPath(d) ?? '')
+            .attr('fill', '#d1d5db')
+            .attr('stroke', 'none');
+        }
+      } else {
+        miniG.selectAll('path')
+          .data(geoData.features)
+          .join('path')
+          .attr('d', (d) => miniPath(d) ?? '')
+          .attr('fill', '#d1d5db')
+          .attr('stroke', '#9ca3af')
+          .attr('stroke-width', 0.15);
+      }
 
       miniG.append('rect')
         .attr('class', 'mini-viewport')
