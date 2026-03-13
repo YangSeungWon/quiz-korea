@@ -472,11 +472,22 @@ export default function QuizMap({
     };
 
     if (displayMode === 'borderless') {
-      // Draw country outline using topojson mesh (outer boundary only)
+      // Draw outer boundary of the active region set (filtered sido or full country)
       try {
         const objectKey = Object.keys(topoData.objects)[0];
         const geometries = topoData.objects[objectKey] as GeometryCollection;
-        const outerBoundary = topojson.mesh(topoData, geometries, (a, b) => a === b);
+        const activeCodes = new Set(geoData.features.map(f => getRegionCode(f)));
+
+        const outerBoundary = topojson.mesh(topoData, geometries, (a, b) => {
+          const aProps = a.properties as Record<string, unknown> | undefined;
+          const bProps = b.properties as Record<string, unknown> | undefined;
+          const aCode = String(aProps?.SIG_CD ?? aProps?.CTPRVN_CD ?? aProps?.code ?? '');
+          const bCode = String(bProps?.SIG_CD ?? bProps?.CTPRVN_CD ?? bProps?.code ?? '');
+          const aIn = activeCodes.has(aCode);
+          const bIn = activeCodes.has(bCode);
+          if (a === b) return aIn;
+          return aIn !== bIn;
+        });
 
         g.append('path')
           .datum(outerBoundary)
