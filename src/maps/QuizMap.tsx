@@ -325,6 +325,11 @@ export default function QuizMap({
             if (el.classList.contains('inset-region')) {
               el.setAttribute('stroke', COLORS.stroke);
               el.setAttribute('stroke-width', '1.5');
+            } else if (displayMode === 'borderless') {
+              // Keep stroke matching fill to avoid seams
+              const code = el.getAttribute('data-code') || '';
+              el.setAttribute('stroke', answeredCodesRef.current.has(code) ? getAnsweredFill(answeredCodesRef.current, code) : 'transparent');
+              el.setAttribute('stroke-width', '1');
             } else {
               el.setAttribute('stroke', borderMesh ? 'none' : COLORS.stroke);
               el.setAttribute('stroke-width', borderMesh ? '0' : '1.2');
@@ -500,11 +505,12 @@ export default function QuizMap({
         // Fallback: just draw without internal borders
       }
 
-      // Invisible clickable regions
+      // Invisible clickable regions (stroke matches fill to hide seams)
       g.selectAll('path.region')
         .data(geoData.features)
         .join('path')
         .attr('class', 'region')
+        .attr('data-code', (d: RegionFeature) => getRegionCode(d))
         .attr('d', pathAttr(path))
         .attr('fill', (d: RegionFeature) => {
           const code = getRegionCode(d);
@@ -512,7 +518,12 @@ export default function QuizMap({
           if (answeredCodesRef.current.has(code)) return getAnsweredFill(answeredCodesRef.current, code);
           return 'transparent';
         })
-        .attr('stroke', 'none')
+        .attr('stroke', (d: RegionFeature) => {
+          const code = getRegionCode(d);
+          if (answeredCodesRef.current.has(code)) return getAnsweredFill(answeredCodesRef.current, code);
+          return 'transparent';
+        })
+        .attr('stroke-width', 1)
         .style('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
         .on('click', (_, d: RegionFeature) => {
@@ -896,8 +907,12 @@ export default function QuizMap({
         // Borderless main-map regions stay transparent unless answered/targeted
         if (isBorderless && el.classList.contains('region') && fill !== COLORS.wrongFlash && !answeredCodes.has(code) && code !== targetRegionCode) {
           el.setAttribute('fill', 'transparent');
+          el.setAttribute('stroke', 'transparent');
         } else {
           el.setAttribute('fill', fill);
+          if (isBorderless && el.classList.contains('region')) {
+            el.setAttribute('stroke', fill);
+          }
         }
       }
     }
