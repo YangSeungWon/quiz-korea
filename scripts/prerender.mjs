@@ -35,10 +35,11 @@ function buildHtmlRoutes() {
   for (const level of LEVELS) routes.push(`/learn/${level}`);
   for (const slug of METRO_SLUGS) routes.push(`/learn/sigungu/${slug}`);
   for (const slug of PROVINCE_SLUGS) routes.push(`/learn/sigun/${slug}`);
-  // Maps download pages (HTML)
-  for (const level of LEVELS) routes.push(`/maps/${level}`);
+  // Maps download pages (HTML). 전국 sigungu 백지도는 너무 dense해서 제외 — sido/sigun만 base.
+  routes.push('/maps/sido', '/maps/sigun');
   for (const slug of METRO_SLUGS) routes.push(`/maps/sigungu/${slug}`);
   for (const slug of PROVINCE_SLUGS) routes.push(`/maps/sigun/${slug}`);
+  for (const slug of PROVINCE_SLUGS) routes.push(`/maps/sigungu/${slug}`);
   return routes;
 }
 
@@ -47,7 +48,8 @@ function buildPdfTargets() {
   const targets = [];
   const variants = ['blank', 'label'];
   for (const variant of variants) {
-    for (const level of LEVELS) {
+    // base levels: sido + sigun (전국 sigungu는 PDF 안 만듦 — 너무 dense)
+    for (const level of ['sido', 'sigun']) {
       targets.push({
         route: `/maps/print/${variant}/${level}`,
         filename: `${level}-${variant}.pdf`,
@@ -63,6 +65,12 @@ function buildPdfTargets() {
       targets.push({
         route: `/maps/print/${variant}/sigun/${slug}`,
         filename: `sigun-${slug}-${variant}.pdf`,
+      });
+    }
+    for (const slug of PROVINCE_SLUGS) {
+      targets.push({
+        route: `/maps/print/${variant}/sigungu/${slug}`,
+        filename: `sigungu-${slug}-${variant}.pdf`,
       });
     }
   }

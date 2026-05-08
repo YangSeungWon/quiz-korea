@@ -198,6 +198,43 @@ export function getDisplayName(feature: RegionFeature, locale: Locale = 'ko'): s
   return name;
 }
 
+// Short name without sido prefix — useful inside zoomed insets where the inset
+// label already establishes which 시도 is being shown.
+export function getShortDisplayName(feature: RegionFeature, locale: Locale = 'ko'): string {
+  if (locale === 'en') {
+    if (feature.properties.SIGUN_NAME_EN) return feature.properties.SIGUN_NAME_EN as string;
+    const code = getRegionCode(feature);
+    return SIGUNGU_NAMES_EN[code] || SIDO_MAP_EN[code] || getRegionName(feature);
+  }
+  return getRegionName(feature);
+}
+
+// Korean suffixes stripped for compact sigun-level rendering. Order matters:
+// longer compound suffixes first so we don't strip "시" from "특별시" prematurely.
+const KO_COMPACT_SUFFIXES = ['특별자치도', '특별자치시', '광역시', '특별시', '시', '군', '도'];
+
+function stripKoCompactSuffix(name: string): string {
+  for (const suffix of KO_COMPACT_SUFFIXES) {
+    if (name.endsWith(suffix) && name.length > suffix.length) {
+      return name.slice(0, -suffix.length);
+    }
+  }
+  return name;
+}
+
+// Compact form for sigun-level printable labels: drops 시/군/특별시/광역시/도 suffixes.
+// "수원시" → "수원", "서울특별시" → "서울", "울릉군" → "울릉".
+// Compound names ("수원시 영통구") shouldn't appear at sigun level, but if they do
+// each whitespace-separated part is stripped independently.
+export function getCompactDisplayName(feature: RegionFeature, locale: Locale = 'ko'): string {
+  const short = getShortDisplayName(feature, locale);
+  if (locale !== 'ko') return short;
+  if (short.includes(' ')) {
+    return short.split(' ').map(stripKoCompactSuffix).join(' ');
+  }
+  return stripKoCompactSuffix(short);
+}
+
 // Sigungu suffixes that can be dropped (Korean)
 const SIGUNGU_SUFFIXES = ['특별시', '광역시', '특별자치시', '특별자치도', '시', '군', '구'];
 

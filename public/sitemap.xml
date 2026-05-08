@@ -151,13 +151,7 @@
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/maps/sigungu</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu?lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu?lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
-  </url>
+  <!-- /maps/sigungu (전국 시군구 백지도)는 너무 dense해서 제외. 광역시별/도별 sigungu만 제공. -->
 
   <!-- Map download: 광역시 자치구 -->
   <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/seoul</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/seoul?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/seoul?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
@@ -178,4 +172,15 @@
   <url><loc>https://quiz-korea.ysw.kr/maps/sigun/gyeongbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigun/gyeongbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigun/gyeongbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://quiz-korea.ysw.kr/maps/sigun/gyeongnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigun/gyeongnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigun/gyeongnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
   <url><loc>https://quiz-korea.ysw.kr/maps/sigun/jeju</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigun/jeju?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigun/jeju?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
+  <!-- Map download: 도별 시군구 (수원시 영통구 등) -->
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/gyeonggi</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/gyeonggi?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/gyeonggi?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/gangwon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/gangwon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/gangwon?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/chungbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/chungbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/chungbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/chungnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/chungnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/chungnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/jeonbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/jeonbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/jeonbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/jeonnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/jeonnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/jeonnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/gyeongbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/gyeongbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/gyeongbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/gyeongnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/gyeongnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/gyeongnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/maps/sigungu/jeju</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/maps/sigungu/jeju?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/maps/sigungu/jeju?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
 </urlset>

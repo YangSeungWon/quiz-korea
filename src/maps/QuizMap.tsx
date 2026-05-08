@@ -8,7 +8,7 @@ import * as topojson from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { MultiLineString } from 'geojson';
 import type { RegionCollection, RegionFeature, MapDisplayMode, Locale, AdminLevel } from '../types';
-import { getRegionCode, getDisplayName } from '../utils/regionUtils';
+import { getRegionCode, getDisplayName, getShortDisplayName, getCompactDisplayName } from '../utils/regionUtils';
 // Helper to avoid D3 generics mismatch on .attr('d', path)
 function pathAttr(path: GeoPath): (d: RegionFeature) => string {
   return (d: RegionFeature) => path(d) ?? '';
@@ -134,6 +134,10 @@ interface QuizMapProps {
   onRegionHover?: (code: string | null) => void;
   showLabels?: boolean;
   staticLabels?: boolean;
+  staticLabelSkipCodes?: Set<string>;
+  staticLabelFontRange?: readonly [number, number];
+  staticLabelCompact?: boolean;
+  printBboxMarkers?: ReadonlyArray<{ bbox: readonly [number, number, number, number]; color?: string }>;
   resetZoom?: boolean;
 }
 
@@ -178,6 +182,10 @@ export default function QuizMap({
   onRegionHover,
   showLabels = false,
   staticLabels = false,
+  staticLabelSkipCodes,
+  staticLabelFontRange,
+  staticLabelCompact = false,
+  printBboxMarkers,
   resetZoom = false,
 }: QuizMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -594,24 +602,67 @@ export default function QuizMap({
           .style('pointer-events', 'none');
       }
 
-      // Static labels for printable maps — render every region's name at its centroid
+      // Static labels for printable maps — font size scales with feature area
+      // so large 시군 get prominent labels, small 자치구 get tighter ones.
       if (staticLabels) {
         const labels = g.append('g').attr('class', 'static-labels').style('pointer-events', 'none');
-        geoData.features.forEach((feature) => {
+        const renderable = geoData.features.filter((f) => {
+          const code = getRegionCode(f);
+          return !(staticLabelSkipCodes && staticLabelSkipCodes.has(code));
+        });
+        const areas = renderable.map((f) => Math.abs(path.area(f as GeoPermissibleObjects)));
+        const positiveAreas = areas.filter((a) => a > 0);
+        const minA = positiveAreas.length > 0 ? Math.min(...positiveAreas) : 1;
+        const maxA = positiveAreas.length > 0 ? Math.max(...positiveAreas) : 1;
+        const lo = Math.log(Math.max(minA, 1));
+        const hi = Math.log(Math.max(maxA, 1));
+        // Sido level: keep flat 13px (only 17 sizable features). Otherwise dynamic
+        // within the configured range (defaults [7, 12]; filtered views pass [9, 14]).
+        const [fMin, fMax] = staticLabelFontRange ?? [7, 12];
+        const fontSizeFor = (area: number) => {
+          if (adminLevel === 'sido') return 13;
+          if (hi <= lo) return Math.round((fMin + fMax) / 2);
+          const v = Math.log(Math.max(area, 1));
+          const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+          return Math.round(fMin + t * (fMax - fMin));
+        };
+        renderable.forEach((feature, i) => {
           const centroid = path.centroid(feature as GeoPermissibleObjects);
           if (!Number.isFinite(centroid[0]) || !Number.isFinite(centroid[1])) return;
+          const fontSize = fontSizeFor(areas[i]);
           labels.append('text')
             .attr('x', centroid[0])
             .attr('y', centroid[1])
             .attr('text-anchor', 'middle')
             .attr('dominant-baseline', 'middle')
-            .attr('font-size', adminLevel === 'sido' ? 13 : 10)
+            .attr('font-size', fontSize)
             .attr('font-weight', '600')
             .attr('fill', '#1f2937')
             .attr('stroke', 'white')
-            .attr('stroke-width', 2.5)
+            .attr('stroke-width', Math.max(1.5, fontSize * 0.22))
             .attr('paint-order', 'stroke')
-            .text(getDisplayName(feature, locale));
+            .text(staticLabelCompact ? getCompactDisplayName(feature, locale) : getShortDisplayName(feature, locale));
+        });
+      }
+
+      // Print bbox markers — dashed rectangles indicating "see inset for this area"
+      if (printBboxMarkers && printBboxMarkers.length > 0) {
+        printBboxMarkers.forEach((marker) => {
+          const [minLon, minLat, maxLon, maxLat] = marker.bbox;
+          const tl = projection([minLon, maxLat]);
+          const br = projection([maxLon, minLat]);
+          if (!tl || !br) return;
+          g.append('rect')
+            .attr('x', tl[0])
+            .attr('y', tl[1])
+            .attr('width', br[0] - tl[0])
+            .attr('height', br[1] - tl[1])
+            .attr('fill', 'none')
+            .attr('stroke', marker.color ?? '#6b7280')
+            .attr('stroke-width', 1)
+            .attr('stroke-dasharray', '4,3')
+            .attr('rx', 2)
+            .style('pointer-events', 'none');
         });
       }
     }
