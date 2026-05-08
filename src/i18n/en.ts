@@ -12,6 +12,8 @@ const en: TranslationStrings = {
   'landing.optOutline': 'Outline only',
   'landing.learnMode': 'Learn Mode',
   'landing.learnModeDesc': 'Freely explore the map and learn region names.',
+  'landing.maps': 'Blank Maps',
+  'landing.mapsDesc': 'Download printable blank / labeled map PDFs.',
   'landing.modeSelect': 'Select Mode',
   'landing.dataSource': 'Data source',
 

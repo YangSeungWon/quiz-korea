@@ -30,8 +30,8 @@ export default function LearnMode() {
       })
     : t(`seo.learn.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings);
   const canonicalPath = sidoMeta
-    ? `/learn/${adminLevel}/${sidoMeta.slug}`
-    : `/learn/${adminLevel}`;
+    ? `/learn/${adminLevel}/${sidoMeta.slug}/`
+    : `/learn/${adminLevel}/`;
   usePageMeta({
     title: seoTitle,
     description: seoDesc,

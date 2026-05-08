@@ -1,11 +1,11 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import RegionPicker from './RegionPicker';
 import QuizCard from './QuizCard';
 import LanguageToggle from '../LanguageToggle';
-import { SIDO_SLUG } from '../../utils/regionUtils';
+import { SIDO_SLUG, getSidoMeta } from '../../utils/regionUtils';
 import type { AdminLevel, QuizMode } from '../../types';
 
 interface RegionSelection {
@@ -19,7 +19,7 @@ const COUNT_OPTIONS = [16, 32, 64, 0] as const; // 0 = all
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   usePageMeta({ title: t('seo.home.title'), description: t('seo.home.desc'), path: '/' });
   const [region, setRegion] = useState<RegionSelection | null>(null);
   const [count, setCount] = useState(0); // 0 = all
@@ -55,8 +55,8 @@ export default function LandingPage() {
     }
     const qs = params.toString();
     const base = selectedMode === 'learn'
-      ? `/learn/${region.level}${sidoSegment}`
-      : `/quiz/${selectedMode}/${region.level}${sidoSegment}`;
+      ? `/learn/${region.level}${sidoSegment}/`
+      : `/quiz/${selectedMode}/${region.level}${sidoSegment}/`;
     navigate(qs ? `${base}?${qs}` : base);
   }, [region, selectedMode, count, borderless, noAccum, outline, navigate]);
 
@@ -206,6 +206,54 @@ export default function LandingPage() {
             )}
           </>
         )}
+
+        {/* Secondary CTA — printable maps download. 전국 (시도/시군)은 항상 노출,
+            지역이 선택되면 그 지역 한정 옵션을 추가로 노출. */}
+        {(() => {
+          const entries: Array<{ to: string; heading: string }> = [
+            { to: '/maps/sido/', heading: locale === 'en' ? 'All Provinces' : '전국 시도' },
+            { to: '/maps/sigun/', heading: locale === 'en' ? 'All Cities' : '전국 시군' },
+          ];
+          const sidoMeta = region?.filter ? getSidoMeta(region.filter) : null;
+          if (sidoMeta) {
+            const localName = locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName;
+            const regionLabel = locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo;
+            if (sidoMeta.type === 'province') {
+              // 도: 시군 + 시군구 둘 다 가능
+              entries.push({
+                to: `/maps/sigun/${sidoMeta.slug}/`,
+                heading: `${localName} ${regionLabel}`,
+              });
+              entries.push({
+                to: `/maps/sigungu/${sidoMeta.slug}/`,
+                heading: locale === 'en' ? `${localName} sub-districts` : `${localName} 시군구`,
+              });
+            } else {
+              // 광역시: 자치구만
+              entries.push({
+                to: `/maps/sigungu/${sidoMeta.slug}/`,
+                heading: `${localName} ${regionLabel}`,
+              });
+            }
+          }
+          return (
+            <div className="mt-6">
+              <div className="text-xs font-medium text-gray-400 mb-2">{t('landing.maps')}</div>
+              <div className="grid grid-cols-2 gap-3">
+                {entries.map((e) => (
+                  <Link
+                    key={e.to}
+                    to={e.to}
+                    className="block bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-3 transition-colors"
+                  >
+                    <div className="text-sm font-semibold text-gray-700">{e.heading}</div>
+                    <div className="text-xs text-gray-500 mt-0.5">{t('landing.mapsDesc')}</div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         <footer className="text-center mt-10 text-xs text-gray-400">
           {t('landing.dataSource')}:{' '}

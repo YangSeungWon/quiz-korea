@@ -56,8 +56,8 @@ export default function QuizSession() {
     : t(`seo.quiz.${mode}.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings);
   const canonicalPath = (() => {
     const base = sidoMeta
-      ? `/quiz/${mode}/${adminLevel}/${sidoMeta.slug}`
-      : `/quiz/${mode}/${adminLevel}`;
+      ? `/quiz/${mode}/${adminLevel}/${sidoMeta.slug}/`
+      : `/quiz/${mode}/${adminLevel}/`;
     const opts: string[] = [];
     if (mode === 'pin' && borderless) opts.push('borderless=1');
     if (mode === 'pin' && noAccum) opts.push('noaccum=1');

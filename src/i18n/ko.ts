@@ -12,6 +12,8 @@ const ko: TranslationStrings = {
   'landing.optOutline': '윤곽만 보기',
   'landing.learnMode': '학습 모드',
   'landing.learnModeDesc': '자유롭게 지도를 탐색하며 지역 이름을 익히세요.',
+  'landing.maps': '백지도',
+  'landing.mapsDesc': '학습용 백지도 / 이름 라벨 PDF 다운로드.',
   'landing.modeSelect': '모드 선택',
   'landing.dataSource': '데이터 출처',
 

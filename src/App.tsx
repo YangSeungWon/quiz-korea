@@ -21,7 +21,7 @@ function LegacyQuizRedirect() {
     if (v) carry.set(k, v);
   }
   const qs = carry.toString();
-  return <Navigate to={`/quiz/${mode}/${level}${sidoSegment}${qs ? `?${qs}` : ''}`} replace />;
+  return <Navigate to={`/quiz/${mode}/${level}${sidoSegment}/${qs ? `?${qs}` : ''}`} replace />;
 }
 
 function LegacyLearnRedirect() {
@@ -36,7 +36,7 @@ function LegacyLearnRedirect() {
     if (v) carry.set(k, v);
   }
   const qs = carry.toString();
-  return <Navigate to={`/learn/${level}${sidoSegment}${qs ? `?${qs}` : ''}`} replace />;
+  return <Navigate to={`/learn/${level}${sidoSegment}/${qs ? `?${qs}` : ''}`} replace />;
 }
 
 function App() {

@@ -13,6 +13,8 @@ export interface TranslationStrings {
   'landing.optOutline': string;
   'landing.learnMode': string;
   'landing.learnModeDesc': string;
+  'landing.maps': string;
+  'landing.mapsDesc': string;
   'landing.modeSelect': string;
   'landing.dataSource': string;
 

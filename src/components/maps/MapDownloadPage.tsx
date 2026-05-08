@@ -37,8 +37,8 @@ export default function MapDownloadPage() {
     : t(`maps.heading.${adminLevel}` as keyof TranslationStrings);
 
   const canonicalPath = sidoMeta
-    ? `/maps/${adminLevel}/${sidoMeta.slug}`
-    : `/maps/${adminLevel}`;
+    ? `/maps/${adminLevel}/${sidoMeta.slug}/`
+    : `/maps/${adminLevel}/`;
   usePageMeta({ title: seoTitle, description: seoDesc, path: canonicalPath });
 
   const { geoData, topoData, borderMesh, loading } = useMapData(adminLevel);
@@ -64,19 +64,19 @@ export default function MapDownloadPage() {
   const sidoSegment = sidoMeta ? `/${sidoMeta.slug}` : '';
   const relatedLinks = [
     {
-      to: `/quiz/pin/${adminLevel}${sidoSegment}`,
+      to: `/quiz/pin/${adminLevel}${sidoSegment}/`,
       title: t('landing.pinQuiz'),
       desc: t('landing.pinQuizDesc'),
       color: 'bg-blue-50 border-blue-200 hover:border-blue-400 text-blue-700',
     },
     {
-      to: `/quiz/type/${adminLevel}${sidoSegment}`,
+      to: `/quiz/type/${adminLevel}${sidoSegment}/`,
       title: t('landing.typeQuiz'),
       desc: t('landing.typeQuizDesc'),
       color: 'bg-orange-50 border-orange-200 hover:border-orange-400 text-orange-700',
     },
     {
-      to: `/learn/${adminLevel}${sidoSegment}`,
+      to: `/learn/${adminLevel}${sidoSegment}/`,
       title: t('landing.learnMode'),
       desc: t('landing.learnModeDesc'),
       color: 'bg-green-50 border-green-200 hover:border-green-400 text-green-700',
