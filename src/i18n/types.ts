@@ -89,6 +89,7 @@ export interface TranslationStrings {
   'maps.usage': string;
   'maps.dataNote': string;
   'maps.backToHome': string;
+  'maps.relatedHeading': string;
 
   // Results
   'results.title': string;

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useMapData } from '../../hooks/useMapData';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
 import { getSidoMeta } from '../../utils/regionUtils';
@@ -60,6 +60,28 @@ export default function MapDownloadPage() {
 
   const blankUrl = `/downloads/${pdfFilename(adminLevel, sidoMeta?.slug, 'blank')}`;
   const labelUrl = `/downloads/${pdfFilename(adminLevel, sidoMeta?.slug, 'label')}`;
+
+  const sidoSegment = sidoMeta ? `/${sidoMeta.slug}` : '';
+  const relatedLinks = [
+    {
+      to: `/quiz/pin/${adminLevel}${sidoSegment}`,
+      title: t('landing.pinQuiz'),
+      desc: t('landing.pinQuizDesc'),
+      color: 'bg-blue-50 border-blue-200 hover:border-blue-400 text-blue-700',
+    },
+    {
+      to: `/quiz/type/${adminLevel}${sidoSegment}`,
+      title: t('landing.typeQuiz'),
+      desc: t('landing.typeQuizDesc'),
+      color: 'bg-orange-50 border-orange-200 hover:border-orange-400 text-orange-700',
+    },
+    {
+      to: `/learn/${adminLevel}${sidoSegment}`,
+      title: t('landing.learnMode'),
+      desc: t('landing.learnModeDesc'),
+      color: 'bg-green-50 border-green-200 hover:border-green-400 text-green-700',
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,7 +144,24 @@ export default function MapDownloadPage() {
         </div>
 
         <p className="text-xs text-gray-500 mb-2">{t('maps.usage')}</p>
-        <p className="text-xs text-gray-400">{t('maps.dataNote')}</p>
+        <p className="text-xs text-gray-400 mb-8">{t('maps.dataNote')}</p>
+
+        {/* Related: same-region quiz / typing / learn entry points */}
+        <div className="border-t border-gray-200 pt-6">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">{t('maps.relatedHeading')}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {relatedLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`block border rounded-xl p-4 transition-colors ${link.color}`}
+              >
+                <div className="font-semibold mb-1">{link.title}</div>
+                <div className="text-xs opacity-80 leading-snug">{link.desc}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
