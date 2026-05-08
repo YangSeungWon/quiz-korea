@@ -4,7 +4,7 @@ import { useMapData } from '../../hooks/useMapData';
 import { useQuizEngine } from '../../hooks/useQuizEngine';
 import { useTimer } from '../../hooks/useTimer';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
-import { extractRegions } from '../../utils/regionUtils';
+import { extractRegions, getSidoMeta } from '../../utils/regionUtils';
 import { matchesRegionName } from '../../utils/regionUtils';
 import { shuffle } from '../../utils/quizEngine';
 import { useI18n } from '../../i18n/useI18n';
@@ -16,15 +16,20 @@ import QuizResults from './QuizResults';
 import type { QuizMode, AdminLevel, MapDisplayMode } from '../../types';
 
 export default function QuizSession() {
-  const { mode: modeParam } = useParams<{ mode: string }>();
+  const { mode: modeParam, level: levelParam, sidoSlug } = useParams<{
+    mode: string;
+    level: string;
+    sidoSlug: string;
+  }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { locale, t } = useI18n();
   const prevLocaleRef = useRef(locale);
 
   const mode = (modeParam || 'pin') as QuizMode;
-  const adminLevel = (searchParams.get('level') || 'sido') as AdminLevel;
-  const sidoFilter = searchParams.get('filter') || undefined;
+  const adminLevel = (levelParam || 'sido') as AdminLevel;
+  const sidoMeta = getSidoMeta(sidoSlug || '');
+  const sidoFilter = sidoMeta?.code;
   const countParam = parseInt(searchParams.get('count') || '0', 10) || 0;
 
   // Option query params
@@ -37,12 +42,32 @@ export default function QuizSession() {
     mode === 'type' && outline ? 'outline-only' :
     'normal';
 
-  const seoTitleKey = `seo.quiz.${mode}.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings;
-  const seoDescKey = `seo.quiz.${mode}.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings;
+  const seoTitle = sidoMeta
+    ? t(`seo.quiz.${mode}.filtered.title`, {
+        sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
+        regionLabel: locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo,
+      })
+    : t(`seo.quiz.${mode}.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings);
+  const seoDesc = sidoMeta
+    ? t(`seo.quiz.${mode}.filtered.desc`, {
+        sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
+        regionLabel: locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo,
+      })
+    : t(`seo.quiz.${mode}.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings);
+  const canonicalPath = (() => {
+    const base = sidoMeta
+      ? `/quiz/${mode}/${adminLevel}/${sidoMeta.slug}`
+      : `/quiz/${mode}/${adminLevel}`;
+    const opts: string[] = [];
+    if (mode === 'pin' && borderless) opts.push('borderless=1');
+    if (mode === 'pin' && noAccum) opts.push('noaccum=1');
+    if (mode === 'type' && outline) opts.push('outline=1');
+    return opts.length > 0 ? `${base}?${opts.join('&')}` : base;
+  })();
   usePageMeta({
-    title: t(seoTitleKey),
-    description: t(seoDescKey),
-    path: `/quiz/${mode}?level=${adminLevel}`,
+    title: seoTitle,
+    description: seoDesc,
+    path: canonicalPath,
   });
 
   const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);

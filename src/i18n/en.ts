@@ -35,6 +35,12 @@ const en: TranslationStrings = {
   'seo.learn.sigun.desc': 'Explore the map and learn the locations of South Korean cities',
   'seo.learn.sigungu.title': 'Districts Learn Mode - Korea Geography Quiz',
   'seo.learn.sigungu.desc': 'Explore the map and learn the locations of South Korean districts',
+  'seo.quiz.pin.filtered.title': '{sido} {regionLabel} Click Quiz - Korea Geography Quiz',
+  'seo.quiz.pin.filtered.desc': 'Click the correct {regionLabel} of {sido} on the map',
+  'seo.quiz.type.filtered.title': '{sido} {regionLabel} Typing Quiz - Korea Geography Quiz',
+  'seo.quiz.type.filtered.desc': 'Type the name of the highlighted {regionLabel} of {sido}',
+  'seo.learn.filtered.title': '{sido} {regionLabel} Learn Mode - Korea Geography Quiz',
+  'seo.learn.filtered.desc': 'Explore the map and learn the locations of {sido} {regionLabel}',
 
   'picker.sido': 'Provinces',
   'picker.allSido': 'All 17 Provinces',

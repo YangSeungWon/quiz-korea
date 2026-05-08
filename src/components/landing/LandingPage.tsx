@@ -5,6 +5,7 @@ import { usePageMeta } from '../../hooks/usePageMeta';
 import RegionPicker from './RegionPicker';
 import QuizCard from './QuizCard';
 import LanguageToggle from '../LanguageToggle';
+import { SIDO_SLUG } from '../../utils/regionUtils';
 import type { AdminLevel, QuizMode } from '../../types';
 
 interface RegionSelection {
@@ -41,15 +42,9 @@ export default function LandingPage() {
 
   const handleStart = useCallback(() => {
     if (!region || !selectedMode) return;
-    if (selectedMode === 'learn') {
-      const params = new URLSearchParams({ level: region.level });
-      if (region.filter) params.set('filter', region.filter);
-      if (count > 0) params.set('count', String(count));
-      navigate(`/learn?${params.toString()}`);
-      return;
-    }
-    const params = new URLSearchParams({ level: region.level });
-    if (region.filter) params.set('filter', region.filter);
+    const sidoSlug = region.filter ? SIDO_SLUG[region.filter] : undefined;
+    const sidoSegment = sidoSlug ? `/${sidoSlug}` : '';
+    const params = new URLSearchParams();
     if (count > 0) params.set('count', String(count));
     if (selectedMode === 'pin') {
       if (borderless) params.set('borderless', '1');
@@ -58,7 +53,11 @@ export default function LandingPage() {
     if (selectedMode === 'type' && outline) {
       params.set('outline', '1');
     }
-    navigate(`/quiz/${selectedMode}?${params.toString()}`);
+    const qs = params.toString();
+    const base = selectedMode === 'learn'
+      ? `/learn/${region.level}${sidoSegment}`
+      : `/quiz/${selectedMode}/${region.level}${sidoSegment}`;
+    navigate(qs ? `${base}?${qs}` : base);
   }, [region, selectedMode, count, borderless, noAccum, outline, navigate]);
 
   const handleModeClick = useCallback(

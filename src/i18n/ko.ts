@@ -35,6 +35,12 @@ const ko: TranslationStrings = {
   'seo.learn.sigun.desc': '지도를 탐색하며 시군 위치를 익히세요',
   'seo.learn.sigungu.title': '시군구 학습 모드 - 한국 지리 퀴즈',
   'seo.learn.sigungu.desc': '지도를 탐색하며 시군구 위치를 익히세요',
+  'seo.quiz.pin.filtered.title': '{sido} {regionLabel} 클릭 퀴즈 - 한국 지리 퀴즈',
+  'seo.quiz.pin.filtered.desc': '{sido} {regionLabel}을(를) 지도에서 클릭하여 맞추는 퀴즈',
+  'seo.quiz.type.filtered.title': '{sido} {regionLabel} 타이핑 퀴즈 - 한국 지리 퀴즈',
+  'seo.quiz.type.filtered.desc': '{sido} {regionLabel} 이름을 입력하여 맞추는 퀴즈',
+  'seo.learn.filtered.title': '{sido} {regionLabel} 학습 모드 - 한국 지리 퀴즈',
+  'seo.learn.filtered.desc': '지도를 탐색하며 {sido} {regionLabel} 위치를 익히세요',
 
   'picker.sido': '시도',
   'picker.allSido': '전국 17개 시도',

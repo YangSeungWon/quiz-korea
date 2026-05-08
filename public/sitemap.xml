@@ -13,162 +13,126 @@
 
   <!-- Pin quiz: base -->
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sido</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/quiz/pin/sido</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sido?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sido?lang=en" />
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sigun</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/quiz/pin/sigun</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun?lang=en" />
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sigungu</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/quiz/pin/sigungu</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu?lang=en" />
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>
-
-  <!-- Pin quiz: borderless -->
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;borderless=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;borderless=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;borderless=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;borderless=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;borderless=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;borderless=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;borderless=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;borderless=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;borderless=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <!-- Pin quiz: noaccum -->
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;noaccum=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;noaccum=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;noaccum=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;noaccum=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;noaccum=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;noaccum=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;noaccum=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;noaccum=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;noaccum=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <!-- Pin quiz: borderless + noaccum -->
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;borderless=1&amp;noaccum=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;borderless=1&amp;noaccum=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sido&amp;borderless=1&amp;noaccum=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;borderless=1&amp;noaccum=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;borderless=1&amp;noaccum=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigun&amp;borderless=1&amp;noaccum=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;borderless=1&amp;noaccum=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;borderless=1&amp;noaccum=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin?level=sigungu&amp;borderless=1&amp;noaccum=1&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
   </url>
 
   <!-- Type quiz: base -->
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type?level=sido</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type?level=sido&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type?level=sido&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/quiz/type/sido</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sido?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sido?lang=en" />
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type?level=sigun</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type?level=sigun&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type?level=sigun&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/quiz/type/sigun</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun?lang=en" />
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type?level=sigungu</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type?level=sigungu&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type?level=sigungu&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/quiz/type/sigungu</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigungu?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigungu?lang=en" />
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- Type quiz: outline -->
+  <!-- 광역시 자치구 (sigungu × pin/type) -->
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigungu/seoul</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/seoul?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/seoul?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigungu/seoul</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/seoul?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/seoul?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigungu/busan</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/busan?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/busan?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigungu/busan</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/busan?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/busan?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigungu/daegu</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/daegu?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/daegu?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigungu/daegu</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/daegu?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/daegu?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigungu/incheon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/incheon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/incheon?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigungu/incheon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/incheon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/incheon?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigungu/gwangju</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/gwangju?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/gwangju?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigungu/gwangju</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/gwangju?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/gwangju?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigungu/daejeon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/daejeon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/daejeon?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigungu/daejeon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/daejeon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/daejeon?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigungu/ulsan</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/ulsan?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigungu/ulsan?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigungu/ulsan</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/ulsan?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigungu/ulsan?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- 도 시군 (sigun × pin/type) -->
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeonggi</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeonggi?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeonggi?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/gyeonggi</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/gyeonggi?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/gyeonggi?lang=en" /><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/gangwon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/gangwon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/gangwon?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/gangwon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/gangwon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/gangwon?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/chungbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/chungbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/chungbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/chungbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/chungbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/chungbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/chungnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/chungnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/chungnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/chungnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/chungnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/chungnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/jeonbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/jeonbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/jeonbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/jeonbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/jeonbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/jeonbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/jeonnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/jeonnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/jeonnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/jeonnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/jeonnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/jeonnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeongbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeongbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeongbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/gyeongbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/gyeongbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/gyeongbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeongnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeongnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/gyeongnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/gyeongnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/gyeongnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/gyeongnam?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/pin/sigun/jeju</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/jeju?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/pin/sigun/jeju?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/quiz/type/sigun/jeju</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type/sigun/jeju?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type/sigun/jeju?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
+  <!-- Learn mode: base -->
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type?level=sido&amp;outline=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type?level=sido&amp;outline=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type?level=sido&amp;outline=1&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/learn/sido</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sido?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sido?lang=en" />
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type?level=sigun&amp;outline=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type?level=sigun&amp;outline=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type?level=sigun&amp;outline=1&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/learn/sigun</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun?lang=en" />
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://quiz-korea.ysw.kr/quiz/type?level=sigungu&amp;outline=1</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/quiz/type?level=sigungu&amp;outline=1&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/quiz/type?level=sigungu&amp;outline=1&amp;lang=en" />
+    <loc>https://quiz-korea.ysw.kr/learn/sigungu</loc>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigungu?lang=ko" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigungu?lang=en" />
     <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
   </url>
 
-  <!-- Learn mode -->
-  <url>
-    <loc>https://quiz-korea.ysw.kr/learn?level=sido</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn?level=sido&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn?level=sido&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/learn?level=sigun</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn?level=sigun&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn?level=sigun&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://quiz-korea.ysw.kr/learn?level=sigungu</loc>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn?level=sigungu&amp;lang=ko" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn?level=sigungu&amp;lang=en" />
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <!-- Learn mode: 광역시 자치구 -->
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigungu/seoul</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigungu/seoul?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigungu/seoul?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigungu/busan</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigungu/busan?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigungu/busan?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigungu/daegu</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigungu/daegu?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigungu/daegu?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigungu/incheon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigungu/incheon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigungu/incheon?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigungu/gwangju</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigungu/gwangju?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigungu/gwangju?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigungu/daejeon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigungu/daejeon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigungu/daejeon?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigungu/ulsan</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigungu/ulsan?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigungu/ulsan?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+
+  <!-- Learn mode: 도 시군 -->
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/gyeonggi</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/gyeonggi?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/gyeonggi?lang=en" /><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/gangwon</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/gangwon?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/gangwon?lang=en" /><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/chungbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/chungbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/chungbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/chungnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/chungnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/chungnam?lang=en" /><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/jeonbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/jeonbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/jeonbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/jeonnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/jeonnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/jeonnam?lang=en" /><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/gyeongbuk</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/gyeongbuk?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/gyeongbuk?lang=en" /><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/gyeongnam</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/gyeongnam?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/gyeongnam?lang=en" /><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://quiz-korea.ysw.kr/learn/sigun/jeju</loc><xhtml:link rel="alternate" hreflang="ko" href="https://quiz-korea.ysw.kr/learn/sigun/jeju?lang=ko" /><xhtml:link rel="alternate" hreflang="en" href="https://quiz-korea.ysw.kr/learn/sigun/jeju?lang=en" /><changefreq>monthly</changefreq><priority>0.5</priority></url>
 </urlset>

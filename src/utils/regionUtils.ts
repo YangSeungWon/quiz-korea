@@ -112,6 +112,60 @@ export const SIDO_SHORT: Record<string, string> = {
   '50': '제주',
 };
 
+// Sido code → English slug for SEO-friendly URLs (e.g. ?sido=seoul)
+// Sejong (36) is omitted since it's a single 자치시 with no meaningful filtered view.
+export const SIDO_SLUG: Record<string, string> = {
+  '11': 'seoul',
+  '26': 'busan',
+  '27': 'daegu',
+  '28': 'incheon',
+  '29': 'gwangju',
+  '30': 'daejeon',
+  '31': 'ulsan',
+  '41': 'gyeonggi',
+  '42': 'gangwon',
+  '43': 'chungbuk',
+  '44': 'chungnam',
+  '45': 'jeonbuk',
+  '46': 'jeonnam',
+  '47': 'gyeongbuk',
+  '48': 'gyeongnam',
+  '50': 'jeju',
+};
+
+// Reverse: slug → admin code
+export const SLUG_TO_SIDO: Record<string, string> = Object.fromEntries(
+  Object.entries(SIDO_SLUG).map(([code, slug]) => [slug, code]),
+);
+
+// 광역시 codes (자치구). Others in SIDO_SLUG are 도 (시군).
+const METRO_SIDO = new Set(['11', '26', '27', '28', '29', '30', '31']);
+
+export interface SidoMeta {
+  code: string;
+  slug: string;
+  shortName: string;
+  shortNameEn: string;
+  type: 'metro' | 'province';
+  regionLabelKo: '자치구' | '시군';
+  regionLabelEn: 'districts' | 'cities';
+}
+
+export function getSidoMeta(codeOrSlug: string): SidoMeta | null {
+  const code = SLUG_TO_SIDO[codeOrSlug] ?? codeOrSlug;
+  if (!SIDO_SLUG[code]) return null;
+  const isMetro = METRO_SIDO.has(code);
+  return {
+    code,
+    slug: SIDO_SLUG[code],
+    shortName: SIDO_SHORT[code],
+    shortNameEn: SIDO_SHORT_EN[code] ?? '',
+    type: isMetro ? 'metro' : 'province',
+    regionLabelKo: isMetro ? '자치구' : '시군',
+    regionLabelEn: isMetro ? 'districts' : 'cities',
+  };
+}
+
 // Get display name: prefix with sido short name for all sigungu features
 export function getDisplayName(feature: RegionFeature, locale: Locale = 'ko'): string {
   // Sigun merged features have their own name

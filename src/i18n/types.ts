@@ -60,6 +60,13 @@ export interface TranslationStrings {
   'seo.learn.sigun.desc': string;
   'seo.learn.sigungu.title': string;
   'seo.learn.sigungu.desc': string;
+  // Filtered (per-sido) SEO templates: {sido} = '서울', {regionLabel} = '자치구'/'시군'
+  'seo.quiz.pin.filtered.title': string;
+  'seo.quiz.pin.filtered.desc': string;
+  'seo.quiz.type.filtered.title': string;
+  'seo.quiz.type.filtered.desc': string;
+  'seo.learn.filtered.title': string;
+  'seo.learn.filtered.desc': string;
 
   // Results
   'results.title': string;
