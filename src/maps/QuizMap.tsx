@@ -133,6 +133,7 @@ interface QuizMapProps {
   onRegionClick?: (code: string) => void;
   onRegionHover?: (code: string | null) => void;
   showLabels?: boolean;
+  staticLabels?: boolean;
   resetZoom?: boolean;
 }
 
@@ -176,6 +177,7 @@ export default function QuizMap({
   onRegionClick,
   onRegionHover,
   showLabels = false,
+  staticLabels = false,
   resetZoom = false,
 }: QuizMapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -590,6 +592,27 @@ export default function QuizMap({
           .attr('stroke-width', 1.2)
           .style('vector-effect', 'non-scaling-stroke')
           .style('pointer-events', 'none');
+      }
+
+      // Static labels for printable maps — render every region's name at its centroid
+      if (staticLabels) {
+        const labels = g.append('g').attr('class', 'static-labels').style('pointer-events', 'none');
+        geoData.features.forEach((feature) => {
+          const centroid = path.centroid(feature as GeoPermissibleObjects);
+          if (!Number.isFinite(centroid[0]) || !Number.isFinite(centroid[1])) return;
+          labels.append('text')
+            .attr('x', centroid[0])
+            .attr('y', centroid[1])
+            .attr('text-anchor', 'middle')
+            .attr('dominant-baseline', 'middle')
+            .attr('font-size', adminLevel === 'sido' ? 13 : 10)
+            .attr('font-weight', '600')
+            .attr('fill', '#1f2937')
+            .attr('stroke', 'white')
+            .attr('stroke-width', 2.5)
+            .attr('paint-order', 'stroke')
+            .text(getDisplayName(feature, locale));
+        });
       }
     }
 

@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useSearchP
 import LandingPage from './components/landing/LandingPage';
 import QuizSession from './components/quiz/QuizSession';
 import LearnMode from './components/learn/LearnMode';
+import MapDownloadPage from './components/maps/MapDownloadPage';
+import MapPrintView from './components/maps/MapPrintView';
 import { SIDO_SLUG } from './utils/regionUtils';
 
 // Backward-compat: /quiz/:mode?level=X&(filter=11|sido=seoul)&...
@@ -48,6 +50,13 @@ function App() {
         <Route path="/quiz/:mode/:level/:sidoSlug" element={<QuizSession />} />
         <Route path="/learn/:level" element={<LearnMode />} />
         <Route path="/learn/:level/:sidoSlug" element={<LearnMode />} />
+
+        {/* Maps download pages */}
+        <Route path="/maps/:level" element={<MapDownloadPage />} />
+        <Route path="/maps/:level/:sidoSlug" element={<MapDownloadPage />} />
+        {/* Print-only views (used by puppeteer at build time, noindex) */}
+        <Route path="/maps/print/:variant/:level" element={<MapPrintView />} />
+        <Route path="/maps/print/:variant/:level/:sidoSlug" element={<MapPrintView />} />
 
         {/* Legacy redirects (keep submitted GSC URLs alive) */}
         <Route path="/quiz/:mode" element={<LegacyQuizRedirect />} />

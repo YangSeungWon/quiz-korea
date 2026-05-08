@@ -68,6 +68,28 @@ export interface TranslationStrings {
   'seo.learn.filtered.title': string;
   'seo.learn.filtered.desc': string;
 
+  // Maps download pages
+  'seo.maps.sido.title': string;
+  'seo.maps.sido.desc': string;
+  'seo.maps.sigun.title': string;
+  'seo.maps.sigun.desc': string;
+  'seo.maps.sigungu.title': string;
+  'seo.maps.sigungu.desc': string;
+  'seo.maps.filtered.title': string;
+  'seo.maps.filtered.desc': string;
+  'maps.heading.sido': string;
+  'maps.heading.sigun': string;
+  'maps.heading.sigungu': string;
+  'maps.heading.filtered': string;
+  'maps.intro': string;
+  'maps.downloadBlankPdf': string;
+  'maps.downloadLabelPdf': string;
+  'maps.previewBlank': string;
+  'maps.previewLabel': string;
+  'maps.usage': string;
+  'maps.dataNote': string;
+  'maps.backToHome': string;
+
   // Results
   'results.title': string;
   'results.perfect': string;
