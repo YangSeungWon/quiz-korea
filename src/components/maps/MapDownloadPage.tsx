@@ -7,9 +7,15 @@ import LanguageToggle from '../LanguageToggle';
 import type { AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
 
-function pdfFilename(level: AdminLevel, sidoSlug: string | undefined, variant: 'blank' | 'label'): string {
+function downloadFilename(
+  level: AdminLevel,
+  sidoSlug: string | undefined,
+  variant: 'blank' | 'label',
+  locale: 'ko' | 'en',
+  ext: 'pdf' | 'png',
+): string {
   const slugPart = sidoSlug ? `-${sidoSlug}` : '';
-  return `${level}${slugPart}-${variant}.pdf`;
+  return `${level}${slugPart}-${variant}-${locale}.${ext}`;
 }
 
 export default function MapDownloadPage() {
@@ -39,8 +45,10 @@ export default function MapDownloadPage() {
     : `/maps/${adminLevel}/`;
   usePageMeta({ title: seoTitle, description: seoDesc, path: canonicalPath });
 
-  const blankUrl = `/downloads/${pdfFilename(adminLevel, sidoMeta?.slug, 'blank')}`;
-  const labelUrl = `/downloads/${pdfFilename(adminLevel, sidoMeta?.slug, 'label')}`;
+  const blankPdfUrl = `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, 'blank', locale, 'pdf')}`;
+  const labelPdfUrl = `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, 'label', locale, 'pdf')}`;
+  const blankPngUrl = `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, 'blank', locale, 'png')}`;
+  const labelPngUrl = `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, 'label', locale, 'png')}`;
 
   const sidoSegment = sidoMeta ? `/${sidoMeta.slug}` : '';
   const relatedLinks = [
@@ -80,20 +88,25 @@ export default function MapDownloadPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{heading}</h1>
         <p className="text-gray-600 mb-6">{t('maps.intro')}</p>
 
-        {/* Preview + download — actual PDFs embedded so what you see is what you get */}
+        {/* Preview + download — PNG thumbnail (cross-platform safe) + PDF link */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           <div className="flex flex-col gap-2">
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <iframe
-                src={`${blankUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
-                className="block w-full"
-                style={{ aspectRatio: '210 / 297', border: 0 }}
-                title={t('maps.previewBlank')}
-                loading="lazy"
-              />
-            </div>
             <a
-              href={blankUrl}
+              href={blankPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-blue-400 transition-colors"
+            >
+              <img
+                src={blankPngUrl}
+                alt={t('maps.previewBlank')}
+                loading="lazy"
+                className="block w-full h-auto"
+                style={{ aspectRatio: '210 / 297' }}
+              />
+            </a>
+            <a
+              href={blankPdfUrl}
               download
               className="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold text-center transition-colors"
             >
@@ -101,17 +114,22 @@ export default function MapDownloadPage() {
             </a>
           </div>
           <div className="flex flex-col gap-2">
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-              <iframe
-                src={`${labelUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
-                className="block w-full"
-                style={{ aspectRatio: '210 / 297', border: 0 }}
-                title={t('maps.previewLabel')}
-                loading="lazy"
-              />
-            </div>
             <a
-              href={labelUrl}
+              href={labelPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-green-400 transition-colors"
+            >
+              <img
+                src={labelPngUrl}
+                alt={t('maps.previewLabel')}
+                loading="lazy"
+                className="block w-full h-auto"
+                style={{ aspectRatio: '210 / 297' }}
+              />
+            </a>
+            <a
+              href={labelPdfUrl}
               download
               className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold text-center transition-colors"
             >

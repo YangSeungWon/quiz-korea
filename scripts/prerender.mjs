@@ -56,34 +56,34 @@ function buildHtmlRoutes() {
 }
 
 function buildPdfTargets() {
-  // Each entry: { route, filename }
   const targets = [];
   const variants = ['blank', 'label'];
-  for (const variant of variants) {
-    // base levels: sido + sigun (전국 sigungu는 PDF 안 만듦 — 너무 dense)
-    for (const level of ['sido', 'sigun']) {
-      targets.push({
-        route: `/maps/print/${variant}/${level}`,
-        filename: `${level}-${variant}.pdf`,
-      });
-    }
-    for (const slug of METRO_SLUGS) {
-      targets.push({
-        route: `/maps/print/${variant}/sigungu/${slug}`,
-        filename: `sigungu-${slug}-${variant}.pdf`,
-      });
-    }
-    for (const slug of PROVINCE_SLUGS) {
-      targets.push({
-        route: `/maps/print/${variant}/sigun/${slug}`,
-        filename: `sigun-${slug}-${variant}.pdf`,
-      });
-    }
-    for (const slug of PROVINCE_SLUGS) {
-      targets.push({
-        route: `/maps/print/${variant}/sigungu/${slug}`,
-        filename: `sigungu-${slug}-${variant}.pdf`,
-      });
+  for (const lang of LOCALES) {
+    for (const variant of variants) {
+      for (const level of ['sido', 'sigun']) {
+        targets.push({
+          route: `/${lang}/maps/print/${variant}/${level}`,
+          filename: `${level}-${variant}-${lang}.pdf`,
+        });
+      }
+      for (const slug of METRO_SLUGS) {
+        targets.push({
+          route: `/${lang}/maps/print/${variant}/sigungu/${slug}`,
+          filename: `sigungu-${slug}-${variant}-${lang}.pdf`,
+        });
+      }
+      for (const slug of PROVINCE_SLUGS) {
+        targets.push({
+          route: `/${lang}/maps/print/${variant}/sigun/${slug}`,
+          filename: `sigun-${slug}-${variant}-${lang}.pdf`,
+        });
+      }
+      for (const slug of PROVINCE_SLUGS) {
+        targets.push({
+          route: `/${lang}/maps/print/${variant}/sigungu/${slug}`,
+          filename: `sigungu-${slug}-${variant}-${lang}.pdf`,
+        });
+      }
     }
   }
   return targets;
@@ -151,10 +151,10 @@ async function prerenderHtml(browser, routes) {
 
 async function generatePdfs(browser, targets) {
   await mkdir(DOWNLOADS, { recursive: true });
-  console.log(`Generating ${targets.length} PDFs...`);
+  console.log(`Generating ${targets.length} PDFs + PNG previews...`);
   for (const { route, filename } of targets) {
     const url = `http://localhost:${PORT}${route}`;
-    console.log(`  PDF  ${filename}`);
+    console.log(`  ${filename}`);
     const page = await browser.newPage();
     // A4 portrait at 96dpi: 794 × 1123 px
     await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
@@ -168,6 +168,15 @@ async function generatePdfs(browser, targets) {
       margin: { top: 0, right: 0, bottom: 0, left: 0 },
     });
     await writeFile(join(DOWNLOADS, filename), pdf);
+
+    // PNG preview — used by MapDownloadPage (cross-platform safe vs iframe PDF)
+    const pngFilename = filename.replace(/\.pdf$/, '.png');
+    const png = await page.screenshot({
+      type: 'png',
+      clip: { x: 0, y: 0, width: 794, height: 1123 },
+    });
+    await writeFile(join(DOWNLOADS, pngFilename), png);
+
     await page.close();
   }
 }

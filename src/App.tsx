@@ -109,11 +109,6 @@ function App() {
         {/* Root → /ko/ or /en/ */}
         <Route path="/" element={<RootRedirect />} />
 
-        {/* Print-only views (puppeteer-internal, not localized) — must come
-            before /:lang/ to keep them out of the lang scope. */}
-        <Route path="/maps/print/:variant/:level" element={<MapPrintView />} />
-        <Route path="/maps/print/:variant/:level/:sidoSlug" element={<MapPrintView />} />
-
         {/* Legacy ?level=&filter= redirects (must be more specific than /:lang) */}
         <Route path="/quiz/:mode" element={<LegacyQuizRedirect />} />
         <Route path="/learn" element={<LegacyLearnRedirect />} />
@@ -135,6 +130,9 @@ function App() {
           <Route path="learn/:level/:sidoSlug" element={<LearnMode />} />
           <Route path="maps/:level" element={<MapDownloadPage />} />
           <Route path="maps/:level/:sidoSlug" element={<MapDownloadPage />} />
+          {/* Print-only routes (puppeteer-internal, lang chooses content language) */}
+          <Route path="maps/print/:variant/:level" element={<MapPrintView />} />
+          <Route path="maps/print/:variant/:level/:sidoSlug" element={<MapPrintView />} />
           {/* Unmatched within a valid lang → back to root */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
