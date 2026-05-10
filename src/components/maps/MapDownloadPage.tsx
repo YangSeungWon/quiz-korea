@@ -5,6 +5,7 @@ import { useResponsiveSize } from '../../hooks/useResponsiveSize';
 import { getSidoMeta } from '../../utils/regionUtils';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
+import { useLocalePath } from '../../hooks/useLocalePath';
 import QuizMap from '../../maps/QuizMap';
 import LanguageToggle from '../LanguageToggle';
 import type { AdminLevel } from '../../types';
@@ -18,6 +19,7 @@ function pdfFilename(level: AdminLevel, sidoSlug: string | undefined, variant: '
 export default function MapDownloadPage() {
   const { level: levelParam, sidoSlug } = useParams<{ level: string; sidoSlug?: string }>();
   const navigate = useNavigate();
+  const localized = useLocalePath();
   const { locale, t } = useI18n();
   const adminLevel = (levelParam || 'sido') as AdminLevel;
   const sidoMeta = getSidoMeta(sidoSlug || '');
@@ -64,19 +66,19 @@ export default function MapDownloadPage() {
   const sidoSegment = sidoMeta ? `/${sidoMeta.slug}` : '';
   const relatedLinks = [
     {
-      to: `/quiz/pin/${adminLevel}${sidoSegment}/`,
+      to: localized(`/quiz/pin/${adminLevel}${sidoSegment}/`),
       title: t('landing.pinQuiz'),
       desc: t('landing.pinQuizDesc'),
       color: 'bg-blue-50 border-blue-200 hover:border-blue-400 text-blue-700',
     },
     {
-      to: `/quiz/type/${adminLevel}${sidoSegment}/`,
+      to: localized(`/quiz/type/${adminLevel}${sidoSegment}/`),
       title: t('landing.typeQuiz'),
       desc: t('landing.typeQuizDesc'),
       color: 'bg-orange-50 border-orange-200 hover:border-orange-400 text-orange-700',
     },
     {
-      to: `/learn/${adminLevel}${sidoSegment}/`,
+      to: localized(`/learn/${adminLevel}${sidoSegment}/`),
       title: t('landing.learnMode'),
       desc: t('landing.learnModeDesc'),
       color: 'bg-green-50 border-green-200 hover:border-green-400 text-green-700',
@@ -88,7 +90,7 @@ export default function MapDownloadPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate(localized('/'))}
             className="text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
           >
             &larr; {t('maps.backToHome')}

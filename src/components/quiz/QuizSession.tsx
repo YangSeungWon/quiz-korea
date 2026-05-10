@@ -5,6 +5,7 @@ import { useQuizEngine } from '../../hooks/useQuizEngine';
 import { useTimer } from '../../hooks/useTimer';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
 import { extractRegions, getSidoMeta } from '../../utils/regionUtils';
+import { useLocalePath } from '../../hooks/useLocalePath';
 import { matchesRegionName } from '../../utils/regionUtils';
 import { shuffle } from '../../utils/quizEngine';
 import { useI18n } from '../../i18n/useI18n';
@@ -23,6 +24,7 @@ export default function QuizSession() {
   }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const localized = useLocalePath();
   const { locale, t } = useI18n();
   const prevLocaleRef = useRef(locale);
 
@@ -182,8 +184,8 @@ export default function QuizSession() {
   }, [reset]);
 
   const handleBack = useCallback(() => {
-    navigate('/');
-  }, [navigate]);
+    navigate(localized('/'));
+  }, [navigate, localized]);
 
   if (loading) {
     return (

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useMapData } from '../../hooks/useMapData';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
 import { getDisplayName, getSidoMeta } from '../../utils/regionUtils';
+import { useLocalePath } from '../../hooks/useLocalePath';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import QuizMap from '../../maps/QuizMap';
@@ -12,6 +13,7 @@ import type { AdminLevel } from '../../types';
 export default function LearnMode() {
   const { level: levelParam, sidoSlug } = useParams<{ level: string; sidoSlug: string }>();
   const navigate = useNavigate();
+  const localized = useLocalePath();
   const { locale, t } = useI18n();
   const adminLevel = (levelParam || 'sido') as AdminLevel;
   const sidoMeta = getSidoMeta(sidoSlug || '');
@@ -94,7 +96,7 @@ export default function LearnMode() {
     <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden">
       <div className="flex items-center px-4 py-3 bg-white border-b border-gray-200">
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate(localized('/'))}
           className="text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
         >
           &larr; {t('quiz.back')}

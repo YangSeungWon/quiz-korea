@@ -24,22 +24,34 @@ const QUIZ_MODES = ['pin', 'type'];
 const LEVELS = ['sido', 'sigun', 'sigungu'];
 const METRO_SLUGS = ['seoul', 'busan', 'daegu', 'incheon', 'gwangju', 'daejeon', 'ulsan'];
 const PROVINCE_SLUGS = ['gyeonggi', 'gangwon', 'chungbuk', 'chungnam', 'jeonbuk', 'jeonnam', 'gyeongbuk', 'gyeongnam', 'jeju'];
+const LOCALES = ['ko', 'en'];
+
+function buildLanglessPaths() {
+  const paths = ['/'];
+  for (const mode of QUIZ_MODES) {
+    for (const level of LEVELS) paths.push(`/quiz/${mode}/${level}`);
+    for (const slug of METRO_SLUGS) paths.push(`/quiz/${mode}/sigungu/${slug}`);
+    for (const slug of PROVINCE_SLUGS) paths.push(`/quiz/${mode}/sigun/${slug}`);
+  }
+  for (const level of LEVELS) paths.push(`/learn/${level}`);
+  for (const slug of METRO_SLUGS) paths.push(`/learn/sigungu/${slug}`);
+  for (const slug of PROVINCE_SLUGS) paths.push(`/learn/sigun/${slug}`);
+  // Maps download pages (HTML). 전국 sigungu 백지도는 dense해서 제외.
+  paths.push('/maps/sido', '/maps/sigun');
+  for (const slug of METRO_SLUGS) paths.push(`/maps/sigungu/${slug}`);
+  for (const slug of PROVINCE_SLUGS) paths.push(`/maps/sigun/${slug}`);
+  for (const slug of PROVINCE_SLUGS) paths.push(`/maps/sigungu/${slug}`);
+  return paths;
+}
 
 function buildHtmlRoutes() {
-  const routes = ['/'];
-  for (const mode of QUIZ_MODES) {
-    for (const level of LEVELS) routes.push(`/quiz/${mode}/${level}`);
-    for (const slug of METRO_SLUGS) routes.push(`/quiz/${mode}/sigungu/${slug}`);
-    for (const slug of PROVINCE_SLUGS) routes.push(`/quiz/${mode}/sigun/${slug}`);
+  const langless = buildLanglessPaths();
+  const routes = [];
+  for (const locale of LOCALES) {
+    for (const path of langless) {
+      routes.push(path === '/' ? `/${locale}` : `/${locale}${path}`);
+    }
   }
-  for (const level of LEVELS) routes.push(`/learn/${level}`);
-  for (const slug of METRO_SLUGS) routes.push(`/learn/sigungu/${slug}`);
-  for (const slug of PROVINCE_SLUGS) routes.push(`/learn/sigun/${slug}`);
-  // Maps download pages (HTML). 전국 sigungu 백지도는 너무 dense해서 제외 — sido/sigun만 base.
-  routes.push('/maps/sido', '/maps/sigun');
-  for (const slug of METRO_SLUGS) routes.push(`/maps/sigungu/${slug}`);
-  for (const slug of PROVINCE_SLUGS) routes.push(`/maps/sigun/${slug}`);
-  for (const slug of PROVINCE_SLUGS) routes.push(`/maps/sigungu/${slug}`);
   return routes;
 }
 

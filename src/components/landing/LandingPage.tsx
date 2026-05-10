@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
+import { useLocalePath } from '../../hooks/useLocalePath';
 import RegionPicker from './RegionPicker';
 import QuizCard from './QuizCard';
 import LanguageToggle from '../LanguageToggle';
@@ -19,6 +20,7 @@ const COUNT_OPTIONS = [16, 32, 64, 0] as const; // 0 = all
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const localized = useLocalePath();
   const { t, locale } = useI18n();
   usePageMeta({ title: t('seo.home.title'), description: t('seo.home.desc'), path: '/' });
   const [region, setRegion] = useState<RegionSelection | null>(null);
@@ -57,8 +59,8 @@ export default function LandingPage() {
     const base = selectedMode === 'learn'
       ? `/learn/${region.level}${sidoSegment}/`
       : `/quiz/${selectedMode}/${region.level}${sidoSegment}/`;
-    navigate(qs ? `${base}?${qs}` : base);
-  }, [region, selectedMode, count, borderless, noAccum, outline, navigate]);
+    navigate(localized(qs ? `${base}?${qs}` : base));
+  }, [region, selectedMode, count, borderless, noAccum, outline, navigate, localized]);
 
   const handleModeClick = useCallback(
     (mode: SelectedMode) => {
@@ -211,8 +213,8 @@ export default function LandingPage() {
             지역이 선택되면 그 지역 한정 옵션을 추가로 노출. */}
         {(() => {
           const entries: Array<{ to: string; heading: string }> = [
-            { to: '/maps/sido/', heading: locale === 'en' ? 'All Provinces' : '전국 시도' },
-            { to: '/maps/sigun/', heading: locale === 'en' ? 'All Cities' : '전국 시군' },
+            { to: localized('/maps/sido/'), heading: locale === 'en' ? 'All Provinces' : '전국 시도' },
+            { to: localized('/maps/sigun/'), heading: locale === 'en' ? 'All Cities' : '전국 시군' },
           ];
           const sidoMeta = region?.filter ? getSidoMeta(region.filter) : null;
           if (sidoMeta) {
@@ -221,17 +223,17 @@ export default function LandingPage() {
             if (sidoMeta.type === 'province') {
               // 도: 시군 + 시군구 둘 다 가능
               entries.push({
-                to: `/maps/sigun/${sidoMeta.slug}/`,
+                to: localized(`/maps/sigun/${sidoMeta.slug}/`),
                 heading: `${localName} ${regionLabel}`,
               });
               entries.push({
-                to: `/maps/sigungu/${sidoMeta.slug}/`,
+                to: localized(`/maps/sigungu/${sidoMeta.slug}/`),
                 heading: locale === 'en' ? `${localName} sub-districts` : `${localName} 시군구`,
               });
             } else {
               // 광역시: 자치구만
               entries.push({
-                to: `/maps/sigungu/${sidoMeta.slug}/`,
+                to: localized(`/maps/sigungu/${sidoMeta.slug}/`),
                 heading: `${localName} ${regionLabel}`,
               });
             }
