@@ -146,11 +146,29 @@ JSON 파일은 다음 형식을 따라야 합니다:
 
 ## 데이터 출처
 
-- 행정구역 경계 데이터: [Korea_District](https://github.com/cubensys/Korea_District)
+행정구역 경계 데이터는 두 출처를 사용합니다:
+
+- [southkorea-maps](https://github.com/southkorea/southkorea-maps) — 고해상도 시군구
+  TopoJSON (KOSTAT 행정구역 통계 데이터 기반)
+- [Korea_District](https://github.com/cubensys/Korea_District) — 초기 시도 경계
+
+데이터 라이선스:
+- southkorea-maps의 KOSTAT 부분: "Free to share or remix" (해당 repo README 명시)
+- Korea_District: 라이선스 미명시 — 정부 공공 데이터(KOSTAT) 기반
+
+### 행정구역 기준 시점
+
+본 프로젝트는 **2018년 KOSTAT 기준** 행정구역 데이터를 사용하며, 학습용 도구로서
+전통적인 17개 시도 구분을 의도적으로 유지합니다. 따라서 다음 최근 변경 사항은
+반영되지 않습니다:
+
+- 군위군의 경상북도 → 대구광역시 편입 (2023-07-01)
+- 광주·전남 통합특별시 출범
 
 ## 라이선스
 
-MIT
+코드: MIT  
+지리 데이터: 위 데이터 출처 섹션 참조
 
 ## 기여
 

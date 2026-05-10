@@ -4,7 +4,7 @@ import { useMapData } from '../../hooks/useMapData';
 import { useQuizEngine } from '../../hooks/useQuizEngine';
 import { useTimer } from '../../hooks/useTimer';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
-import { extractRegions, getSidoMeta } from '../../utils/regionUtils';
+import { extractRegions, getSidoMeta, getRegionLabel } from '../../utils/regionUtils';
 import { useLocalePath } from '../../hooks/useLocalePath';
 import { matchesRegionName } from '../../utils/regionUtils';
 import { shuffle } from '../../utils/quizEngine';
@@ -47,13 +47,13 @@ export default function QuizSession() {
   const seoTitle = sidoMeta
     ? t(`seo.quiz.${mode}.filtered.title`, {
         sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
-        regionLabel: locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo,
+        regionLabel: getRegionLabel(sidoMeta, adminLevel, locale),
       })
     : t(`seo.quiz.${mode}.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings);
   const seoDesc = sidoMeta
     ? t(`seo.quiz.${mode}.filtered.desc`, {
         sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
-        regionLabel: locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo,
+        regionLabel: getRegionLabel(sidoMeta, adminLevel, locale),
       })
     : t(`seo.quiz.${mode}.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings);
   const canonicalPath = (() => {

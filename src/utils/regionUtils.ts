@@ -140,6 +140,9 @@ export const SLUG_TO_SIDO: Record<string, string> = Object.fromEntries(
 
 // 광역시 codes (자치구). Others in SIDO_SLUG are 도 (시군).
 const METRO_SIDO = new Set(['11', '26', '27', '28', '29', '30', '31']);
+// 광역시 중에서 "군"을 포함하는 곳 — 부산·대구·인천·울산.
+// 서울/광주/대전은 자치구만 있음.
+const METRO_WITH_GUN = new Set(['26', '27', '28', '31']);
 
 export interface SidoMeta {
   code: string;
@@ -147,23 +150,50 @@ export interface SidoMeta {
   shortName: string;
   shortNameEn: string;
   type: 'metro' | 'province';
-  regionLabelKo: '자치구' | '시군';
-  regionLabelEn: 'districts' | 'cities';
+  // User-facing label that matches actual administrative composition:
+  //  - 서울/광주/대전 → "구"     (자치구만)
+  //  - 부산/대구/인천/울산 → "구·군" (자치구 + 군)
+  //  - 도(province) → "시군"
+  regionLabelKo: '구' | '구·군' | '시군';
+  regionLabelEn: 'districts' | 'districts and counties' | 'cities';
 }
 
 export function getSidoMeta(codeOrSlug: string): SidoMeta | null {
   const code = SLUG_TO_SIDO[codeOrSlug] ?? codeOrSlug;
   if (!SIDO_SLUG[code]) return null;
   const isMetro = METRO_SIDO.has(code);
+  const hasGun = METRO_WITH_GUN.has(code);
   return {
     code,
     slug: SIDO_SLUG[code],
     shortName: SIDO_SHORT[code],
     shortNameEn: SIDO_SHORT_EN[code] ?? '',
     type: isMetro ? 'metro' : 'province',
-    regionLabelKo: isMetro ? '자치구' : '시군',
-    regionLabelEn: isMetro ? 'districts' : 'cities',
+    regionLabelKo: isMetro ? (hasGun ? '구·군' : '구') : '시군',
+    regionLabelEn: isMetro ? (hasGun ? 'districts and counties' : 'districts') : 'cities',
   };
+}
+
+/**
+ * User-facing region label for an inhabited (sido, adminLevel) combo. The
+ * SidoMeta.regionLabel covers the primary case (광역시 → 구/구·군, 도 → 시군),
+ * but 도 also supports a sub-city sigungu view that should be labeled "시군구".
+ */
+export function getRegionLabel(
+  sidoMeta: SidoMeta,
+  adminLevel: 'sido' | 'sigun' | 'sigungu',
+  locale: Locale = 'ko',
+): string {
+  // 광역시: regionLabel is correct regardless of adminLevel (sigun level meaningless).
+  if (sidoMeta.type === 'metro') {
+    return locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo;
+  }
+  // 도 sigungu (e.g. 수원시 영통구) — finer subdivisions
+  if (adminLevel === 'sigungu') {
+    return locale === 'en' ? 'sub-divisions' : '시군구';
+  }
+  // 도 sigun — cities & counties
+  return locale === 'en' ? 'cities' : '시군';
 }
 
 // Get display name: prefix with sido short name for all sigungu features

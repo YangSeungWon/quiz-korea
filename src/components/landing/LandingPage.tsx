@@ -209,40 +209,58 @@ export default function LandingPage() {
           </>
         )}
 
-        {/* Secondary CTA — printable maps download. 전국 (시도/시군)은 항상 노출,
-            지역이 선택되면 그 지역 한정 옵션을 추가로 노출. */}
+        {/* Secondary CTA — printable maps download.
+            Block A (normal cards): 전국 + 현재 선택된 지역 한정
+            Block B (compact chips): 모든 시도의 1차 지도 — 다른 지역도 빠르게 발견·이동 */}
         {(() => {
-          const entries: Array<{ to: string; heading: string }> = [
+          const sidoMeta = region?.filter ? getSidoMeta(region.filter) : null;
+          const sidoLocalName = sidoMeta
+            ? locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName
+            : '';
+
+          // Normal-size cards
+          const blockA: Array<{ to: string; heading: string }> = [
             { to: localized('/maps/sido/'), heading: locale === 'en' ? 'All Provinces' : '전국 시도' },
             { to: localized('/maps/sigun/'), heading: locale === 'en' ? 'All Cities' : '전국 시군' },
           ];
-          const sidoMeta = region?.filter ? getSidoMeta(region.filter) : null;
           if (sidoMeta) {
-            const localName = locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName;
-            const regionLabel = locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo;
             if (sidoMeta.type === 'province') {
-              // 도: 시군 + 시군구 둘 다 가능
-              entries.push({
+              blockA.push({
                 to: localized(`/maps/sigun/${sidoMeta.slug}/`),
-                heading: `${localName} ${regionLabel}`,
+                heading: `${sidoLocalName} 시군`,
               });
-              entries.push({
+              blockA.push({
                 to: localized(`/maps/sigungu/${sidoMeta.slug}/`),
-                heading: locale === 'en' ? `${localName} sub-districts` : `${localName} 시군구`,
+                heading: `${sidoLocalName} 시군구`,
               });
             } else {
-              // 광역시: 자치구만
-              entries.push({
+              // 광역시: regionLabelKo는 "구" (서울/광주/대전) 또는 "구·군" (부산/대구/인천/울산)
+              blockA.push({
                 to: localized(`/maps/sigungu/${sidoMeta.slug}/`),
-                heading: `${localName} ${regionLabel}`,
+                heading: `${sidoLocalName} ${sidoMeta.regionLabelKo}`,
               });
             }
           }
+
+          // Compact chips — every sido's primary filtered map
+          const ALL_SIDO_CODES = ['11', '26', '27', '28', '29', '30', '31', '41', '42', '43', '44', '45', '46', '47', '48', '50'];
+          const blockB = ALL_SIDO_CODES.map((code) => {
+            const meta = getSidoMeta(code);
+            if (!meta) return null;
+            const targetLevel = meta.type === 'metro' ? 'sigungu' : 'sigun';
+            const label = locale === 'en' ? meta.shortNameEn : meta.shortName;
+            return {
+              to: localized(`/maps/${targetLevel}/${meta.slug}/`),
+              label,
+              isCurrent: meta.code === sidoMeta?.code,
+            };
+          }).filter((x): x is NonNullable<typeof x> => x !== null);
+
           return (
             <div className="mt-6">
               <div className="text-xs font-medium text-gray-400 mb-2">{t('landing.maps')}</div>
-              <div className="grid grid-cols-2 gap-3">
-                {entries.map((e) => (
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                {blockA.map((e) => (
                   <Link
                     key={e.to}
                     to={e.to}
@@ -250,6 +268,21 @@ export default function LandingPage() {
                   >
                     <div className="text-sm font-semibold text-gray-700">{e.heading}</div>
                     <div className="text-xs text-gray-500 mt-0.5">{t('landing.mapsDesc')}</div>
+                  </Link>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {blockB.map((b) => (
+                  <Link
+                    key={b.to}
+                    to={b.to}
+                    className={`text-xs px-2 py-1 rounded transition-colors ${
+                      b.isCurrent
+                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {b.label}
                   </Link>
                 ))}
               </div>

@@ -1,12 +1,8 @@
-import { useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useMapData } from '../../hooks/useMapData';
-import { useResponsiveSize } from '../../hooks/useResponsiveSize';
-import { getSidoMeta } from '../../utils/regionUtils';
+import { getSidoMeta, getRegionLabel } from '../../utils/regionUtils';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { useLocalePath } from '../../hooks/useLocalePath';
-import QuizMap from '../../maps/QuizMap';
 import LanguageToggle from '../LanguageToggle';
 import type { AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
@@ -25,7 +21,7 @@ export default function MapDownloadPage() {
   const sidoMeta = getSidoMeta(sidoSlug || '');
 
   const sidoName = sidoMeta ? (locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName) : '';
-  const regionLabel = sidoMeta ? (locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo) : '';
+  const regionLabel = sidoMeta ? getRegionLabel(sidoMeta, adminLevel, locale) : '';
 
   const seoTitle = sidoMeta
     ? t('seo.maps.filtered.title', { sido: sidoName, regionLabel })
@@ -42,23 +38,6 @@ export default function MapDownloadPage() {
     ? `/maps/${adminLevel}/${sidoMeta.slug}/`
     : `/maps/${adminLevel}/`;
   usePageMeta({ title: seoTitle, description: seoDesc, path: canonicalPath });
-
-  const { geoData, topoData, borderMesh, loading } = useMapData(adminLevel);
-  const { containerRef, width, height } = useResponsiveSize();
-  const emptyAnswered = useMemo(() => new Map<string, number>(), []);
-
-  const filteredGeoData = useMemo(() => {
-    if (!geoData || !sidoMeta) return geoData;
-    return {
-      ...geoData,
-      features: geoData.features.filter((f) => {
-        const code = f.properties.SIG_CD || f.properties.CTPRVN_CD || f.properties.code || '';
-        return code.startsWith(sidoMeta.code);
-      }),
-    };
-  }, [geoData, sidoMeta]);
-
-  const showInsets = (adminLevel === 'sigungu' || adminLevel === 'sigun') && !sidoMeta;
 
   const blankUrl = `/downloads/${pdfFilename(adminLevel, sidoMeta?.slug, 'blank')}`;
   const labelUrl = `/downloads/${pdfFilename(adminLevel, sidoMeta?.slug, 'label')}`;
@@ -101,48 +80,44 @@ export default function MapDownloadPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{heading}</h1>
         <p className="text-gray-600 mb-6">{t('maps.intro')}</p>
 
-        {/* Preview map */}
-        <div
-          ref={containerRef}
-          className="bg-white border border-gray-200 rounded-xl overflow-hidden mb-4 aspect-[4/3] flex items-center justify-center"
-        >
-          {loading || !filteredGeoData || !topoData ? (
-            <div className="text-gray-400">…</div>
-          ) : (
-            <QuizMap
-              geoData={filteredGeoData}
-              contextGeoData={sidoMeta ? geoData : null}
-              topoData={topoData}
-              borderMesh={sidoMeta ? null : borderMesh}
-              displayMode="normal"
-              width={width}
-              height={height}
-              showInsets={showInsets}
-              adminLevel={adminLevel}
-              locale={locale}
-              answeredCodes={emptyAnswered}
-              wrongFlashCode={null}
-              showLabels
-            />
-          )}
-        </div>
-
-        {/* Download buttons */}
+        {/* Preview + download — actual PDFs embedded so what you see is what you get */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          <a
-            href={blankUrl}
-            download
-            className="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold text-center transition-colors"
-          >
-            {t('maps.downloadBlankPdf')}
-          </a>
-          <a
-            href={labelUrl}
-            download
-            className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold text-center transition-colors"
-          >
-            {t('maps.downloadLabelPdf')}
-          </a>
+          <div className="flex flex-col gap-2">
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <iframe
+                src={`${blankUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
+                className="block w-full"
+                style={{ aspectRatio: '210 / 297', border: 0 }}
+                title={t('maps.previewBlank')}
+                loading="lazy"
+              />
+            </div>
+            <a
+              href={blankUrl}
+              download
+              className="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold text-center transition-colors"
+            >
+              {t('maps.downloadBlankPdf')}
+            </a>
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+              <iframe
+                src={`${labelUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
+                className="block w-full"
+                style={{ aspectRatio: '210 / 297', border: 0 }}
+                title={t('maps.previewLabel')}
+                loading="lazy"
+              />
+            </div>
+            <a
+              href={labelUrl}
+              download
+              className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold text-center transition-colors"
+            >
+              {t('maps.downloadLabelPdf')}
+            </a>
+          </div>
         </div>
 
         <p className="text-xs text-gray-500 mb-2">{t('maps.usage')}</p>

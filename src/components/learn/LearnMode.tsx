@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMapData } from '../../hooks/useMapData';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
-import { getDisplayName, getSidoMeta } from '../../utils/regionUtils';
+import { getDisplayName, getSidoMeta, getRegionLabel } from '../../utils/regionUtils';
 import { useLocalePath } from '../../hooks/useLocalePath';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
@@ -22,13 +22,13 @@ export default function LearnMode() {
   const seoTitle = sidoMeta
     ? t('seo.learn.filtered.title', {
         sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
-        regionLabel: locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo,
+        regionLabel: getRegionLabel(sidoMeta, adminLevel, locale),
       })
     : t(`seo.learn.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings);
   const seoDesc = sidoMeta
     ? t('seo.learn.filtered.desc', {
         sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
-        regionLabel: locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo,
+        regionLabel: getRegionLabel(sidoMeta, adminLevel, locale),
       })
     : t(`seo.learn.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings);
   const canonicalPath = sidoMeta

@@ -61,7 +61,7 @@ const en: TranslationStrings = {
   'maps.downloadLabelPdf': 'Download Labeled Map PDF',
   'maps.previewBlank': 'Blank map preview',
   'maps.previewLabel': 'Labeled map preview',
-  'maps.usage': 'A4 landscape, free for educational and personal use',
+  'maps.usage': 'A4 portrait · for study, classroom, and practice',
   'maps.dataNote': 'Administrative divisions snapshot: Gunwi-gun in Gyeongbuk · Gwangju and Jeollanam separate (traditional 17 provinces)',
   'maps.backToHome': 'Home',
   'maps.relatedHeading': 'Practice this region',
