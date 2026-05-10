@@ -4,6 +4,7 @@ import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { useLocalePath } from '../../hooks/useLocalePath';
 import LanguageToggle from '../LanguageToggle';
+import MapsBanner from './MapsBanner';
 import type { AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
 
@@ -156,6 +157,12 @@ export default function MapDownloadPage() {
               </Link>
             ))}
           </div>
+        </div>
+
+        {/* Other-region maps banner — same format as the landing page so
+            visitors can hop to another sido's printable map directly. */}
+        <div className="border-t border-gray-200 pt-6 mt-6">
+          <MapsBanner currentSidoCode={sidoMeta?.code} />
         </div>
       </div>
     </div>

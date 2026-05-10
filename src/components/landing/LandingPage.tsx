@@ -1,12 +1,13 @@
 import { useState, useCallback, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { useLocalePath } from '../../hooks/useLocalePath';
 import RegionPicker from './RegionPicker';
 import QuizCard from './QuizCard';
 import LanguageToggle from '../LanguageToggle';
-import { SIDO_SLUG, getSidoMeta } from '../../utils/regionUtils';
+import MapsBanner from '../maps/MapsBanner';
+import { SIDO_SLUG } from '../../utils/regionUtils';
 import type { AdminLevel, QuizMode } from '../../types';
 
 interface RegionSelection {
@@ -21,7 +22,7 @@ const COUNT_OPTIONS = [16, 32, 64, 0] as const; // 0 = all
 export default function LandingPage() {
   const navigate = useNavigate();
   const localized = useLocalePath();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   usePageMeta({ title: t('seo.home.title'), description: t('seo.home.desc'), path: '/' });
   const [region, setRegion] = useState<RegionSelection | null>(null);
   const [count, setCount] = useState(0); // 0 = all
@@ -209,86 +210,10 @@ export default function LandingPage() {
           </>
         )}
 
-        {/* Secondary CTA — printable maps download.
-            Block A (normal cards): 전국 + 현재 선택된 지역 한정
-            Block B (compact chips): 모든 시도의 1차 지도 — 다른 지역도 빠르게 발견·이동 */}
-        {(() => {
-          const sidoMeta = region?.filter ? getSidoMeta(region.filter) : null;
-          const sidoLocalName = sidoMeta
-            ? locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName
-            : '';
-
-          // Normal-size cards
-          const blockA: Array<{ to: string; heading: string }> = [
-            { to: localized('/maps/sido/'), heading: locale === 'en' ? 'All Provinces' : '전국 시도' },
-            { to: localized('/maps/sigun/'), heading: locale === 'en' ? 'All Cities' : '전국 시군' },
-          ];
-          if (sidoMeta) {
-            if (sidoMeta.type === 'province') {
-              blockA.push({
-                to: localized(`/maps/sigun/${sidoMeta.slug}/`),
-                heading: `${sidoLocalName} 시군`,
-              });
-              blockA.push({
-                to: localized(`/maps/sigungu/${sidoMeta.slug}/`),
-                heading: `${sidoLocalName} 시군구`,
-              });
-            } else {
-              // 광역시: regionLabelKo는 "구" (서울/광주/대전) 또는 "구·군" (부산/대구/인천/울산)
-              blockA.push({
-                to: localized(`/maps/sigungu/${sidoMeta.slug}/`),
-                heading: `${sidoLocalName} ${sidoMeta.regionLabelKo}`,
-              });
-            }
-          }
-
-          // Compact chips — every sido's primary filtered map
-          const ALL_SIDO_CODES = ['11', '26', '27', '28', '29', '30', '31', '41', '42', '43', '44', '45', '46', '47', '48', '50'];
-          const blockB = ALL_SIDO_CODES.map((code) => {
-            const meta = getSidoMeta(code);
-            if (!meta) return null;
-            const targetLevel = meta.type === 'metro' ? 'sigungu' : 'sigun';
-            const label = locale === 'en' ? meta.shortNameEn : meta.shortName;
-            return {
-              to: localized(`/maps/${targetLevel}/${meta.slug}/`),
-              label,
-              isCurrent: meta.code === sidoMeta?.code,
-            };
-          }).filter((x): x is NonNullable<typeof x> => x !== null);
-
-          return (
-            <div className="mt-6">
-              <div className="text-xs font-medium text-gray-400 mb-2">{t('landing.maps')}</div>
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                {blockA.map((e) => (
-                  <Link
-                    key={e.to}
-                    to={e.to}
-                    className="block bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-3 transition-colors"
-                  >
-                    <div className="text-sm font-semibold text-gray-700">{e.heading}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{t('landing.mapsDesc')}</div>
-                  </Link>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {blockB.map((b) => (
-                  <Link
-                    key={b.to}
-                    to={b.to}
-                    className={`text-xs px-2 py-1 rounded transition-colors ${
-                      b.isCurrent
-                        ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {b.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
+        {/* Secondary CTA — printable maps download */}
+        <div className="mt-6">
+          <MapsBanner currentSidoCode={region?.filter} />
+        </div>
 
         <footer className="text-center mt-10 text-xs text-gray-400">
           {t('landing.dataSource')}:{' '}
