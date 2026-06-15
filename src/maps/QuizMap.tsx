@@ -402,6 +402,9 @@ export default function QuizMap({
       .scaleExtent([1, 6])
       .extent([[0, 0], [mainWidth, mainHeight]])
       .translateExtent([[0, 0], [mainWidth, mainHeight]])
+      // Don't treat tiny pointer jitter during a click as a pan — otherwise
+      // d3-zoom suppresses the subsequent click and the region won't register.
+      .clickDistance(10)
       .filter((event) => {
         // Block zoom events originating from inset areas
         const target = event.target as Element;
