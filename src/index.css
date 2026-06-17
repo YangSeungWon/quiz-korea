@@ -23,3 +23,28 @@ body {
   50% { opacity: 0; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1.02); }
 }
+
+/* On-demand printable maps (e.g. 읍면동 백지도 worksheet). */
+.print-only { display: none; }
+
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+
+  /* Hide app chrome and anything explicitly marked no-print. */
+  .no-print { display: none !important; }
+
+  /* Reveal print-only elements (e.g. the worksheet title). */
+  .print-only { display: block !important; }
+
+  /* Let the printable surface fill the page instead of the screen viewport. */
+  html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
+  .print-surface {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  /* Blank map: drop the on-screen labels so the print is a fill-in worksheet. */
+  .print-blank svg text { display: none !important; }
+}
