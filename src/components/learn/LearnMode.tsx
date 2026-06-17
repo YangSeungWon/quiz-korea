@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMapData } from '../../hooks/useMapData';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
-import { getDisplayName, getSidoMeta, getRegionLabel } from '../../utils/regionUtils';
+import { getDisplayName, getSidoMeta, getRegionLabel, getSigunguName } from '../../utils/regionUtils';
 import { useLocalePath } from '../../hooks/useLocalePath';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
@@ -16,22 +16,35 @@ export default function LearnMode() {
   const localized = useLocalePath();
   const { locale, t } = useI18n();
   const adminLevel = (levelParam || 'sido') as AdminLevel;
+  const isDong = adminLevel === 'dong';
   const sidoMeta = getSidoMeta(sidoSlug || '');
-  const sidoFilter = sidoMeta?.code;
+  // 동: the :sidoSlug segment carries the raw 5-digit 시군구 code.
+  const sidoFilter = isDong ? (sidoSlug || undefined) : sidoMeta?.code;
+  const dongRegionName = isDong && sidoFilter ? getSigunguName(sidoFilter, locale) : '';
 
-  const seoTitle = sidoMeta
+  const seoTitle = isDong
+    ? (locale === 'en'
+        ? `${dongRegionName} towns — learn`
+        : `${dongRegionName} 읍·면·동 학습`)
+    : sidoMeta
     ? t('seo.learn.filtered.title', {
         sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
         regionLabel: getRegionLabel(sidoMeta, adminLevel, locale),
       })
     : t(`seo.learn.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings);
-  const seoDesc = sidoMeta
+  const seoDesc = isDong
+    ? (locale === 'en'
+        ? `Explore the towns (eup/myeon/dong) of ${dongRegionName}.`
+        : `${dongRegionName}의 읍·면·동을 둘러보세요.`)
+    : sidoMeta
     ? t('seo.learn.filtered.desc', {
         sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
         regionLabel: getRegionLabel(sidoMeta, adminLevel, locale),
       })
     : t(`seo.learn.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings);
-  const canonicalPath = sidoMeta
+  const canonicalPath = isDong && sidoFilter
+    ? `/learn/dong/${sidoFilter}/`
+    : sidoMeta
     ? `/learn/${adminLevel}/${sidoMeta.slug}/`
     : `/learn/${adminLevel}/`;
   usePageMeta({
@@ -40,7 +53,7 @@ export default function LearnMode() {
     path: canonicalPath,
   });
 
-  const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);
+  const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel, sidoFilter);
   const { containerRef, width, height } = useResponsiveSize();
   const [hoveredName, setHoveredName] = useState<string | null>(null);
   const emptyAnsweredCodes = useMemo(() => new Map<string, number>(), []);
@@ -118,7 +131,7 @@ export default function LearnMode() {
       <div ref={containerRef} className="flex-1 min-h-0 flex items-start justify-center pb-4">
         <QuizMap
           geoData={filteredGeoData}
-          contextGeoData={sidoFilter ? geoData : null}
+          contextGeoData={sidoFilter && !isDong ? geoData : null}
           topoData={topoData}
           borderMesh={sidoFilter ? null : borderMesh}
           displayMode="normal"
