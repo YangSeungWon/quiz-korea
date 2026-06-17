@@ -4,7 +4,7 @@ import type { RegionCollection, AdminLevel, MapData } from '../types';
 import type { Topology } from 'topojson-specification';
 import type { MultiLineString } from 'geojson';
 
-export function useMapData(level: AdminLevel = 'sido') {
+export function useMapData(level: AdminLevel = 'sido', filter?: string) {
   const [geoData, setGeoData] = useState<RegionCollection | null>(null);
   const [topoData, setTopoData] = useState<Topology | null>(null);
   const [borderMesh, setBorderMesh] = useState<MultiLineString | null>(null);
@@ -19,7 +19,7 @@ export function useMapData(level: AdminLevel = 'sido') {
       setError(null);
 
       try {
-        const result: MapData = await loadKoreaMapData(level);
+        const result: MapData = await loadKoreaMapData(level, filter);
         if (!cancelled) {
           setGeoData(result.geoData);
           setTopoData(result.topoData);
@@ -41,7 +41,7 @@ export function useMapData(level: AdminLevel = 'sido') {
     return () => {
       cancelled = true;
     };
-  }, [level]);
+  }, [level, filter]);
 
   return { geoData, topoData, borderMesh, loading, error };
 }

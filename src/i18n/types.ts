@@ -25,6 +25,9 @@ export interface TranslationStrings {
   'picker.allSigun': string;
   'picker.sigungu': string;
   'picker.allSigungu': string;
+  'picker.dong': string;
+  'picker.dongPickSido': string;
+  'picker.dongPickSigungu': string;
   'picker.count': string;
   'picker.countAll': string;
 
