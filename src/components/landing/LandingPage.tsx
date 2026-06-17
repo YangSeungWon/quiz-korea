@@ -33,8 +33,13 @@ export default function LandingPage() {
   const [noAccum, setNoAccum] = useState(false);
   const [outline, setOutline] = useState(false);
 
-  // Show count picker for levels with many regions
-  const showCountPicker = region && region.level !== 'sido' && !region.filter;
+  // Show count picker for levels with many regions (not 동 — it's already small)
+  const showCountPicker = region && region.level !== 'sido' && region.level !== 'dong' && !region.filter;
+
+  // 동 requires a 시군구 filter before the quiz can start.
+  const regionReady = !!region && (region.level !== 'dong' || !!region.filter);
+  // Learn mode isn't wired for 동 yet — hide it there.
+  const isDong = region?.level === 'dong';
 
   // Difficulty level based on checked options
   const difficultyCount = useMemo(() => {
@@ -45,8 +50,11 @@ export default function LandingPage() {
 
   const handleStart = useCallback(() => {
     if (!region || !selectedMode) return;
-    const sidoSlug = region.filter ? SIDO_SLUG[region.filter] : undefined;
-    const sidoSegment = sidoSlug ? `/${sidoSlug}` : '';
+    if (region.level === 'dong' && !region.filter) return;
+    // 동: path segment is the raw 5-digit 시군구 code. Others use the sido slug.
+    const sidoSegment = region.level === 'dong'
+      ? (region.filter ? `/${region.filter}` : '')
+      : (region.filter && SIDO_SLUG[region.filter] ? `/${SIDO_SLUG[region.filter]}` : '');
     const params = new URLSearchParams();
     if (count > 0) params.set('count', String(count));
     if (selectedMode === 'pin') {
@@ -97,7 +105,11 @@ export default function LandingPage() {
         </div>
 
         <div className="mb-6">
-          <RegionPicker value={region} onChange={(r) => { setRegion(r); setCount(0); }} />
+          <RegionPicker value={region} onChange={(r) => {
+            setRegion(r);
+            setCount(0);
+            if (r.level === 'dong' && selectedMode === 'learn') setSelectedMode(null);
+          }} />
         </div>
 
         {showCountPicker && (
@@ -123,7 +135,7 @@ export default function LandingPage() {
           </div>
         )}
 
-        {region && (
+        {regionReady && (
           <>
             <div className="text-xs font-medium text-gray-400 mb-2">{t('landing.modeSelect')}</div>
             <div className="grid grid-cols-3 gap-3 mb-4">
@@ -141,13 +153,15 @@ export default function LandingPage() {
                 selected={selectedMode === 'type'}
                 icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M7 16h10"/></svg>}
               />
-              <QuizCard
-                title={t('landing.learnMode')}
-                description={t('landing.learnModeDesc')}
-                onClick={() => handleModeClick('learn')}
-                selected={selectedMode === 'learn'}
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
-              />
+              {!isDong && (
+                <QuizCard
+                  title={t('landing.learnMode')}
+                  description={t('landing.learnModeDesc')}
+                  onClick={() => handleModeClick('learn')}
+                  selected={selectedMode === 'learn'}
+                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
+                />
+              )}
             </div>
 
             {/* Options for pin mode */}

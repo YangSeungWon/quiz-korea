@@ -72,6 +72,9 @@ const ko: TranslationStrings = {
   'picker.allSigun': '전국 {count}개 시군',
   'picker.sigungu': '시군구',
   'picker.allSigungu': '전국 {count}개 시군구',
+  'picker.dong': '읍면동',
+  'picker.dongPickSido': '시도를 먼저 선택하세요',
+  'picker.dongPickSigungu': '시군구를 선택하세요',
   'picker.count': '문제 수',
   'picker.countAll': '전체',
 

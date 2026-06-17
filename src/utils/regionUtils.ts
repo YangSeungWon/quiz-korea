@@ -1,7 +1,8 @@
 import type { Locale } from '../i18n/types';
-import type { RegionCollection, RegionFeature, QuizRegion } from '../types';
+import type { RegionCollection, RegionFeature, QuizRegion, AdminLevel } from '../types';
 import { SIDO_MAP_EN, SIDO_SHORT_EN, SIDO_SHORT_FORMS_EN } from '../i18n/regions/sido';
 import { SIGUNGU_NAMES_EN } from '../i18n/regions/en';
+import { DONG_NAMES_EN, SIGUNGU_NAMES_KO } from '../i18n/regions/dong';
 
 // Extract code from feature properties (fallback chain)
 export function getRegionCode(feature: RegionFeature): string {
@@ -20,6 +21,8 @@ export function getRegionNameLocale(feature: RegionFeature, locale: Locale = 'ko
   const code = getRegionCode(feature);
   // Sigun merged feature
   if (feature.properties.SIGUN_NAME_EN) return feature.properties.SIGUN_NAME_EN as string;
+  // 동(읍면동) — 8-digit code, won't collide with sigungu/sido lookups
+  if (DONG_NAMES_EN[code]) return DONG_NAMES_EN[code];
   // Try sigungu lookup first
   if (SIGUNGU_NAMES_EN[code]) return SIGUNGU_NAMES_EN[code];
   // Try sido lookup
@@ -183,9 +186,13 @@ export function getSidoMeta(codeOrSlug: string): SidoMeta | null {
  */
 export function getRegionLabel(
   sidoMeta: SidoMeta,
-  adminLevel: 'sido' | 'sigun' | 'sigungu',
+  adminLevel: AdminLevel,
   locale: Locale = 'ko',
 ): string {
+  // 동(읍면동)
+  if (adminLevel === 'dong') {
+    return locale === 'en' ? 'towns' : '읍·면·동';
+  }
   // 광역시: regionLabel is correct regardless of adminLevel (sigun level meaningless).
   if (sidoMeta.type === 'metro') {
     return locale === 'en' ? sidoMeta.regionLabelEn : sidoMeta.regionLabelKo;
@@ -267,11 +274,12 @@ export function getCompactDisplayName(feature: RegionFeature, locale: Locale = '
   return stripKoCompactSuffix(short);
 }
 
-// Sigungu suffixes that can be dropped (Korean)
-const SIGUNGU_SUFFIXES = ['특별시', '광역시', '특별자치시', '특별자치도', '시', '군', '구'];
+// Sigungu / 동 suffixes that can be dropped (Korean). 동/읍/면 added for 동 mode
+// so "사직" matches "사직동".
+const SIGUNGU_SUFFIXES = ['특별시', '광역시', '특별자치시', '특별자치도', '시', '군', '구', '동', '읍', '면'];
 
 // English suffixes that can be dropped
-const SIGUNGU_SUFFIXES_EN = ['-gu', '-si', '-do', '-gun'];
+const SIGUNGU_SUFFIXES_EN = ['-gu', '-si', '-do', '-gun', '-dong', '-eup', '-myeon'];
 
 // Check if user input matches a region name (supports short forms)
 export function matchesRegionName(input: string, regionName: string, locale: Locale = 'ko'): boolean {
@@ -344,6 +352,22 @@ export function matchesRegionName(input: string, regionName: string, locale: Loc
   }
 
   return false;
+}
+
+// Sigungu display name from a 5-digit code (for 동 mode SEO / prompts).
+// Prefixes the 시도 short name unless the sigungu name is already compound.
+export function getSigunguName(code: string, locale: Locale = 'ko'): string {
+  const sido = code.substring(0, 2);
+  if (locale === 'en') {
+    const en = SIGUNGU_NAMES_EN[code];
+    if (!en) return code;
+    const prefix = SIDO_SHORT_EN[sido];
+    return prefix ? `${prefix} ${en}` : en;
+  }
+  const ko = SIGUNGU_NAMES_KO[code];
+  if (!ko) return code;
+  const prefix = SIDO_SHORT[sido];
+  return prefix && !ko.includes(' ') ? `${prefix} ${ko}` : ko;
 }
 
 // Get sido list for sigungu filtering

@@ -4,7 +4,7 @@ import { useMapData } from '../../hooks/useMapData';
 import { useQuizEngine } from '../../hooks/useQuizEngine';
 import { useTimer } from '../../hooks/useTimer';
 import { useResponsiveSize } from '../../hooks/useResponsiveSize';
-import { extractRegions, getSidoMeta, getRegionLabel } from '../../utils/regionUtils';
+import { extractRegions, getSidoMeta, getRegionLabel, getSigunguName } from '../../utils/regionUtils';
 import { useLocalePath } from '../../hooks/useLocalePath';
 import { matchesRegionName } from '../../utils/regionUtils';
 import { shuffle } from '../../utils/quizEngine';
@@ -30,8 +30,11 @@ export default function QuizSession() {
 
   const mode = (modeParam || 'pin') as QuizMode;
   const adminLevel = (levelParam || 'sido') as AdminLevel;
+  const isDong = adminLevel === 'dong';
   const sidoMeta = getSidoMeta(sidoSlug || '');
-  const sidoFilter = sidoMeta?.code;
+  // 동: the :sidoSlug segment carries the raw 5-digit 시군구 code.
+  const sidoFilter = isDong ? (sidoSlug || undefined) : sidoMeta?.code;
+  const dongRegionName = isDong && sidoFilter ? getSigunguName(sidoFilter, locale) : '';
   const countParam = parseInt(searchParams.get('count') || '0', 10) || 0;
 
   // Option query params
@@ -44,20 +47,33 @@ export default function QuizSession() {
     mode === 'type' && outline ? 'outline-only' :
     'normal';
 
-  const seoTitle = sidoMeta
+  const dongModeWord = mode === 'pin'
+    ? (locale === 'en' ? 'find' : '위치 맞히기')
+    : (locale === 'en' ? 'name' : '이름 맞히기');
+  const seoTitle = isDong
+    ? (locale === 'en'
+        ? `${dongRegionName} towns — ${dongModeWord} quiz`
+        : `${dongRegionName} 읍·면·동 ${dongModeWord} 퀴즈`)
+    : sidoMeta
     ? t(`seo.quiz.${mode}.filtered.title`, {
         sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
         regionLabel: getRegionLabel(sidoMeta, adminLevel, locale),
       })
     : t(`seo.quiz.${mode}.${adminLevel}.title` as keyof import('../../i18n/types').TranslationStrings);
-  const seoDesc = sidoMeta
+  const seoDesc = isDong
+    ? (locale === 'en'
+        ? `Quiz on the towns (eup/myeon/dong) of ${dongRegionName}.`
+        : `${dongRegionName}의 읍·면·동을 맞히는 퀴즈.`)
+    : sidoMeta
     ? t(`seo.quiz.${mode}.filtered.desc`, {
         sido: locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName,
         regionLabel: getRegionLabel(sidoMeta, adminLevel, locale),
       })
     : t(`seo.quiz.${mode}.${adminLevel}.desc` as keyof import('../../i18n/types').TranslationStrings);
   const canonicalPath = (() => {
-    const base = sidoMeta
+    const base = isDong && sidoFilter
+      ? `/quiz/${mode}/dong/${sidoFilter}/`
+      : sidoMeta
       ? `/quiz/${mode}/${adminLevel}/${sidoMeta.slug}/`
       : `/quiz/${mode}/${adminLevel}/`;
     const opts: string[] = [];
@@ -72,7 +88,7 @@ export default function QuizSession() {
     path: canonicalPath,
   });
 
-  const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);
+  const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel, sidoFilter);
   const { state, currentRegion, progress, start, answerCorrect, answerWrong, reset } =
     useQuizEngine();
   const { formatted: elapsedTime } = useTimer(state.phase);
@@ -237,7 +253,7 @@ export default function QuizSession() {
       <div ref={containerRef} className={`flex-1 min-h-0 flex items-start justify-center ${isFinished ? 'pt-4' : ''} pb-4`}>
         <QuizMap
           geoData={filteredGeoData!}
-          contextGeoData={sidoFilter ? geoData : null}
+          contextGeoData={sidoFilter && !isDong ? geoData : null}
           topoData={topoData}
           borderMesh={sidoFilter ? null : borderMesh}
           displayMode={isFinished ? 'normal' : displayMode}
@@ -283,7 +299,7 @@ export default function QuizSession() {
               </button>
               <span className="text-gray-300">|</span>
               <span className="text-xs text-gray-500">
-                {t(mode === 'pin' ? 'landing.pinQuiz' : 'landing.typeQuiz')} · {t(adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun')}
+                {t(mode === 'pin' ? 'landing.pinQuiz' : 'landing.typeQuiz')} · {t(adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : adminLevel === 'dong' ? 'picker.dong' : 'picker.sigun')}{isDong && dongRegionName ? ` · ${dongRegionName}` : ''}
                 {(() => {
                   const opts: string[] = [];
                   if (borderless) opts.push(t('landing.optBorderless'));

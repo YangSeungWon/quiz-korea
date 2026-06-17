@@ -5,7 +5,25 @@ import { buildSigunData } from './sigunMerge';
 
 const cache = new Map<string, MapData>();
 
-export async function loadKoreaMapData(level: AdminLevel): Promise<MapData> {
+export async function loadKoreaMapData(level: AdminLevel, filter?: string): Promise<MapData> {
+  // 동(읍면동): one file per 시도, picked from the sigungu filter's 시도 prefix.
+  if (level === 'dong') {
+    const sido = (filter || '').substring(0, 2);
+    if (!sido) throw new Error('dong level requires a sigungu filter');
+    const cacheKey = `dong-${sido}`;
+    if (cache.has(cacheKey)) return cache.get(cacheKey)!;
+    const response = await fetch(`/data/dong/korea-dong-${sido}.json`);
+    if (!response.ok) {
+      throw new Error(`Failed to load dong data (${sido}): ${response.statusText}`);
+    }
+    const topology = (await response.json()) as Topology;
+    const objectKey = Object.keys(topology.objects)[0];
+    const geoData = feature(topology, topology.objects[objectKey]) as RegionCollection;
+    const result: MapData = { geoData, topoData: topology };
+    cache.set(cacheKey, result);
+    return result;
+  }
+
   if (cache.has(level)) return cache.get(level)!;
 
   // sigun uses sigungu data, merged at runtime
