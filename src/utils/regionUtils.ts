@@ -207,6 +207,11 @@ export function getRegionLabel(
 
 // Get display name: prefix with sido short name for all sigungu features
 export function getDisplayName(feature: RegionFeature, locale: Locale = 'ko'): string {
+  // 동(읍면동): 8-digit code, plain name with no 시도 prefix (already scoped to a 시군구)
+  const dongCode = getRegionCode(feature);
+  if (dongCode.length === 8) {
+    return locale === 'en' ? (DONG_NAMES_EN[dongCode] || getRegionName(feature)) : getRegionName(feature);
+  }
   // Sigun merged features have their own name
   if (feature.properties.SIGUN_NAME_EN && locale === 'en') {
     const code = getRegionCode(feature);
@@ -243,7 +248,7 @@ export function getShortDisplayName(feature: RegionFeature, locale: Locale = 'ko
   if (locale === 'en') {
     if (feature.properties.SIGUN_NAME_EN) return feature.properties.SIGUN_NAME_EN as string;
     const code = getRegionCode(feature);
-    return SIGUNGU_NAMES_EN[code] || SIDO_MAP_EN[code] || getRegionName(feature);
+    return DONG_NAMES_EN[code] || SIGUNGU_NAMES_EN[code] || SIDO_MAP_EN[code] || getRegionName(feature);
   }
   return getRegionName(feature);
 }
