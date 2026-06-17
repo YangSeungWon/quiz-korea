@@ -6,8 +6,8 @@ import { SIDO_MAP } from './regionUtils';
 import { SIDO_MAP_EN } from '../i18n/regions/sido';
 import { SIGUNGU_NAMES_EN } from '../i18n/regions/en';
 
-// Metro city codes — group all districts into one
-export const METRO_CODES = new Set(['11', '26', '27', '28', '29', '30', '31', '36']);
+// Metro city codes — group all districts into one (SGIS codes; incl. 세종=29)
+export const METRO_CODES = new Set(['11', '21', '22', '23', '24', '25', '26', '29']);
 
 interface SigunGroup {
   groupKey: string;

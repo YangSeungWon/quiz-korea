@@ -16,8 +16,8 @@ const PRINT_HEIGHT = 1123;
 // Outlier sigungu codes — pulled out of the main map and rendered in dedicated
 // inset boxes so the mainland doesn't get squished by their distant bbox.
 // 신안군 (46910)은 outlier로 분류하지 않고 본토와 함께 그림 — 살짝만 서쪽으로 튀어남.
-const OUTLIER_DONGHAE = ['47940']; // 경북 울릉군 (울릉도/독도)
-const OUTLIER_SEOHAE = ['28720']; // 인천 옹진군 (백령도/대청도/연평도)
+const OUTLIER_DONGHAE = ['37630']; // 경북 울릉군 (울릉도/독도)
+const OUTLIER_SEOHAE = ['23520']; // 인천 옹진군 (백령도/대청도/연평도)
 
 // Density-zone bbox는 메인 서비스(QuizMap.tsx INSET_ZONES)와 동일하게 좁게 잡음.
 // centroid가 bbox 안에 있는 sigungu만 inset으로 넘기고, 외곽(경기 양평·포천 등)은 본 지도에 둠.
@@ -220,8 +220,8 @@ export default function MapPrintView() {
 
       {/* Outlier insets — layered absolute on top of the main map */}
       {partitioned && (() => {
-        const seohaeBig = sidoMeta?.code === '28';   // /maps/.../incheon
-        const donghaeBig = sidoMeta?.code === '47';  // /maps/.../gyeongbuk
+        const seohaeBig = sidoMeta?.code === '23';   // /maps/.../incheon
+        const donghaeBig = sidoMeta?.code === '37';  // /maps/.../gyeongbuk
         const seohaeW = seohaeBig ? FILTERED_OUTLIER_W : INSET_W;
         const seohaeH = seohaeBig ? FILTERED_OUTLIER_H : INSET_H;
         const donghaeW = donghaeBig ? FILTERED_OUTLIER_W : INSET_W;
