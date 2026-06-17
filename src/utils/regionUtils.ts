@@ -50,25 +50,25 @@ export function extractRegions(
   }));
 }
 
-// Sido code-to-name mapping
+// Sido code-to-name mapping (SGIS census codes, BASE_DATE 2025-06-30)
 export const SIDO_MAP: Record<string, string> = {
   '11': '서울특별시',
-  '26': '부산광역시',
-  '27': '대구광역시',
-  '28': '인천광역시',
-  '29': '광주광역시',
-  '30': '대전광역시',
-  '31': '울산광역시',
-  '36': '세종특별자치시',
-  '41': '경기도',
-  '42': '강원특별자치도',
-  '43': '충청북도',
-  '44': '충청남도',
-  '45': '전북특별자치도',
-  '46': '전라남도',
-  '47': '경상북도',
-  '48': '경상남도',
-  '50': '제주특별자치도',
+  '21': '부산광역시',
+  '22': '대구광역시',
+  '23': '인천광역시',
+  '24': '광주광역시',
+  '25': '대전광역시',
+  '26': '울산광역시',
+  '29': '세종특별자치시',
+  '31': '경기도',
+  '32': '강원특별자치도',
+  '33': '충청북도',
+  '34': '충청남도',
+  '35': '전북특별자치도',
+  '36': '전라남도',
+  '37': '경상북도',
+  '38': '경상남도',
+  '39': '제주특별자치도',
 };
 
 // Short-form matching for sido names (Korean)
@@ -91,46 +91,48 @@ const SIDO_SHORT_FORMS: Record<string, string> = {
   '경남': '경상남도',
   '제주': '제주특별자치도',
 };
+// NOTE: SIDO_SHORT_FORMS above is keyed by name, not code — unaffected by code scheme.
 
 // Sido code → short name for prefixing duplicates
 export const SIDO_SHORT: Record<string, string> = {
   '11': '서울',
-  '26': '부산',
-  '27': '대구',
-  '28': '인천',
-  '29': '광주',
-  '30': '대전',
-  '31': '울산',
-  '41': '경기',
-  '42': '강원',
-  '43': '충북',
-  '44': '충남',
-  '45': '전북',
-  '46': '전남',
-  '47': '경북',
-  '48': '경남',
-  '50': '제주',
+  '21': '부산',
+  '22': '대구',
+  '23': '인천',
+  '24': '광주',
+  '25': '대전',
+  '26': '울산',
+  '29': '세종',
+  '31': '경기',
+  '32': '강원',
+  '33': '충북',
+  '34': '충남',
+  '35': '전북',
+  '36': '전남',
+  '37': '경북',
+  '38': '경남',
+  '39': '제주',
 };
 
 // Sido code → English slug for SEO-friendly URLs (e.g. ?sido=seoul)
 // Sejong (36) is omitted since it's a single 자치시 with no meaningful filtered view.
 export const SIDO_SLUG: Record<string, string> = {
   '11': 'seoul',
-  '26': 'busan',
-  '27': 'daegu',
-  '28': 'incheon',
-  '29': 'gwangju',
-  '30': 'daejeon',
-  '31': 'ulsan',
-  '41': 'gyeonggi',
-  '42': 'gangwon',
-  '43': 'chungbuk',
-  '44': 'chungnam',
-  '45': 'jeonbuk',
-  '46': 'jeonnam',
-  '47': 'gyeongbuk',
-  '48': 'gyeongnam',
-  '50': 'jeju',
+  '21': 'busan',
+  '22': 'daegu',
+  '23': 'incheon',
+  '24': 'gwangju',
+  '25': 'daejeon',
+  '26': 'ulsan',
+  '31': 'gyeonggi',
+  '32': 'gangwon',
+  '33': 'chungbuk',
+  '34': 'chungnam',
+  '35': 'jeonbuk',
+  '36': 'jeonnam',
+  '37': 'gyeongbuk',
+  '38': 'gyeongnam',
+  '39': 'jeju',
 };
 
 // Reverse: slug → admin code
@@ -138,11 +140,11 @@ export const SLUG_TO_SIDO: Record<string, string> = Object.fromEntries(
   Object.entries(SIDO_SLUG).map(([code, slug]) => [slug, code]),
 );
 
-// 광역시 codes (자치구). Others in SIDO_SLUG are 도 (시군).
-const METRO_SIDO = new Set(['11', '26', '27', '28', '29', '30', '31']);
+// 광역시 codes (자치구). Others in SIDO_SLUG are 도 (시군). SGIS codes.
+const METRO_SIDO = new Set(['11', '21', '22', '23', '24', '25', '26']);
 // 광역시 중에서 "군"을 포함하는 곳 — 부산·대구·인천·울산.
-// 서울/광주/대전은 자치구만 있음.
-const METRO_WITH_GUN = new Set(['26', '27', '28', '31']);
+// 서울/광주/대전은 자치구만 있음. (대구는 2023년 군위군 편입으로 군 보유)
+const METRO_WITH_GUN = new Set(['21', '22', '23', '26']);
 
 export interface SidoMeta {
   code: string;
@@ -348,20 +350,8 @@ export function matchesRegionName(input: string, regionName: string, locale: Loc
 export function getSidoList(geoData: RegionCollection, locale: Locale = 'ko'): Array<{ code: string; name: string }> {
   const sidoMap = new Map<string, string>();
 
-  // Extended map to handle legacy codes (51=강원, 52=전북)
-  const codeMapKo: Record<string, string> = {
-    ...SIDO_MAP,
-    '51': '강원특별자치도',
-    '52': '전북특별자치도',
-  };
-
-  const codeMapEn: Record<string, string> = {
-    ...SIDO_MAP_EN,
-    '51': 'Gangwon-do',
-    '52': 'Jeollabuk-do',
-  };
-
-  const codeMap = locale === 'en' ? codeMapEn : codeMapKo;
+  // SGIS census codes: 강원=32, 전북=35 (covered by SIDO_MAP / SIDO_MAP_EN).
+  const codeMap = locale === 'en' ? SIDO_MAP_EN : SIDO_MAP;
 
   for (const feature of geoData.features) {
     const sigCode = feature.properties.SIG_CD || '';

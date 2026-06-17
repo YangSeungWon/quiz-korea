@@ -22,7 +22,7 @@ const COUNT_OPTIONS = [16, 32, 64, 0] as const; // 0 = all
 export default function LandingPage() {
   const navigate = useNavigate();
   const localized = useLocalePath();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   usePageMeta({ title: t('seo.home.title'), description: t('seo.home.desc'), path: '/' });
   const [region, setRegion] = useState<RegionSelection | null>(null);
   const [count, setCount] = useState(0); // 0 = all
@@ -218,21 +218,14 @@ export default function LandingPage() {
         <footer className="text-center mt-10 text-xs text-gray-400">
           {t('landing.dataSource')}:{' '}
           <a
-            href="https://github.com/cubensys/Korea_District"
+            href="https://sgis.mods.go.kr/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-400 hover:underline"
           >
-            Korea_District
-          </a>
-          {', '}
-          <a
-            href="https://github.com/southkorea/southkorea-maps"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-400 hover:underline"
-          >
-            southkorea-maps
+            {locale === 'en'
+              ? 'SGIS (Statistics Korea), 2025'
+              : '통계청 SGIS 행정구역경계 (2025)'}
           </a>
         </footer>
       </div>
