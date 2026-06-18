@@ -18,7 +18,8 @@ const H = 630;
 const TITLE = '한국 지리 퀴즈';
 const SUBTITLE = '시도·시군구·읍면동을 지도에서 찾아보세요';
 
-const topo = JSON.parse(await readFile(join(root, 'public/data/korea-sido.json'), 'utf-8'));
+// Use the sigungu map so every district shows — it's rendered large.
+const topo = JSON.parse(await readFile(join(root, 'public/data/korea-sigungu.json'), 'utf-8'));
 const objKey = Object.keys(topo.objects)[0];
 const fc = feature(topo, topo.objects[objKey]);
 const borders = mesh(topo, topo.objects[objKey]);
