@@ -87,7 +87,10 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
       arr.push(f);
       by4.set(p4, arr);
     }
-    const out: DongScope[] = [];
+    // Standalone 시군구 first (so the simple ones are all visible up top),
+    // then the multi-구 city groups at the back.
+    const plains: DongScope[] = [];
+    const cities: DongScope[] = [];
     for (const [p4, arr] of [...by4].sort((a, b) => a[0].localeCompare(b[0]))) {
       arr.sort((a, b) => (a.properties.SIG_CD as string).localeCompare(b.properties.SIG_CD as string));
       const isCity = new Set(arr.map((f) => f.properties.SIG_CD)).size > 1;
@@ -99,12 +102,12 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
           const gu = fn.includes(' ') ? fn.split(' ').slice(1).join(' ') : fn;
           return { code: f.properties.SIG_CD as string, label: gu };
         });
-        out.push({ kind: 'city', code: p4, label: city, gus });
+        cities.push({ kind: 'city', code: p4, label: city, gus });
       } else {
-        out.push({ kind: 'plain', code: arr[0].properties.SIG_CD as string, label: getShortDisplayName(arr[0], locale) });
+        plains.push({ kind: 'plain', code: arr[0].properties.SIG_CD as string, label: getShortDisplayName(arr[0], locale) });
       }
     }
-    return out;
+    return [...plains, ...cities];
   }, [geoData, dongSido, locale]);
 
   return (
