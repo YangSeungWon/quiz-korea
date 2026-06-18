@@ -71,13 +71,36 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
 
   const isAllSelected = value && !value.filter;
 
-  // 시군구 list for the chosen 시도 (동 mode step 2)
-  const sigunguInSido = useMemo(() => {
+  // 동 mode step 2: scope list for the chosen 시도. 일반구 도시(수원·성남 등,
+  // 4자리 코드를 공유하는 여러 구)는 "시 전체"(4자리) + 개별 구(5자리)를 함께 노출.
+  const dongScopes = useMemo(() => {
     if (!geoData || !dongSido) return [];
-    return geoData.features
-      .filter((f) => (f.properties.SIG_CD || '').startsWith(dongSido))
-      .map((f) => ({ code: f.properties.SIG_CD as string, name: getShortDisplayName(f, locale) }))
-      .sort((a, b) => a.code.localeCompare(b.code));
+    const feats = geoData.features.filter((f) => (f.properties.SIG_CD || '').startsWith(dongSido));
+    const by4 = new Map<string, typeof feats>();
+    for (const f of feats) {
+      const p4 = (f.properties.SIG_CD as string).slice(0, 4);
+      const arr = by4.get(p4) ?? [];
+      arr.push(f);
+      by4.set(p4, arr);
+    }
+    const out: { code: string; label: string; kind: 'city' | 'gu' | 'plain' }[] = [];
+    for (const [p4, arr] of [...by4].sort((a, b) => a[0].localeCompare(b[0]))) {
+      arr.sort((a, b) => (a.properties.SIG_CD as string).localeCompare(b.properties.SIG_CD as string));
+      const isCity = new Set(arr.map((f) => f.properties.SIG_CD)).size > 1;
+      if (isCity) {
+        const full = getShortDisplayName(arr[0], locale); // "수원시 영통구" / "Suwon Yeongtong-gu"
+        const city = locale === 'en' ? `${full.split(' ')[0]}-si` : full.split(' ')[0];
+        out.push({ code: p4, label: city, kind: 'city' });
+        for (const f of arr) {
+          const fn = getShortDisplayName(f, locale);
+          const gu = fn.includes(' ') ? fn.split(' ').slice(1).join(' ') : fn;
+          out.push({ code: f.properties.SIG_CD as string, label: gu, kind: 'gu' });
+        }
+      } else {
+        out.push({ code: arr[0].properties.SIG_CD as string, label: getShortDisplayName(arr[0], locale), kind: 'plain' });
+      }
+    }
+    return out;
   }, [geoData, dongSido, locale]);
 
   return (
@@ -157,18 +180,32 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
             <p className="text-xs text-gray-400 text-center py-1">{t('picker.dongPickSido')}</p>
           ) : (
             <div className="grid grid-cols-4 gap-1.5">
-              {sigunguInSido.map((sg) => {
-                const isSelected = value?.filter === sg.code;
+              {dongScopes.map((sc) => {
+                const isSelected = value?.filter === sc.code;
+                if (sc.kind === 'city') {
+                  return (
+                    <button
+                      key={sc.code}
+                      onClick={() => onChange({ level: 'dong', filter: sc.code })}
+                      title={sc.label}
+                      className={`col-span-4 px-2 py-1.5 rounded text-xs font-semibold text-left transition-colors ${
+                        isSelected ? selectedBtn : unselectedBtn
+                      }`}
+                    >
+                      {sc.label} {locale === 'en' ? '(all)' : '전체'}
+                    </button>
+                  );
+                }
                 return (
                   <button
-                    key={sg.code}
-                    onClick={() => onChange({ level: 'dong', filter: sg.code })}
-                    title={sg.name}
+                    key={sc.code}
+                    onClick={() => onChange({ level: 'dong', filter: sc.code })}
+                    title={sc.label}
                     className={`px-1 py-1.5 rounded text-xs font-medium transition-colors truncate ${
-                      isSelected ? selectedBtn : unselectedBtn
-                    }`}
+                      sc.kind === 'gu' ? 'pl-3' : ''
+                    } ${isSelected ? selectedBtn : unselectedBtn}`}
                   >
-                    {sg.name}
+                    {sc.label}
                   </button>
                 );
               })}
