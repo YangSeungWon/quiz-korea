@@ -205,8 +205,10 @@ export default function QuizSession() {
   }, [reset]);
 
   const handleBack = useCallback(() => {
-    navigate(localized('/'));
-  }, [navigate, localized]);
+    // Return to the landing page with this region pre-selected, so the mode
+    // cards show immediately (= back to mode selection, region kept).
+    navigate(localized('/'), { state: { region: { level: adminLevel, filter: sidoFilter } } });
+  }, [navigate, localized, adminLevel, sidoFilter]);
 
   if (loading) {
     return (
@@ -302,10 +304,11 @@ export default function QuizSession() {
             <div className="pointer-events-auto flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg px-4 py-2 shadow text-sm">
               <button
                 onClick={handleBack}
-                className="text-gray-400 hover:text-gray-700 transition-colors"
+                className="flex items-center gap-1 font-medium text-gray-600 hover:text-blue-600 transition-colors"
                 title={t('results.backToModes')}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                {t('results.backToModes')}
               </button>
               <span className="text-gray-300">|</span>
               <span className="text-xs text-gray-500">

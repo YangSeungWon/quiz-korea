@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { useLocalePath } from '../../hooks/useLocalePath';
@@ -44,7 +44,11 @@ export default function LandingPage() {
   const localized = useLocalePath();
   const { t, locale } = useI18n();
   usePageMeta({ title: t('seo.home.title'), description: t('seo.home.desc'), path: '/' });
-  const [region, setRegion] = useState<RegionSelection | null>(null);
+  // Coming back from a quiz/learn session pre-selects that region (so the mode
+  // cards show immediately — "back to mode selection, region kept").
+  const location = useLocation();
+  const returnedRegion = (location.state as { region?: RegionSelection } | null)?.region ?? null;
+  const [region, setRegion] = useState<RegionSelection | null>(returnedRegion);
   const [count, setCount] = useState(0); // 0 = all
 
   // Difficulty option toggles (chips). Persist across mode launches.
