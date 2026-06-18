@@ -62,7 +62,7 @@ const en: TranslationStrings = {
   'maps.previewBlank': 'Blank map preview',
   'maps.previewLabel': 'Labeled map preview',
   'maps.usage': 'A4 portrait · for study, classroom, and practice',
-  'maps.dataNote': 'Administrative divisions snapshot: Gunwi-gun in Gyeongbuk · Gwangju and Jeollanam separate (traditional 17 provinces)',
+  'maps.dataNote': 'Administrative boundaries: Statistics Korea (SGIS) 2025 census',
   'maps.backToHome': 'Home',
   'maps.relatedHeading': 'Practice this region',
 
