@@ -359,10 +359,28 @@ export function matchesRegionName(input: string, regionName: string, locale: Loc
   return false;
 }
 
-// Sigungu display name from a 5-digit code (for 동 mode SEO / prompts).
-// Prefixes the 시도 short name unless the sigungu name is already compound.
+// Display name for a 동-mode scope code (used for SEO / prompts):
+//  - 5-digit → a single 시군구/구 (e.g. "서울 종로구", "수원시 영통구")
+//  - 4-digit → a 일반구 city merged across its 구 (e.g. "수원시", "Suwon-si")
 export function getSigunguName(code: string, locale: Locale = 'ko'): string {
   const sido = code.substring(0, 2);
+
+  // 시 전체 (일반구 합본): derive the city name from any child 시군구.
+  if (code.length === 4) {
+    if (locale === 'en') {
+      const child = Object.entries(SIGUNGU_NAMES_EN).find(([c]) => c.startsWith(code));
+      if (!child) return code;
+      const city = child[1].split(' ')[0]; // "Suwon Jangan-gu" → "Suwon"
+      const prefix = SIDO_SHORT_EN[sido];
+      return prefix ? `${prefix} ${city}-si` : `${city}-si`;
+    }
+    const childKo = Object.entries(SIGUNGU_NAMES_KO).find(([c]) => c.startsWith(code));
+    if (!childKo) return code;
+    const city = childKo[1].split(' ')[0]; // "수원시 영통구" → "수원시"
+    const prefix = SIDO_SHORT[sido];
+    return prefix ? `${prefix} ${city}` : city;
+  }
+
   if (locale === 'en') {
     const en = SIGUNGU_NAMES_EN[code];
     if (!en) return code;
