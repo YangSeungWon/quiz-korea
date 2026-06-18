@@ -87,7 +87,7 @@ const en: TranslationStrings = {
   'quiz.loadError': 'Failed to load data.',
 
   'learn.title': 'Learn Mode',
-  'learn.hoverHint': 'Hover over a region to see its name',
+  'learn.hoverHint': 'Tap or hover a region to see its name',
 
   'results.title': 'Quiz Complete',
   'results.perfect': 'Perfect!',
