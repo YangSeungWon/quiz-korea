@@ -36,6 +36,10 @@ export default function QuizSession() {
   // 동: the :sidoSlug segment carries the raw 5-digit 시군구 code.
   const sidoFilter = isDong ? (sidoSlug || undefined) : sidoMeta?.code;
   const dongRegionName = isDong && sidoFilter ? getSigunguName(sidoFilter, locale) : '';
+  // Region the quiz is scoped to, for results/share labels (empty = 전국).
+  const regionLabel = isDong
+    ? dongRegionName
+    : (sidoMeta ? (locale === 'en' ? sidoMeta.shortNameEn : sidoMeta.shortName) : '');
   const countParam = parseInt(searchParams.get('count') || '0', 10) || 0;
 
   // Option query params
@@ -301,7 +305,7 @@ export default function QuizSession() {
               </button>
               <span className="text-gray-300">|</span>
               <span className="text-xs text-gray-500">
-                {t(mode === 'pin' ? 'landing.pinQuiz' : 'landing.typeQuiz')} · {t(adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : adminLevel === 'dong' ? 'picker.dong' : 'picker.sigun')}{isDong && dongRegionName ? ` · ${dongRegionName}` : ''}
+                {t(mode === 'pin' ? 'landing.pinQuiz' : 'landing.typeQuiz')} · {regionLabel ? `${regionLabel} ` : ''}{t(adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : adminLevel === 'dong' ? 'picker.dong' : 'picker.sigun')}
                 {(() => {
                   const opts: string[] = [];
                   if (borderless) opts.push(t('landing.optBorderless'));
@@ -343,6 +347,7 @@ export default function QuizSession() {
                   elapsedTime={elapsedTime}
                   mode={mode}
                   adminLevel={adminLevel}
+                  regionLabel={regionLabel}
                   isSubset={countParam > 0}
                   borderless={borderless}
                   noAccum={noAccum}

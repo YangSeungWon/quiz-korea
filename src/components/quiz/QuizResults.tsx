@@ -9,6 +9,8 @@ interface QuizResultsProps {
   elapsedTime: string;
   mode: QuizMode;
   adminLevel: AdminLevel;
+  /** Region the quiz was scoped to (e.g. "경기", "수원시"). Empty for 전국. */
+  regionLabel?: string;
   isSubset: boolean;
   borderless?: boolean;
   noAccum?: boolean;
@@ -24,6 +26,7 @@ export default function QuizResults({
   elapsedTime,
   mode,
   adminLevel,
+  regionLabel,
   isSubset,
   borderless,
   noAccum,
@@ -72,14 +75,14 @@ export default function QuizResults({
               pin: 'landing.pinQuiz',
               type: 'landing.typeQuiz',
             };
-            const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun';
+            const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : adminLevel === 'dong' ? 'picker.dong' : 'picker.sigun';
             const opts: string[] = [];
             if (borderless) opts.push(t('landing.optBorderless'));
             if (noAccum) opts.push(t('landing.optNoAccum'));
             if (outline) opts.push(t('landing.optOutline'));
             return (
               <>
-                <div>{t(modeKeys[mode])} · {t(levelKey)}{isSubset ? ` ${totalRegions}` : ''}</div>
+                <div>{t(modeKeys[mode])} · {regionLabel ? `${regionLabel} ` : ''}{t(levelKey)}{isSubset ? ` ${totalRegions}` : ''}</div>
                 {opts.length > 0 && (
                   <div className="text-gray-400">[{opts.join(', ')}]</div>
                 )}
@@ -105,13 +108,14 @@ export default function QuizResults({
                 pin: 'landing.pinQuiz',
                 type: 'landing.typeQuiz',
               };
-              const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : 'picker.sigun';
+              const levelKey: keyof TranslationStrings = adminLevel === 'sido' ? 'picker.sido' : adminLevel === 'sigungu' ? 'picker.sigungu' : adminLevel === 'dong' ? 'picker.dong' : 'picker.sigun';
               const opts: string[] = [];
               if (borderless) opts.push(t('landing.optBorderless'));
               if (noAccum) opts.push(t('landing.optNoAccum'));
               if (outline) opts.push(t('landing.optOutline'));
               const optStr = opts.length > 0 ? ` [${opts.join(', ')}]` : '';
-              const modeLine = `${t(modeKeys[mode])} · ${t(levelKey)}${isSubset ? ` ${totalRegions}` : ''}${optStr}`;
+              const regionStr = regionLabel ? `${regionLabel} ` : '';
+              const modeLine = `${t(modeKeys[mode])} · ${regionStr}${t(levelKey)}${isSubset ? ` ${totalRegions}` : ''}${optStr}`;
               const text = `${t('results.shareText')}\n${modeLine}\n${firstTryCount}/${totalRegions} | ${elapsedTime}\nquiz-korea.ysw.kr`;
               if (navigator.share) {
                 try {
