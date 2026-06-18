@@ -62,7 +62,7 @@ const ko: TranslationStrings = {
   'maps.previewBlank': '백지도 미리보기',
   'maps.previewLabel': '이름 라벨 미리보기',
   'maps.usage': 'A4 세로 · 학습/수업/연습용',
-  'maps.dataNote': '행정구역 기준: 군위군 경북 소속 · 광주광역시·전라남도 분리 시점 (전통 17개 시도 구분)',
+  'maps.dataNote': '행정구역 기준: 통계청 SGIS 2025년 센서스 경계',
   'maps.backToHome': '메인으로',
   'maps.relatedHeading': '이 지역으로 학습하기',
 
