@@ -39,6 +39,7 @@ export interface TranslationStrings {
   'quiz.back': string;
   'quiz.loading': string;
   'quiz.loadError': string;
+  'quiz.answerLabel': string;
 
   // Learn
   'learn.title': string;

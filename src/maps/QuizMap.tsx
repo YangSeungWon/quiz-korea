@@ -129,6 +129,9 @@ interface QuizMapProps {
   targetRegionCode?: string | null;
   answeredCodes: Map<string, number>;
   wrongFlashCode: string | null;
+  /** Briefly flash a wrongly-clicked region's border red (pin mode). */
+  wrongPulseCode?: string | null;
+  wrongPulseKey?: number;
   hoveredCode?: string | null;
   onRegionClick?: (code: string) => void;
   onRegionHover?: (code: string | null) => void;
@@ -178,6 +181,8 @@ export default function QuizMap({
   targetRegionCode,
   answeredCodes,
   wrongFlashCode,
+  wrongPulseCode,
+  wrongPulseKey,
   onRegionClick,
   onRegionHover,
   showLabels = false,
@@ -206,6 +211,24 @@ export default function QuizMap({
   targetRegionCodeRef.current = targetRegionCode;
   onRegionClickRef.current = onRegionClick;
   onRegionHoverRef.current = onRegionHover;
+
+  // Pin mode: briefly flash a wrongly-clicked region's border red. WAAPI with
+  // fill:none reverts to the d3-set stroke automatically, so no manual restore.
+  useEffect(() => {
+    if (!wrongPulseKey || !wrongPulseCode) return;
+    const els = regionElsRef.current.get(wrongPulseCode);
+    if (!els) return;
+    for (const el of els) {
+      el.animate(
+        [
+          { stroke: '#dc2626', strokeWidth: '3px', offset: 0 },
+          { stroke: '#dc2626', strokeWidth: '3px', offset: 0.6 },
+          { stroke: '#dc2626', strokeWidth: '1px', offset: 1 },
+        ],
+        { duration: 600, easing: 'ease-out' },
+      );
+    }
+  }, [wrongPulseKey, wrongPulseCode]);
 
   // In outline-only mode, target change needs structural rebuild
   const structuralTargetCode = displayMode === 'outline-only' ? targetRegionCode : undefined;

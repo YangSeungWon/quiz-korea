@@ -100,6 +100,7 @@ export default function QuizSession() {
   const { formatted: elapsedTime, elapsedMs } = useTimer(state.phase);
   const { containerRef, width, height } = useResponsiveSize();
   const [showResults, setShowResults] = useState(true);
+  const [wrongPulse, setWrongPulse] = useState<{ code: string; n: number } | null>(null);
   const [record, setRecord] = useState<ReturnType<typeof saveAttempt> | null>(null);
   const recordedRef = useRef(false);
 
@@ -202,6 +203,7 @@ export default function QuizSession() {
         answerCorrect();
       } else {
         answerWrong();
+        setWrongPulse((prev) => ({ code: clickedCode, n: (prev?.n ?? 0) + 1 }));
       }
     },
     [currentRegion, state.phase, state.answered, noAccum, answerCorrect, answerWrong],
@@ -279,6 +281,7 @@ export default function QuizSession() {
             currentRegion={currentRegion}
             onTypeSubmit={handleTypeAnswer}
             wrongShakeKey={state.wrongAttempts}
+            revealAnswer={mode === 'type' && state.currentWrongCount >= 3}
           />
         </>
       )}
@@ -302,6 +305,8 @@ export default function QuizSession() {
           }
           answeredCodes={answeredCodes}
           wrongFlashCode={state.wrongFlashCode}
+          wrongPulseCode={wrongPulse?.code ?? null}
+          wrongPulseKey={wrongPulse?.n ?? 0}
           onRegionClick={!isFinished && isPinMode ? handlePinAnswer : undefined}
           resetZoom={isFinished}
         />

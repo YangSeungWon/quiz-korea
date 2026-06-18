@@ -4,16 +4,38 @@ import { useI18n } from '../../i18n/useI18n';
 interface TypeInputProps {
   onSubmit: (input: string) => void;
   placeholder?: string;
+  /** Increments on each wrong answer — triggers a shake + red flash. */
+  wrongKey?: number;
 }
 
-export default function TypeInput({ onSubmit, placeholder }: TypeInputProps) {
+export default function TypeInput({ onSubmit, placeholder, wrongKey }: TypeInputProps) {
   const { t } = useI18n();
   const [value, setValue] = useState('');
+  const [wrong, setWrong] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const firstRun = useRef(true);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Wrong-answer feedback: shake the input and flash its border red.
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; return; }
+    setWrong(true);
+    inputRef.current?.animate(
+      [
+        { transform: 'translateX(0)' },
+        { transform: 'translateX(-5px)' },
+        { transform: 'translateX(5px)' },
+        { transform: 'translateX(-3px)' },
+        { transform: 'translateX(0)' },
+      ],
+      { duration: 300, easing: 'ease' },
+    );
+    const id = setTimeout(() => setWrong(false), 600);
+    return () => clearTimeout(id);
+  }, [wrongKey]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +53,11 @@ export default function TypeInput({ onSubmit, placeholder }: TypeInputProps) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
-        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-center text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+        className={`flex-1 px-4 py-2 border rounded-lg text-center text-lg focus:outline-none focus:ring-2 ${
+          wrong
+            ? 'border-red-400 ring-2 ring-red-200 text-red-600'
+            : 'border-gray-300 focus:ring-blue-400 focus:border-transparent'
+        }`}
         autoComplete="off"
         spellCheck={false}
       />
