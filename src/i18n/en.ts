@@ -85,6 +85,7 @@ const en: TranslationStrings = {
   'quiz.back': 'Back',
   'quiz.loading': 'Loading data...',
   'quiz.loadError': 'Failed to load data.',
+  'quiz.answerLabel': 'Answer',
 
   'learn.title': 'Learn Mode',
   'learn.hoverHint': 'Tap or hover a region to see its name',

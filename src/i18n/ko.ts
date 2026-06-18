@@ -85,6 +85,7 @@ const ko: TranslationStrings = {
   'quiz.back': '뒤로',
   'quiz.loading': '데이터 로딩 중...',
   'quiz.loadError': '데이터를 불러오지 못했습니다.',
+  'quiz.answerLabel': '정답',
 
   'learn.title': '학습 모드',
   'learn.hoverHint': '지역을 탭하거나 마우스를 올려 이름을 확인하세요',

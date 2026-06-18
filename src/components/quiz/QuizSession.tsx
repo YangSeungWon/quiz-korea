@@ -279,6 +279,7 @@ export default function QuizSession() {
             currentRegion={currentRegion}
             onTypeSubmit={handleTypeAnswer}
             wrongShakeKey={state.wrongAttempts}
+            revealAnswer={mode === 'type' && state.currentWrongCount >= 3}
           />
         </>
       )}

@@ -7,6 +7,8 @@ interface QuizPromptProps {
   currentRegion: QuizRegion | null;
   onTypeSubmit: (input: string) => void;
   wrongShakeKey?: number;
+  /** Reveal the answer name (type mode, after several wrong attempts). */
+  revealAnswer?: boolean;
 }
 
 export default function QuizPrompt({
@@ -14,6 +16,7 @@ export default function QuizPrompt({
   currentRegion,
   onTypeSubmit,
   wrongShakeKey,
+  revealAnswer,
 }: QuizPromptProps) {
   const { t } = useI18n();
 
@@ -24,11 +27,18 @@ export default function QuizPrompt({
   return (
     <div className="text-center py-3 px-4">
       {isTypeMode ? (
-        <TypeInput
-          key={currentRegion.code}
-          onSubmit={onTypeSubmit}
-          placeholder={t('quiz.typePlaceholder')}
-        />
+        <div className="flex flex-col items-center gap-1">
+          <TypeInput
+            key={currentRegion.code}
+            onSubmit={onTypeSubmit}
+            placeholder={t('quiz.typePlaceholder')}
+          />
+          {revealAnswer && (
+            <p className="text-sm text-amber-600">
+              {t('quiz.answerLabel')}: <span className="font-bold">{currentRegion.name}</span>
+            </p>
+          )}
+        </div>
       ) : (
         <p
           key={wrongShakeKey}
