@@ -8,6 +8,7 @@ import { extractRegions, getSidoMeta, getRegionLabel, getSigunguName } from '../
 import { useLocalePath } from '../../hooks/useLocalePath';
 import { matchesRegionName } from '../../utils/regionUtils';
 import { shuffle } from '../../utils/quizEngine';
+import { saveAttempt } from '../../utils/records';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import QuizMap from '../../maps/QuizMap';
@@ -96,9 +97,11 @@ export default function QuizSession() {
   const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel, sidoFilter);
   const { state, currentRegion, progress, start, answerCorrect, answerWrong, reset } =
     useQuizEngine();
-  const { formatted: elapsedTime } = useTimer(state.phase);
+  const { formatted: elapsedTime, elapsedMs } = useTimer(state.phase);
   const { containerRef, width, height } = useResponsiveSize();
   const [showResults, setShowResults] = useState(true);
+  const [record, setRecord] = useState<ReturnType<typeof saveAttempt> | null>(null);
+  const recordedRef = useRef(false);
 
   // noAccum: visibleAnswered with 1-second fadeout — only show the latest answer
   const [visibleAnswered, setVisibleAnswered] = useState<Map<string, number>>(new Map());
@@ -134,6 +137,24 @@ export default function QuizSession() {
       prevAnsweredKeys.current = new Set();
     }
   }, [state.phase]);
+
+  // Save a personal-best record once when the quiz finishes (learn has no
+  // QuizSession). Reset the guard so a retry records its own attempt.
+  useEffect(() => {
+    if (state.phase !== 'finished') {
+      recordedRef.current = false;
+      setRecord(null);
+      return;
+    }
+    if (recordedRef.current) return;
+    recordedRef.current = true;
+    let correct = 0;
+    for (const m of state.answered.values()) if (m === 0) correct++;
+    setRecord(saveAttempt(
+      { mode, adminLevel, filter: sidoFilter, count: countParam, borderless, noAccum, outline },
+      { correct, total: state.totalRegions, timeMs: elapsedMs, dateISO: new Date().toISOString() },
+    ));
+  }, [state.phase, state.answered, state.totalRegions, mode, adminLevel, sidoFilter, countParam, borderless, noAccum, outline, elapsedMs]);
 
   const regions = useMemo(() => {
     if (!geoData) return [];
@@ -355,6 +376,7 @@ export default function QuizSession() {
                   mode={mode}
                   adminLevel={adminLevel}
                   regionLabel={regionLabel}
+                  record={record}
                   isSubset={countParam > 0}
                   borderless={borderless}
                   noAccum={noAccum}

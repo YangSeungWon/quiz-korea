@@ -11,6 +11,7 @@ import {
 import LandingPage from './components/landing/LandingPage';
 import QuizSession from './components/quiz/QuizSession';
 import LearnMode from './components/learn/LearnMode';
+import RecordsPage from './components/records/RecordsPage';
 import MapDownloadPage from './components/maps/MapDownloadPage';
 import MapPrintView from './components/maps/MapPrintView';
 import { I18nProvider } from './i18n/I18nContext';
@@ -124,6 +125,7 @@ function App() {
         {/* Lang-prefixed canonical routes */}
         <Route path="/:lang" element={<LangScope />}>
           <Route index element={<LandingPage />} />
+          <Route path="records" element={<RecordsPage />} />
           <Route path="quiz/:mode/:level" element={<QuizSession />} />
           <Route path="quiz/:mode/:level/:sidoSlug" element={<QuizSession />} />
           <Route path="learn/:level" element={<LearnMode />} />

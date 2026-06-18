@@ -103,6 +103,17 @@ const en: TranslationStrings = {
   'results.share': 'Share',
   'results.copied': 'Copied!',
   'results.shareText': 'Korea Geography Quiz 🇰🇷',
+  'results.newRecord': '🎉 New record!',
+  'results.bestRecord': 'Best',
+  'results.viewRecords': 'View my records',
+
+  'records.title': 'My Records',
+  'records.subtitle': 'Best score per quiz, saved in this browser',
+  'records.empty': 'No records yet. Play a quiz!',
+  'records.replay': 'Replay',
+  'records.clear': 'Clear records',
+  'records.clearConfirm': 'Delete all records?',
+  'records.link': 'My Records',
 };
 
 export default en;

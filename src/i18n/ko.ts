@@ -103,6 +103,17 @@ const ko: TranslationStrings = {
   'results.share': '공유',
   'results.copied': '복사됨!',
   'results.shareText': '한국 지리 퀴즈 🇰🇷',
+  'results.newRecord': '🎉 신기록!',
+  'results.bestRecord': '최고 기록',
+  'results.viewRecords': '내 기록 보기',
+
+  'records.title': '내 기록',
+  'records.subtitle': '이 브라우저에 저장된 퀴즈별 최고 기록',
+  'records.empty': '아직 기록이 없어요. 퀴즈를 풀어보세요!',
+  'records.replay': '다시 도전',
+  'records.clear': '기록 초기화',
+  'records.clearConfirm': '모든 기록을 삭제할까요?',
+  'records.link': '내 기록',
 };
 
 export default ko;
