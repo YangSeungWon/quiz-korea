@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
@@ -19,6 +19,26 @@ type SelectedMode = QuizMode | 'learn';
 
 const COUNT_OPTIONS = [16, 32, 64, 0] as const; // 0 = all
 
+// A difficulty toggle shown under a mode card. Active = harder (orange ▲).
+// Toggling it does not start the quiz — only the mode card does.
+function DifficultyChip({ active, onToggle, label }: { active: boolean; onToggle: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={active}
+      className={`w-full text-[11px] leading-tight px-1.5 py-1 rounded-md border text-left transition-colors flex items-center gap-1 ${
+        active
+          ? 'bg-orange-50 border-orange-300 text-orange-700'
+          : 'bg-white border-gray-200 text-gray-400 hover:border-orange-200'
+      }`}
+    >
+      <span className={active ? 'text-orange-500' : 'text-gray-300'}>▲</span>
+      <span className="truncate">{label}</span>
+    </button>
+  );
+}
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const localized = useLocalePath();
@@ -26,9 +46,8 @@ export default function LandingPage() {
   usePageMeta({ title: t('seo.home.title'), description: t('seo.home.desc'), path: '/' });
   const [region, setRegion] = useState<RegionSelection | null>(null);
   const [count, setCount] = useState(0); // 0 = all
-  const [selectedMode, setSelectedMode] = useState<SelectedMode | null>(null);
 
-  // Option toggles
+  // Difficulty option toggles (chips). Persist across mode launches.
   const [borderless, setBorderless] = useState(false);
   const [noAccum, setNoAccum] = useState(false);
   const [outline, setOutline] = useState(false);
@@ -38,58 +57,32 @@ export default function LandingPage() {
 
   // 동 requires a 시군구 filter before the quiz/learn can start.
   const regionReady = !!region && (region.level !== 'dong' || !!region.filter);
+  const harderLabel = locale === 'en' ? 'Harder ↑' : '난이도 ↑';
 
-  // Difficulty level based on checked options
-  const difficultyCount = useMemo(() => {
-    if (selectedMode === 'pin') return (borderless ? 1 : 0) + (noAccum ? 1 : 0);
-    if (selectedMode === 'type') return outline ? 1 : 0;
-    return 0;
-  }, [selectedMode, borderless, noAccum, outline]);
-
-  const handleStart = useCallback(() => {
-    if (!region || !selectedMode) return;
-    if (region.level === 'dong' && !region.filter) return;
-    // 동: path segment is the raw 5-digit 시군구 code. Others use the sido slug.
-    const sidoSegment = region.level === 'dong'
-      ? (region.filter ? `/${region.filter}` : '')
-      : (region.filter && SIDO_SLUG[region.filter] ? `/${SIDO_SLUG[region.filter]}` : '');
-    const params = new URLSearchParams();
-    if (count > 0) params.set('count', String(count));
-    if (selectedMode === 'pin') {
-      if (borderless) params.set('borderless', '1');
-      if (noAccum) params.set('noaccum', '1');
-    }
-    if (selectedMode === 'type' && outline) {
-      params.set('outline', '1');
-    }
-    const qs = params.toString();
-    const base = selectedMode === 'learn'
-      ? `/learn/${region.level}${sidoSegment}/`
-      : `/quiz/${selectedMode}/${region.level}${sidoSegment}/`;
-    navigate(localized(qs ? `${base}?${qs}` : base));
-  }, [region, selectedMode, count, borderless, noAccum, outline, navigate, localized]);
-
-  const handleModeClick = useCallback(
+  // Clicking a mode card starts immediately, using the difficulty chips'
+  // current state. No intermediate "start" step.
+  const launch = useCallback(
     (mode: SelectedMode) => {
-      if (selectedMode === mode) {
-        setSelectedMode(null);
-      } else {
-        setSelectedMode(mode);
-        setBorderless(false);
-        setNoAccum(false);
-        setOutline(false);
+      if (!region || (region.level === 'dong' && !region.filter)) return;
+      // 동: path segment is the raw 5-digit 시군구 code. Others use the sido slug.
+      const sidoSegment = region.level === 'dong'
+        ? (region.filter ? `/${region.filter}` : '')
+        : (region.filter && SIDO_SLUG[region.filter] ? `/${SIDO_SLUG[region.filter]}` : '');
+      const params = new URLSearchParams();
+      if (count > 0) params.set('count', String(count));
+      if (mode === 'pin') {
+        if (borderless) params.set('borderless', '1');
+        if (noAccum) params.set('noaccum', '1');
       }
+      if (mode === 'type' && outline) params.set('outline', '1');
+      const qs = params.toString();
+      const base = mode === 'learn'
+        ? `/learn/${region.level}${sidoSegment}/`
+        : `/quiz/${mode}/${region.level}${sidoSegment}/`;
+      navigate(localized(qs ? `${base}?${qs}` : base));
     },
-    [selectedMode],
+    [region, count, borderless, noAccum, outline, navigate, localized],
   );
-
-  const startLabel = selectedMode === 'learn'
-    ? t('landing.learnMode')
-    : selectedMode === 'pin'
-      ? t('landing.pinQuiz')
-      : selectedMode === 'type'
-        ? t('landing.typeQuiz')
-        : '';
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
@@ -131,88 +124,46 @@ export default function LandingPage() {
 
         {regionReady && (
           <>
-            <div className="text-xs font-medium text-gray-400 mb-2">{t('landing.modeSelect')}</div>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <QuizCard
-                title={t('landing.pinQuiz')}
-                description={t('landing.pinQuizDesc')}
-                onClick={() => handleModeClick('pin')}
-                selected={selectedMode === 'pin'}
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>}
-              />
-              <QuizCard
-                title={t('landing.typeQuiz')}
-                description={t('landing.typeQuizDesc')}
-                onClick={() => handleModeClick('type')}
-                selected={selectedMode === 'type'}
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M7 16h10"/></svg>}
-              />
-              <QuizCard
-                title={t('landing.learnMode')}
-                description={t('landing.learnModeDesc')}
-                onClick={() => handleModeClick('learn')}
-                selected={selectedMode === 'learn'}
-                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
-              />
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-400">{t('landing.modeSelect')}</span>
+              <span className="text-[11px] text-blue-400 font-medium">
+                {locale === 'en' ? 'Tap a mode to start →' : '누르면 바로 시작 →'}
+              </span>
             </div>
-
-            {/* Options for pin mode */}
-            {selectedMode === 'pin' && (
-              <div className="mb-4 bg-white border border-blue-200 rounded-xl p-4 space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={borderless}
-                    onChange={(e) => setBorderless(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{t('landing.optBorderless')}</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={noAccum}
-                    onChange={(e) => setNoAccum(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{t('landing.optNoAccum')}</span>
-                </label>
+            <div className="grid grid-cols-3 gap-3 mb-4 items-start">
+              {/* 클릭 퀴즈 */}
+              <div className="flex flex-col gap-1.5">
+                <QuizCard
+                  title={t('landing.pinQuiz')}
+                  description={t('landing.pinQuizDesc')}
+                  onClick={() => launch('pin')}
+                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>}
+                />
+                <span className="text-[9px] font-semibold text-orange-400 px-0.5 mt-0.5">{harderLabel}</span>
+                <DifficultyChip active={borderless} onToggle={() => setBorderless((v) => !v)} label={t('landing.optBorderless')} />
+                <DifficultyChip active={noAccum} onToggle={() => setNoAccum((v) => !v)} label={t('landing.optNoAccum')} />
               </div>
-            )}
-
-            {/* Options for type mode */}
-            {selectedMode === 'type' && (
-              <div className="mb-4 bg-white border border-blue-200 rounded-xl p-4 space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={outline}
-                    onChange={(e) => setOutline(e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">{t('landing.optOutline')}</span>
-                </label>
+              {/* 타이핑 퀴즈 */}
+              <div className="flex flex-col gap-1.5">
+                <QuizCard
+                  title={t('landing.typeQuiz')}
+                  description={t('landing.typeQuizDesc')}
+                  onClick={() => launch('type')}
+                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M7 16h10"/></svg>}
+                />
+                <span className="text-[9px] font-semibold text-orange-400 px-0.5 mt-0.5">{harderLabel}</span>
+                <DifficultyChip active={outline} onToggle={() => setOutline((v) => !v)} label={t('landing.optOutline')} />
               </div>
-            )}
-
-            {/* Unified start button */}
-            {selectedMode && (
-              <button
-                onClick={handleStart}
-                className={`relative w-full text-white py-3 rounded-xl font-semibold transition-colors overflow-hidden ${
-                  difficultyCount >= 2
-                    ? 'bg-red-500 hover:bg-red-600'
-                    : difficultyCount === 1
-                      ? 'bg-orange-500 hover:bg-orange-600'
-                      : selectedMode === 'learn'
-                        ? 'bg-green-500 hover:bg-green-600'
-                        : 'bg-blue-500 hover:bg-blue-600'
-                }`}
-              >
-                <span className="absolute inset-0 animate-[ripple_2s_ease-in-out_infinite] rounded-xl border-2 border-white/30" />
-                <span className="relative">{startLabel}</span>
-              </button>
-            )}
+              {/* 학습 모드 (옵션 없음) */}
+              <div className="flex flex-col gap-1.5">
+                <QuizCard
+                  title={t('landing.learnMode')}
+                  description={t('landing.learnModeDesc')}
+                  onClick={() => launch('learn')}
+                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
+                />
+              </div>
+            </div>
           </>
         )}
 
