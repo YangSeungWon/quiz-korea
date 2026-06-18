@@ -32,6 +32,7 @@ export default function QuizPrompt({
             key={currentRegion.code}
             onSubmit={onTypeSubmit}
             placeholder={t('quiz.typePlaceholder')}
+            wrongKey={wrongShakeKey}
           />
           {revealAnswer && (
             <p className="text-sm text-amber-600">
