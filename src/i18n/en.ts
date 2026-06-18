@@ -18,7 +18,7 @@ const en: TranslationStrings = {
   'landing.dataSource': 'Data source',
 
   'seo.home.title': 'Korea Geography Quiz - Provinces & Districts Map Quiz',
-  'seo.home.desc': 'Test your knowledge of South Korean geography with interactive map quizzes',
+  'seo.home.desc': 'Test your knowledge of South Korean geography — provinces, districts, and towns — with interactive map quizzes',
   'seo.quiz.pin.sido.title': 'Provinces Click Quiz - Korea Geography Quiz',
   'seo.quiz.pin.sido.desc': 'Click the correct province on the map of South Korea',
   'seo.quiz.pin.sigun.title': 'Cities Click Quiz - Korea Geography Quiz',
