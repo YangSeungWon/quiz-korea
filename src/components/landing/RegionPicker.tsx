@@ -72,8 +72,12 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
   const isAllSelected = value && !value.filter;
 
   // 동 mode step 2: scope list for the chosen 시도. 일반구 도시(수원·성남 등,
-  // 4자리 코드를 공유하는 여러 구)는 "시 전체"(4자리) + 개별 구(5자리)를 함께 노출.
-  const dongScopes = useMemo(() => {
+  // 4자리 코드를 공유하는 여러 구)는 하나의 묶음으로 — "시 전체"(4자리) + 개별
+  // 구(5자리)를 한 카드 안에 담아 소속 관계를 드러냄. 그 외는 단일 버튼.
+  type DongScope =
+    | { kind: 'plain'; code: string; label: string }
+    | { kind: 'city'; code: string; label: string; gus: { code: string; label: string }[] };
+  const dongScopes = useMemo<DongScope[]>(() => {
     if (!geoData || !dongSido) return [];
     const feats = geoData.features.filter((f) => (f.properties.SIG_CD || '').startsWith(dongSido));
     const by4 = new Map<string, typeof feats>();
@@ -83,21 +87,21 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
       arr.push(f);
       by4.set(p4, arr);
     }
-    const out: { code: string; label: string; kind: 'city' | 'gu' | 'plain' }[] = [];
+    const out: DongScope[] = [];
     for (const [p4, arr] of [...by4].sort((a, b) => a[0].localeCompare(b[0]))) {
       arr.sort((a, b) => (a.properties.SIG_CD as string).localeCompare(b.properties.SIG_CD as string));
       const isCity = new Set(arr.map((f) => f.properties.SIG_CD)).size > 1;
       if (isCity) {
         const full = getShortDisplayName(arr[0], locale); // "수원시 영통구" / "Suwon Yeongtong-gu"
         const city = locale === 'en' ? `${full.split(' ')[0]}-si` : full.split(' ')[0];
-        out.push({ code: p4, label: city, kind: 'city' });
-        for (const f of arr) {
+        const gus = arr.map((f) => {
           const fn = getShortDisplayName(f, locale);
           const gu = fn.includes(' ') ? fn.split(' ').slice(1).join(' ') : fn;
-          out.push({ code: f.properties.SIG_CD as string, label: gu, kind: 'gu' });
-        }
+          return { code: f.properties.SIG_CD as string, label: gu };
+        });
+        out.push({ kind: 'city', code: p4, label: city, gus });
       } else {
-        out.push({ code: arr[0].properties.SIG_CD as string, label: getShortDisplayName(arr[0], locale), kind: 'plain' });
+        out.push({ kind: 'plain', code: arr[0].properties.SIG_CD as string, label: getShortDisplayName(arr[0], locale) });
       }
     }
     return out;
@@ -181,32 +185,54 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
           ) : (
             <div className="grid grid-cols-4 gap-1.5">
               {dongScopes.map((sc) => {
-                const isSelected = value?.filter === sc.code;
-                if (sc.kind === 'city') {
+                if (sc.kind === 'plain') {
+                  const isSelected = value?.filter === sc.code;
                   return (
                     <button
                       key={sc.code}
                       onClick={() => onChange({ level: 'dong', filter: sc.code })}
                       title={sc.label}
-                      className={`col-span-4 px-2 py-1.5 rounded text-xs font-semibold text-left transition-colors ${
+                      className={`px-1 py-1.5 rounded text-xs font-medium transition-colors truncate ${
                         isSelected ? selectedBtn : unselectedBtn
+                      }`}
+                    >
+                      {sc.label}
+                    </button>
+                  );
+                }
+                // 일반구 도시 — 한 카드로 묶어 "시 전체" + 소속 구를 담음
+                const cityActive = value?.filter === sc.code || sc.gus.some((g) => g.code === value?.filter);
+                return (
+                  <div
+                    key={sc.code}
+                    className={`col-span-4 rounded-lg border p-1.5 transition-colors ${
+                      cityActive ? 'border-blue-300 bg-blue-50/60' : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <button
+                      onClick={() => onChange({ level: 'dong', filter: sc.code })}
+                      title={sc.label}
+                      className={`w-full px-2 py-1.5 rounded text-xs font-semibold text-left transition-colors ${
+                        value?.filter === sc.code ? selectedBtn : unselectedBtn
                       }`}
                     >
                       {sc.label} {locale === 'en' ? '(all)' : '전체'}
                     </button>
-                  );
-                }
-                return (
-                  <button
-                    key={sc.code}
-                    onClick={() => onChange({ level: 'dong', filter: sc.code })}
-                    title={sc.label}
-                    className={`px-1 py-1.5 rounded text-xs font-medium transition-colors truncate ${
-                      sc.kind === 'gu' ? 'pl-3' : ''
-                    } ${isSelected ? selectedBtn : unselectedBtn}`}
-                  >
-                    {sc.label}
-                  </button>
+                    <div className="grid grid-cols-4 gap-1.5 mt-1.5">
+                      {sc.gus.map((g) => (
+                        <button
+                          key={g.code}
+                          onClick={() => onChange({ level: 'dong', filter: g.code })}
+                          title={g.label}
+                          className={`px-1 py-1.5 rounded text-xs font-medium transition-colors truncate ${
+                            value?.filter === g.code ? selectedBtn : unselectedBtn
+                          }`}
+                        >
+                          {g.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 );
               })}
             </div>
