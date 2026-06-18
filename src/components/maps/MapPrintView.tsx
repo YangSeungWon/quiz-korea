@@ -174,8 +174,25 @@ export default function MapPrintView() {
     styleEl.id = 'print-view-reset';
     styleEl.textContent = `
       @page { size: A4 portrait; margin: 0; }
-      html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; overflow: hidden !important; width: ${PRINT_WIDTH}px !important; height: ${PRINT_HEIGHT}px !important; }
-      #root { margin: 0 !important; padding: 0 !important; width: ${PRINT_WIDTH}px !important; height: ${PRINT_HEIGHT}px !important; overflow: hidden !important; }
+      @keyframes print-view-spin { to { transform: rotate(360deg); } }
+      /* On screen: show the A4 sheet centered on a gray "desk" like a preview. */
+      @media screen {
+        html, body { margin: 0 !important; padding: 0 !important; background: #4b5563 !important; }
+        #root {
+          display: flex !important;
+          justify-content: center !important;
+          align-items: flex-start !important;
+          min-height: 100vh !important;
+          padding: 24px !important;
+          box-sizing: border-box !important;
+        }
+        [data-print-ready], [data-print-status] { box-shadow: 0 6px 30px rgba(0,0,0,0.4) !important; }
+      }
+      /* In print/PDF (puppeteer page.pdf uses print media): full-bleed sheet. */
+      @media print {
+        html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; overflow: hidden !important; width: ${PRINT_WIDTH}px !important; height: ${PRINT_HEIGHT}px !important; }
+        #root { margin: 0 !important; padding: 0 !important; width: ${PRINT_WIDTH}px !important; height: ${PRINT_HEIGHT}px !important; overflow: hidden !important; }
+      }
     `;
     document.head.appendChild(styleEl);
     return () => {
@@ -189,7 +206,41 @@ export default function MapPrintView() {
   );
 
   if (loading || !mainGeoData || !topoData || error) {
-    return <div data-print-status="loading">Loading...</div>;
+    return (
+      <div
+        data-print-status={error ? 'error' : 'loading'}
+        style={{
+          width: PRINT_WIDTH,
+          height: PRINT_HEIGHT,
+          background: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 16,
+          fontFamily: 'system-ui, sans-serif',
+          color: error ? '#dc2626' : '#6b7280',
+        }}
+      >
+        {!error && (
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: '3px solid #e5e7eb',
+              borderTopColor: '#2563eb',
+              borderRadius: '50%',
+              animation: 'print-view-spin 0.8s linear infinite',
+            }}
+          />
+        )}
+        <div style={{ fontSize: 15, fontWeight: 500 }}>
+          {error
+            ? (locale === 'en' ? 'Failed to load the map.' : '지도를 불러오지 못했습니다.')
+            : (locale === 'en' ? 'Preparing the map…' : '지도 준비 중…')}
+        </div>
+      </div>
+    );
   }
 
   return (
