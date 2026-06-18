@@ -8,7 +8,7 @@ import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import QuizMap from '../../maps/QuizMap';
 import LanguageToggle from '../LanguageToggle';
-import DongPrintLinks from '../maps/DongPrintLinks';
+import MapPrintLinks from '../maps/MapPrintLinks';
 import type { AdminLevel } from '../../types';
 
 export default function LearnMode() {
@@ -129,7 +129,11 @@ export default function LearnMode() {
         )}
       </div>
 
-      {isDong && sidoFilter && <DongPrintLinks code={sidoFilter} />}
+      <MapPrintLinks
+        adminLevel={adminLevel}
+        slug={isDong ? undefined : sidoMeta?.slug}
+        dongCode={isDong ? sidoFilter : undefined}
+      />
 
       <div ref={containerRef} className="flex-1 min-h-0 flex items-start justify-center pb-4">
         <QuizMap
