@@ -11,6 +11,7 @@ import { shuffle } from '../../utils/quizEngine';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import QuizMap from '../../maps/QuizMap';
+import DongPrintLinks from '../maps/DongPrintLinks';
 import QuizProgress from './QuizProgress';
 import QuizPrompt from './QuizPrompt';
 import QuizResults from './QuizResults';
@@ -231,6 +232,7 @@ export default function QuizSession() {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden relative">
+      {isDong && sidoFilter && <DongPrintLinks code={sidoFilter} />}
       {!isFinished && (
         <>
           <QuizProgress
