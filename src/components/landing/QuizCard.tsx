@@ -12,7 +12,7 @@ export default function QuizCard({ title, description, onClick, selected, icon }
   return (
     <button
       onClick={onClick}
-      className={`bg-white border rounded-xl p-4 text-left hover:border-blue-300 hover:shadow-md transition-all group ${
+      className={`h-full w-full bg-white border rounded-xl p-4 text-left hover:border-blue-300 hover:shadow-md transition-all group ${
         selected ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
     >

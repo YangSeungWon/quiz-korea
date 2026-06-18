@@ -130,39 +130,39 @@ export default function LandingPage() {
                 {locale === 'en' ? 'Tap a mode to start →' : '누르면 바로 시작 →'}
               </span>
             </div>
+            {/* Mode cards — own grid so all three are equal height */}
+            <div className="grid grid-cols-3 gap-3 mb-2">
+              <QuizCard
+                title={t('landing.pinQuiz')}
+                description={t('landing.pinQuizDesc')}
+                onClick={() => launch('pin')}
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>}
+              />
+              <QuizCard
+                title={t('landing.typeQuiz')}
+                description={t('landing.typeQuizDesc')}
+                onClick={() => launch('type')}
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M7 16h10"/></svg>}
+              />
+              <QuizCard
+                title={t('landing.learnMode')}
+                description={t('landing.learnModeDesc')}
+                onClick={() => launch('learn')}
+                icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
+              />
+            </div>
+            {/* Difficulty chips, aligned under each mode's column */}
             <div className="grid grid-cols-3 gap-3 mb-4 items-start">
-              {/* 클릭 퀴즈 */}
               <div className="flex flex-col gap-1.5">
-                <QuizCard
-                  title={t('landing.pinQuiz')}
-                  description={t('landing.pinQuizDesc')}
-                  onClick={() => launch('pin')}
-                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>}
-                />
-                <span className="text-[9px] font-semibold text-orange-400 px-0.5 mt-0.5">{harderLabel}</span>
+                <span className="text-[9px] font-semibold text-orange-400 px-0.5">{harderLabel}</span>
                 <DifficultyChip active={borderless} onToggle={() => setBorderless((v) => !v)} label={t('landing.optBorderless')} />
                 <DifficultyChip active={noAccum} onToggle={() => setNoAccum((v) => !v)} label={t('landing.optNoAccum')} />
               </div>
-              {/* 타이핑 퀴즈 */}
               <div className="flex flex-col gap-1.5">
-                <QuizCard
-                  title={t('landing.typeQuiz')}
-                  description={t('landing.typeQuizDesc')}
-                  onClick={() => launch('type')}
-                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01"/><path d="M10 8h.01"/><path d="M14 8h.01"/><path d="M18 8h.01"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/><path d="M18 12h.01"/><path d="M7 16h10"/></svg>}
-                />
-                <span className="text-[9px] font-semibold text-orange-400 px-0.5 mt-0.5">{harderLabel}</span>
+                <span className="text-[9px] font-semibold text-orange-400 px-0.5">{harderLabel}</span>
                 <DifficultyChip active={outline} onToggle={() => setOutline((v) => !v)} label={t('landing.optOutline')} />
               </div>
-              {/* 학습 모드 (옵션 없음) */}
-              <div className="flex flex-col gap-1.5">
-                <QuizCard
-                  title={t('landing.learnMode')}
-                  description={t('landing.learnModeDesc')}
-                  onClick={() => launch('learn')}
-                  icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>}
-                />
-              </div>
+              <div />
             </div>
           </>
         )}
