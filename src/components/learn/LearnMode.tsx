@@ -8,6 +8,7 @@ import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import QuizMap from '../../maps/QuizMap';
 import LanguageToggle from '../LanguageToggle';
+import DongPrintLinks from '../maps/DongPrintLinks';
 import type { AdminLevel } from '../../types';
 
 export default function LearnMode() {
@@ -105,13 +106,9 @@ export default function LearnMode() {
     );
   }
 
-  const printTitle = isDong
-    ? (locale === 'en' ? `${dongRegionName} — towns (eup·myeon·dong)` : `${dongRegionName} 읍·면·동 백지도`)
-    : seoTitle;
-
   return (
-    <div className="print-surface h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden">
-      <div className="no-print flex items-center px-4 py-3 bg-white border-b border-gray-200">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-x-hidden overflow-y-auto landscape:overflow-y-hidden">
+      <div className="flex items-center px-4 py-3 bg-white border-b border-gray-200">
         <button
           onClick={() => navigate(localized('/'))}
           className="text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
@@ -121,20 +118,10 @@ export default function LearnMode() {
         <div className="flex-1 text-center">
           <span className="text-sm font-semibold text-gray-700">{t('learn.title')}</span>
         </div>
-        {isDong && (
-          <button
-            onClick={() => window.print()}
-            className="mr-3 inline-flex items-center gap-1.5 text-gray-500 hover:text-blue-600 transition-colors text-sm font-medium"
-            title={locale === 'en' ? 'Print blank map' : '백지도 인쇄'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            {locale === 'en' ? 'Print' : '백지도'}
-          </button>
-        )}
         <LanguageToggle />
       </div>
 
-      <div className="no-print text-center py-3 h-12 flex items-center justify-center">
+      <div className="text-center py-3 h-12 flex items-center justify-center">
         {hoveredName ? (
           <span className="text-lg font-semibold text-gray-800">{hoveredName}</span>
         ) : (
@@ -142,10 +129,9 @@ export default function LearnMode() {
         )}
       </div>
 
-      {/* Print-only worksheet title */}
-      <h2 className="print-only text-center text-xl font-bold text-gray-900 mb-2">{printTitle}</h2>
+      {isDong && sidoFilter && <DongPrintLinks code={sidoFilter} />}
 
-      <div ref={containerRef} className="print-blank flex-1 min-h-0 flex items-start justify-center pb-4">
+      <div ref={containerRef} className="flex-1 min-h-0 flex items-start justify-center pb-4">
         <QuizMap
           geoData={filteredGeoData}
           contextGeoData={sidoFilter && !isDong ? geoData : null}

@@ -57,7 +57,9 @@ function partitionOutliers(
   adminLevel: AdminLevel,
   hasSidoFilter: boolean,
 ): PartitionedFeatures {
-  if (adminLevel === 'sido') {
+  // sido: whole-country, no insets. dong: single 시군구, no insets (and dong
+  // codes would falsely match the 5-digit outlier prefixes, so must bypass).
+  if (adminLevel === 'sido' || adminLevel === 'dong') {
     return { main: features, donghae: [], seohae: [], sugokwon: [], daegu: [], busan: [] };
   }
   const main: RegionFeature[] = [];
@@ -102,21 +104,24 @@ export default function MapPrintView() {
   }>();
   const { locale } = useI18n();
   const adminLevel = (levelParam || 'sido') as AdminLevel;
+  const isDong = adminLevel === 'dong';
   const sidoMeta = getSidoMeta(sidoSlug || '');
+  // 동: the :sidoSlug segment carries the raw 5-digit 시군구 code (no slug).
+  const filterCode = isDong ? (sidoSlug || undefined) : sidoMeta?.code;
   const showLabels = variant === 'label';
 
-  const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel);
+  const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel, filterCode);
 
   const filteredGeoData = useMemo(() => {
-    if (!geoData || !sidoMeta) return geoData;
+    if (!geoData || !filterCode) return geoData;
     return {
       ...geoData,
       features: geoData.features.filter((f) => {
         const code = f.properties.SIG_CD || f.properties.CTPRVN_CD || f.properties.code || '';
-        return code.startsWith(sidoMeta.code);
+        return code.startsWith(filterCode);
       }),
     };
-  }, [geoData, sidoMeta]);
+  }, [geoData, filterCode]);
 
   const partitioned = useMemo(
     () =>
@@ -214,7 +219,7 @@ export default function MapPrintView() {
         staticLabels={showLabels}
         staticLabelSkipCodes={showLabels ? insetSkipCodes : undefined}
         staticLabelCompact={adminLevel === 'sigun'}
-        staticLabelFontRange={sidoMeta ? [9, 14] : undefined}
+        staticLabelFontRange={(sidoMeta || isDong) ? [9, 14] : undefined}
         printBboxMarkers={printBboxMarkers}
       />
 
@@ -304,6 +309,35 @@ export default function MapPrintView() {
       >
         quiz-korea.ysw.kr
       </div>
+
+      {/* On-screen print button for human visitors. Hidden in print/PDF
+          output (.no-print), so puppeteer's page.pdf() never includes it. */}
+      <button
+        type="button"
+        onClick={() => window.print()}
+        className="no-print"
+        style={{
+          position: 'fixed',
+          bottom: 16,
+          right: 16,
+          zIndex: 50,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '10px 16px',
+          borderRadius: 9999,
+          border: 'none',
+          background: '#2563eb',
+          color: '#fff',
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: 14,
+          fontWeight: 600,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          cursor: 'pointer',
+        }}
+      >
+        🖨 {locale === 'en' ? 'Print' : '인쇄'}
+      </button>
     </div>
   );
 }
