@@ -56,6 +56,10 @@ export function usePageMeta({
     setMeta('og:title', title, 'property');
     setMeta('og:description', description, 'property');
     setMeta('og:url', canonical, 'property');
+    // Twitter/X prefers twitter:* over og:* when present, so keep them in sync —
+    // otherwise every sub-page shows the static homepage title when shared.
+    setMeta('twitter:title', title);
+    setMeta('twitter:description', description);
 
     setLink('canonical', canonical);
     setLink('alternate', koUrl, 'ko');

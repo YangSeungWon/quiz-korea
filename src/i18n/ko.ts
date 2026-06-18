@@ -18,7 +18,7 @@ const ko: TranslationStrings = {
   'landing.dataSource': '데이터 출처',
 
   'seo.home.title': '한국 지리 퀴즈 - 시도/시군구 지도 퀴즈',
-  'seo.home.desc': '한국의 시도와 시군구를 지도에서 찾아보는 퀴즈',
+  'seo.home.desc': '한국의 시도·시군구·읍면동을 지도에서 찾아보는 퀴즈',
   'seo.quiz.pin.sido.title': '시도 클릭 퀴즈 - 한국 지리 퀴즈',
   'seo.quiz.pin.sido.desc': '지도에서 시도를 클릭하여 맞추는 퀴즈',
   'seo.quiz.pin.sigun.title': '시군 클릭 퀴즈 - 한국 지리 퀴즈',
