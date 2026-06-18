@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
+import { useLocalePath } from '../../hooks/useLocalePath';
 import type { QuizMode, AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
+import { formatTime, type RecordEntry } from '../../utils/records';
 
 interface QuizResultsProps {
   totalRegions: number;
@@ -11,6 +14,8 @@ interface QuizResultsProps {
   adminLevel: AdminLevel;
   /** Region the quiz was scoped to (e.g. "경기", "수원시"). Empty for 전국. */
   regionLabel?: string;
+  /** Personal-best record outcome for this attempt. */
+  record?: { best: RecordEntry; isNewBest: boolean; previous: RecordEntry | null } | null;
   isSubset: boolean;
   borderless?: boolean;
   noAccum?: boolean;
@@ -27,6 +32,7 @@ export default function QuizResults({
   mode,
   adminLevel,
   regionLabel,
+  record,
   isSubset,
   borderless,
   noAccum,
@@ -36,6 +42,7 @@ export default function QuizResults({
   onClose,
 }: QuizResultsProps) {
   const { t } = useI18n();
+  const localized = useLocalePath();
   const [copied, setCopied] = useState(false);
 
   let firstTryCount = 0;
@@ -96,10 +103,22 @@ export default function QuizResults({
         </div>
         <p className="text-gray-600 mb-4">{message}</p>
 
-        <div className="bg-gray-50 rounded-lg p-3 mb-8 text-sm">
+        <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm">
           <div className="text-xl font-bold text-gray-900 font-mono">{elapsedTime}</div>
           <div className="text-gray-500">{t('results.time')}</div>
         </div>
+
+        {/* Personal best */}
+        {record && (
+          <div className="mb-8">
+            {record.isNewBest && (
+              <div className="text-sm font-bold text-amber-600 mb-1">{t('results.newRecord')}</div>
+            )}
+            <div className="text-xs text-gray-500">
+              🏆 {t('results.bestRecord')} {record.best.correct}/{record.best.total} · {formatTime(record.best.timeMs)}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3">
           <button
@@ -146,7 +165,13 @@ export default function QuizResults({
             {t('results.backToModes')}
           </button>
         </div>
-        <div className="mt-4 text-xs text-gray-300">quiz-korea.ysw.kr</div>
+        <Link
+          to={localized('/records/')}
+          className="mt-4 inline-block text-xs font-medium text-gray-500 hover:text-blue-600 transition-colors"
+        >
+          🏆 {t('results.viewRecords')}
+        </Link>
+        <div className="mt-3 text-xs text-gray-300">quiz-korea.ysw.kr</div>
       </div>
     </div>
   );

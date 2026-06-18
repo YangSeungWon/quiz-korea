@@ -111,4 +111,15 @@ export interface TranslationStrings {
   'results.share': string;
   'results.copied': string;
   'results.shareText': string;
+  'results.newRecord': string;
+  'results.bestRecord': string;
+  'results.viewRecords': string;
+
+  'records.title': string;
+  'records.subtitle': string;
+  'records.empty': string;
+  'records.replay': string;
+  'records.clear': string;
+  'records.clearConfirm': string;
+  'records.link': string;
 }

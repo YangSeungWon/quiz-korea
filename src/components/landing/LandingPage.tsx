@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
 import { usePageMeta } from '../../hooks/usePageMeta';
 import { useLocalePath } from '../../hooks/useLocalePath';
@@ -92,7 +92,13 @@ export default function LandingPage() {
     <div className="min-h-screen bg-gray-50 flex items-start justify-center px-4 py-12 sm:py-16">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex justify-end mb-2">
+          <div className="flex justify-between items-center mb-2">
+            <Link
+              to={localized('/records/')}
+              className="text-xs font-medium text-gray-500 hover:text-blue-600 transition-colors"
+            >
+              🏆 {t('records.link')}
+            </Link>
             <LanguageToggle />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('landing.title')}</h1>
