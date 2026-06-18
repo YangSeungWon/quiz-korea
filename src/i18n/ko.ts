@@ -87,7 +87,7 @@ const ko: TranslationStrings = {
   'quiz.loadError': '데이터를 불러오지 못했습니다.',
 
   'learn.title': '학습 모드',
-  'learn.hoverHint': '지역 위에 마우스를 올려보세요',
+  'learn.hoverHint': '지역을 탭하거나 마우스를 올려 이름을 확인하세요',
 
   'results.title': '퀴즈 완료',
   'results.perfect': '완벽합니다!',
