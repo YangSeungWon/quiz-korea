@@ -60,6 +60,10 @@ export function usePageMeta({
     // otherwise every sub-page shows the static homepage title when shared.
     setMeta('twitter:title', title);
     setMeta('twitter:description', description);
+    // Locale-specific share image (English card on /en).
+    const ogImage = `${BASE_URL}/${locale === 'en' ? 'og-image-en.png' : 'og-image.png'}`;
+    setMeta('og:image', ogImage, 'property');
+    setMeta('twitter:image', ogImage);
 
     setLink('canonical', canonical);
     setLink('alternate', koUrl, 'ko');
