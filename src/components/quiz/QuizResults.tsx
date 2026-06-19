@@ -43,7 +43,7 @@ export default function QuizResults({
   onBack,
   onClose,
 }: QuizResultsProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const localized = useLocalePath();
   const [copied, setCopied] = useState(false);
   const [imgBusy, setImgBusy] = useState(false);
@@ -101,7 +101,13 @@ export default function QuizResults({
     const ts = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
     const modePart = safe(`${t(modeKeys[mode])}_${regionStr}${t(levelKey)}`);
     const scorePart = `${firstTryCount}of${totalRegions}`;
-    const timePart = elapsedTime.replace(/:/g, '-');
+    // Elapsed time as "1분05초" (ko) / "1min05sec" (en); includes hours if any.
+    const parts = elapsedTime.split(':').map((p) => parseInt(p, 10));
+    let h = 0, m = 0, s = 0;
+    if (parts.length === 3) [h, m, s] = parts;
+    else [m, s] = parts;
+    const u = locale === 'en' ? ['h', 'min', 'sec'] : ['시', '분', '초'];
+    const timePart = `${h ? `${h}${u[0]}` : ''}${m}${u[1]}${pad(s)}${u[2]}`;
     return `한국지리퀴즈_${modePart}_${scorePart}_${timePart}_${ts}.png`;
   };
 
