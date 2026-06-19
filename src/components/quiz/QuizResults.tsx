@@ -90,7 +90,19 @@ export default function QuizResults({
       newRecord: record?.isNewBest ? t('results.newRecord') : undefined,
       mapImage,
     });
-    return new File([blob], 'korea-quiz-result.png', { type: 'image/png' });
+    return new File([blob], cardFileName(), { type: 'image/png' });
+  };
+
+  // Descriptive download name: mode, region/level, score, time, timestamp.
+  const cardFileName = () => {
+    const safe = (s: string) => s.replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, '-');
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const ts = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
+    const modePart = safe(`${t(modeKeys[mode])}_${regionStr}${t(levelKey)}`);
+    const scorePart = `${firstTryCount}of${totalRegions}`;
+    const timePart = elapsedTime.replace(/:/g, '-');
+    return `한국지리퀴즈_${modePart}_${scorePart}_${timePart}_${ts}.png`;
   };
 
   // Copy text, with a fallback for insecure contexts where navigator.clipboard
@@ -168,7 +180,7 @@ export default function QuizResults({
       } else {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(file);
-        a.download = 'korea-quiz-result.png';
+        a.download = file.name;
         a.click();
         URL.revokeObjectURL(a.href);
       }
