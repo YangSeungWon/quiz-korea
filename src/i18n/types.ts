@@ -110,6 +110,7 @@ export interface TranslationStrings {
   'results.hideOverlay': string;
   'results.showOverlay': string;
   'results.share': string;
+  'results.shareX': string;
   'results.copied': string;
   'results.shareText': string;
   'results.newRecord': string;

@@ -102,6 +102,7 @@ const en: TranslationStrings = {
   'results.hideOverlay': 'View Map',
   'results.showOverlay': 'Show Results',
   'results.share': 'Share',
+  'results.shareX': 'Share on X',
   'results.copied': 'Copied!',
   'results.shareText': 'Korea Geography Quiz 🇰🇷',
   'results.newRecord': '🎉 New record!',
