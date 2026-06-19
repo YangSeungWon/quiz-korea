@@ -107,7 +107,7 @@ export default function QuizResults({
     let h = 0, m = 0, s = 0;
     if (parts.length === 3) [h, m, s] = parts;
     else [m, s] = parts;
-    const u = locale === 'en' ? ['h', 'min', 'sec'] : ['시간', '분', '초'];
+    const u = locale === 'en' ? ['h', 'm', 's'] : ['시간', '분', '초'];
     const timePart = `${h ? `${h}${u[0]}` : ''}${m}${u[1]}${pad(s)}${u[2]}`;
     return `한국지리퀴즈_${modePart}${optsPart}_${scorePart}_${timePart}_${ts}.png`;
   };
