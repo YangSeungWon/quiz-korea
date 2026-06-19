@@ -1035,6 +1035,7 @@ export default function QuizMap({
   return (
     <svg
       ref={svgRef}
+      data-quiz-map=""
       width={width}
       height={computedHeight}
       viewBox={`0 0 ${width} ${computedHeight}`}

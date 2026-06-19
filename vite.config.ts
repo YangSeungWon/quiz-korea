@@ -7,6 +7,8 @@ export default defineConfig({
   base: '/', // Custom domain: quiz-korea.ysw.kr
   server: {
     port: 10000,
+    // Allow access via the ysw.kr reverse-proxy hosts (e.g. lab.ysw.kr)
+    allowedHosts: ['.ysw.kr'],
   },
   build: {
     outDir: 'dist',
