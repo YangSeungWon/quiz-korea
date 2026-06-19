@@ -110,7 +110,12 @@ export interface TranslationStrings {
   'results.hideOverlay': string;
   'results.showOverlay': string;
   'results.share': string;
+  'results.shareX': string;
+  'results.shareKakao': string;
+  'results.kakaoCardButton': string;
+  'results.shareImage': string;
   'results.copied': string;
+  'results.resultCopied': string;
   'results.shareText': string;
   'results.newRecord': string;
   'results.bestRecord': string;
