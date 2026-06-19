@@ -100,15 +100,16 @@ export default function QuizResults({
     const pad = (n: number) => String(n).padStart(2, '0');
     const ts = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`;
     const modePart = safe(`${t(modeKeys[mode])}_${regionStr}${t(levelKey)}`);
+    const optsPart = shareOpts.length > 0 ? `_${safe(shareOpts.join('-'))}` : '';
     const scorePart = `${firstTryCount}of${totalRegions}`;
     // Elapsed time as "1분05초" (ko) / "1min05sec" (en); includes hours if any.
     const parts = elapsedTime.split(':').map((p) => parseInt(p, 10));
     let h = 0, m = 0, s = 0;
     if (parts.length === 3) [h, m, s] = parts;
     else [m, s] = parts;
-    const u = locale === 'en' ? ['h', 'min', 'sec'] : ['시', '분', '초'];
+    const u = locale === 'en' ? ['h', 'min', 'sec'] : ['시간', '분', '초'];
     const timePart = `${h ? `${h}${u[0]}` : ''}${m}${u[1]}${pad(s)}${u[2]}`;
-    return `한국지리퀴즈_${modePart}_${scorePart}_${timePart}_${ts}.png`;
+    return `한국지리퀴즈_${modePart}${optsPart}_${scorePart}_${timePart}_${ts}.png`;
   };
 
   // Copy text, with a fallback for insecure contexts where navigator.clipboard
