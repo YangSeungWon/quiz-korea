@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useI18n } from '../../i18n/useI18n';
 import { useLocalePath } from '../../hooks/useLocalePath';
@@ -6,7 +6,14 @@ import type { QuizMode, AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
 import { formatTime, type RecordEntry } from '../../utils/records';
 import { buildResultCard, captureMapImage } from '../../utils/resultCard';
-import { isKakaoEnabled, isKakaoMobileShareReliable, shareResultToKakao } from '../../utils/kakao';
+import {
+  isKakaoEnabled,
+  isKakaoMobileShareReliable,
+  isMobileBrowser,
+  preloadKakao,
+  uploadKakaoImage,
+  shareKakaoFeed,
+} from '../../utils/kakao';
 
 interface QuizResultsProps {
   totalRegions: number;
@@ -48,8 +55,13 @@ export default function QuizResults({
   const [copied, setCopied] = useState(false);
   const [imgBusy, setImgBusy] = useState(false);
   const [nativeBusy, setNativeBusy] = useState(false);
-  const [kakaoBusy, setKakaoBusy] = useState(false);
+  // Pre-uploaded result-card image URL, so the Kakao share can fire synchronously
+  // (the upload happens up front, see the effect below). null → use static OG.
+  const [kakaoImageUrl, setKakaoImageUrl] = useState<string | null>(null);
   const kakaoEnabled = isKakaoEnabled();
+  // On mobile the KakaoTalk app only launches if sendDefault runs inside the
+  // click's user gesture — so the SDK + image must be prepared ahead of time.
+  const kakaoNeedsSync = kakaoEnabled && isMobileBrowser() && isKakaoMobileShareReliable();
 
   let firstTryCount = 0;
   for (const mistakes of answered.values()) {
@@ -79,6 +91,7 @@ export default function QuizResults({
 
   const CARD_W = 1200;
   const CARD_H = 630;
+  const KAKAO_FALLBACK_IMG = 'https://quiz-korea.ysw.kr/og-image.png';
   const makeCardFile = async () => {
     const mapImage = await captureMapImage();
     const blob = await buildResultCard({
@@ -196,40 +209,67 @@ export default function QuizResults({
     }
   };
 
-  const shareKakao = async () => {
-    if (kakaoBusy) return;
-    setKakaoBusy(true);
-    try {
-      const file = await makeCardFile();
-      // Firefox mobile can't launch the KakaoTalk app from the web SDK; route
-      // through the OS share sheet (which lists KakaoTalk as a target) instead.
-      if (!isKakaoMobileShareReliable() && navigator.share) {
-        try {
-          if (navigator.canShare?.({ files: [file] })) {
-            await navigator.share({ files: [file], text: `${shareText}\n${shareUrl}` });
-          } else {
-            await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-          }
-        } catch {
-          // user cancelled share
-        }
-        return;
+  // On mobile, prepare the SDK and upload the result card up front so the share
+  // can fire synchronously inside the click (mobile browsers only launch the
+  // KakaoTalk app within the user gesture — any await before sendDefault drops
+  // it and lands on the app-store download page).
+  useEffect(() => {
+    if (!kakaoNeedsSync) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await preloadKakao();
+        const file = await makeCardFile();
+        const url = await uploadKakaoImage(file);
+        if (!cancelled) setKakaoImageUrl(url);
+      } catch {
+        // leave kakaoImageUrl null → share falls back to the static OG image
       }
-      await shareResultToKakao({
-        title: shareTitle,
-        description: `${modeLine}\n${firstTryCount}/${totalRegions} · ${elapsedTime}`,
-        imageFile: file,
-        imageWidth: CARD_W,
-        imageHeight: CARD_H,
-        webUrl: shareUrl,
-        buttonTitle: t('results.kakaoCardButton'),
-        fallbackImageUrl: 'https://quiz-korea.ysw.kr/og-image.png',
-      });
-    } catch {
-      // SDK load / share failed — silently ignore
-    } finally {
-      setKakaoBusy(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const kakaoFeed = (imageUrl: string) => ({
+    title: shareTitle,
+    description: `${modeLine}\n${firstTryCount}/${totalRegions} · ${elapsedTime}`,
+    imageUrl,
+    imageWidth: CARD_W,
+    imageHeight: CARD_H,
+    webUrl: shareUrl,
+    buttonTitle: t('results.kakaoCardButton'),
+  });
+
+  const shareKakao = () => {
+    // Firefox mobile can't launch the KakaoTalk app from the web SDK; route
+    // through the OS share sheet (which lists KakaoTalk as a target). Fire it
+    // synchronously to keep the user gesture.
+    if (!isKakaoMobileShareReliable()) {
+      navigator.share?.({ title: shareTitle, text: shareText, url: shareUrl }).catch(() => {});
+      return;
     }
+    if (kakaoNeedsSync) {
+      // Mobile: must stay synchronous — share with the pre-uploaded card, or the
+      // static OG image if the upload hasn't finished yet.
+      if (shareKakaoFeed(kakaoFeed(kakaoImageUrl ?? KAKAO_FALLBACK_IMG))) return;
+      // SDK not ready yet (clicked before preload finished) — load then retry.
+      void preloadKakao().then(() => shareKakaoFeed(kakaoFeed(kakaoImageUrl ?? KAKAO_FALLBACK_IMG)));
+      return;
+    }
+    // Desktop: opens a login popup that tolerates the async upload first.
+    void (async () => {
+      let imageUrl = KAKAO_FALLBACK_IMG;
+      try {
+        await preloadKakao();
+        const file = await makeCardFile();
+        imageUrl = await uploadKakaoImage(file);
+      } catch {
+        // fall back to the static OG image
+      }
+      shareKakaoFeed(kakaoFeed(imageUrl));
+    })();
   };
 
   return (
@@ -314,10 +354,9 @@ export default function QuizResults({
             {kakaoEnabled && (
               <button
                 onClick={shareKakao}
-                disabled={kakaoBusy}
                 aria-label={t('results.shareKakao')}
                 title={t('results.shareKakao')}
-                className="flex-1 h-12 flex items-center justify-center bg-[#FEE500] text-[#191600] rounded-lg hover:brightness-95 disabled:opacity-60 transition-all"
+                className="flex-1 h-12 flex items-center justify-center bg-[#FEE500] text-[#191600] rounded-lg hover:brightness-95 transition-all"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3C6.48 3 2 6.49 2 10.8c0 2.77 1.86 5.2 4.66 6.57-.15.53-.96 3.33-.99 3.55 0 0-.02.17.09.23.11.07.24.02.24.02.31-.04 3.6-2.36 4.17-2.76.6.08 1.21.13 1.83.13 5.52 0 10-3.49 10-7.79C22 6.49 17.52 3 12 3z"/></svg>
               </button>
