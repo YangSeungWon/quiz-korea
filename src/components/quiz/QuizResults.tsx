@@ -6,7 +6,7 @@ import type { QuizMode, AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
 import { formatTime, type RecordEntry } from '../../utils/records';
 import { buildResultCard, captureMapImage } from '../../utils/resultCard';
-import { isKakaoEnabled, shareResultToKakao } from '../../utils/kakao';
+import { isKakaoEnabled, isKakaoMobileShareReliable, shareResultToKakao } from '../../utils/kakao';
 
 interface QuizResultsProps {
   totalRegions: number;
@@ -201,6 +201,20 @@ export default function QuizResults({
     setKakaoBusy(true);
     try {
       const file = await makeCardFile();
+      // Firefox mobile can't launch the KakaoTalk app from the web SDK; route
+      // through the OS share sheet (which lists KakaoTalk as a target) instead.
+      if (!isKakaoMobileShareReliable() && navigator.share) {
+        try {
+          if (navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ files: [file], text: `${shareText}\n${shareUrl}` });
+          } else {
+            await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+          }
+        } catch {
+          // user cancelled share
+        }
+        return;
+      }
       await shareResultToKakao({
         title: shareTitle,
         description: `${modeLine}\n${firstTryCount}/${totalRegions} · ${elapsedTime}`,

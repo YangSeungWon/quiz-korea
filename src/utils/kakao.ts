@@ -26,6 +26,19 @@ export function isKakaoEnabled(): boolean {
   return !!KAKAO_JS_KEY;
 }
 
+// Firefox on mobile can't reliably launch the KakaoTalk app from the web SDK's
+// share intermediary (talk-apps.kakao.com) — it lands on a "download KakaoTalk"
+// page even when the app is installed. The SDK gives no failure callback for
+// this, so detect those browsers up front and let the caller fall back to the
+// Web Share API (whose share sheet lists KakaoTalk as a normal target).
+export function isKakaoMobileShareReliable(): boolean {
+  if (typeof navigator === 'undefined') return true;
+  const ua = navigator.userAgent;
+  const isFirefox = /Firefox\//.test(ua) || /FxiOS\//.test(ua);
+  const isMobile = /Android|iPhone|iPad|iPod|Mobile/.test(ua);
+  return !(isFirefox && isMobile);
+}
+
 let loadPromise: Promise<KakaoSDK> | null = null;
 
 function loadKakao(): Promise<KakaoSDK> {
