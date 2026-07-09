@@ -57,32 +57,40 @@ function buildHtmlRoutes() {
 
 function buildPdfTargets() {
   const targets = [];
-  const variants = ['blank', 'label'];
+  const variants = ['blank', 'label', 'number'];
+  const colors = ['color', 'bw'];
+  const orients = ['portrait', 'landscape'];
+  // Region targets (level + optional sido slug) defined once, then crossed with
+  // every variant × color × orientation.
+  const regions = [
+    { level: 'sido' },
+    { level: 'sigun' },
+    ...METRO_SLUGS.map((slug) => ({ level: 'sigungu', slug })),
+    ...PROVINCE_SLUGS.map((slug) => ({ level: 'sigun', slug })),
+    ...PROVINCE_SLUGS.map((slug) => ({ level: 'sigungu', slug })),
+  ];
   for (const lang of LOCALES) {
     for (const variant of variants) {
-      for (const level of ['sido', 'sigun']) {
-        targets.push({
-          route: `/${lang}/maps/print/${variant}/${level}`,
-          filename: `${level}-${variant}-${lang}.pdf`,
-        });
-      }
-      for (const slug of METRO_SLUGS) {
-        targets.push({
-          route: `/${lang}/maps/print/${variant}/sigungu/${slug}`,
-          filename: `sigungu-${slug}-${variant}-${lang}.pdf`,
-        });
-      }
-      for (const slug of PROVINCE_SLUGS) {
-        targets.push({
-          route: `/${lang}/maps/print/${variant}/sigun/${slug}`,
-          filename: `sigun-${slug}-${variant}-${lang}.pdf`,
-        });
-      }
-      for (const slug of PROVINCE_SLUGS) {
-        targets.push({
-          route: `/${lang}/maps/print/${variant}/sigungu/${slug}`,
-          filename: `sigungu-${slug}-${variant}-${lang}.pdf`,
-        });
+      for (const color of colors) {
+        for (const orient of orients) {
+          const bw = color === 'bw';
+          const landscape = orient === 'landscape';
+          const query = [];
+          if (bw) query.push('bw=1');
+          if (landscape) query.push('orient=landscape');
+          const qs = query.length ? `?${query.join('&')}` : '';
+          // Suffix only non-defaults so existing filenames/links don't churn.
+          const suffix = `${variant}${bw ? '-bw' : ''}${landscape ? '-land' : ''}`;
+          for (const r of regions) {
+            const seg = r.slug ? `${r.level}/${r.slug}` : r.level;
+            const namePrefix = r.slug ? `${r.level}-${r.slug}` : r.level;
+            targets.push({
+              route: `/${lang}/maps/print/${variant}/${seg}${qs}`,
+              filename: `${namePrefix}-${suffix}-${lang}.pdf`,
+              landscape,
+            });
+          }
+        }
       }
     }
   }
@@ -149,28 +157,32 @@ async function prerenderHtml(browser, routes) {
   }
 }
 
-async function generatePdfs(browser, targets) {
-  await mkdir(DOWNLOADS, { recursive: true });
-  console.log(`Generating ${targets.length} PDFs + PNG previews...`);
-  for (const { route, filename } of targets) {
-    const url = `http://localhost:${PORT}${route}`;
-    console.log(`  ${filename}`);
-    const page = await browser.newPage();
-    // A4 portrait at 96dpi: 794 × 1123 px
-    await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 2 });
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
-    await page.waitForSelector('[data-print-ready="true"]', { timeout: 15000 });
+async function renderTarget(browser, { route, filename, landscape }) {
+  // A4 at 96dpi: portrait 794×1123, landscape 1123×794.
+  const width = landscape ? 1123 : 794;
+  const height = landscape ? 794 : 1123;
+  const url = `http://localhost:${PORT}${route}`;
+  // Fresh page per target — reusing one page across hundreds of D3 re-renders
+  // leaks memory and eventually stalls the ready-wait.
+  const page = await browser.newPage();
+  try {
+    await page.setViewport({ width, height, deviceScaleFactor: 2 });
+    // domcontentloaded (not networkidle0): the data-print-ready selector below is
+    // the real "map rendered" signal, and networkidle0 can deadlock under the
+    // concurrency pool. Generous selector timeout for CPU-contended sigungu maps.
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.waitForSelector('[data-print-ready="true"]', { timeout: 45000 });
 
     // Emulate print media for BOTH outputs. In screen media the print view
     // centers the A4 sheet on a gray "desk" with padding, which flex-shrinks the
-    // 794px sheet below the viewport width and clips the map's right edge in the
-    // screenshot. Print media resets to a full-bleed 794×1123 sheet (no padding,
-    // no floating print button), so the PNG matches the PDF exactly.
+    // sheet below the viewport width and clips the map's right edge in the
+    // screenshot. Print media resets to a full-bleed sheet (no padding, no
+    // floating print button), so the PNG matches the PDF exactly.
     await page.emulateMediaType('print');
 
     const pdf = await page.pdf({
       format: 'A4',
-      landscape: false,
+      landscape,
       printBackground: true,
       margin: { top: 0, right: 0, bottom: 0, left: 0 },
     });
@@ -178,19 +190,47 @@ async function generatePdfs(browser, targets) {
 
     // PNG preview — used by MapDownloadPage (cross-platform safe vs iframe PDF)
     const pngFilename = filename.replace(/\.pdf$/, '.png');
-    const png = await page.screenshot({
-      type: 'png',
-      clip: { x: 0, y: 0, width: 794, height: 1123 },
-    });
+    const png = await page.screenshot({ type: 'png', clip: { x: 0, y: 0, width, height } });
     await writeFile(join(DOWNLOADS, pngFilename), png);
-
+  } finally {
     await page.close();
+  }
+}
+
+async function generatePdfs(browser, targets) {
+  await mkdir(DOWNLOADS, { recursive: true });
+  console.log(`Generating ${targets.length} PDFs + PNG previews...`);
+  // Serial on purpose. Rendering concurrently sounds appealing (~650 targets),
+  // but two heavy maps (national 시군, dense 시군구) capturing screenshots at the
+  // same time starve each other via CDP/GPU contention — a fast ~4s render
+  // balloons to 70–120s and trips protocolTimeout. Serial keeps every target at
+  // its natural ~0.5–4s. Each target uses a fresh page (see renderTarget).
+  let done = 0;
+  for (const target of targets) {
+    try {
+      await renderTarget(browser, target);
+    } catch (err) {
+      // One retry — a transient stall shouldn't fail the whole build.
+      console.warn(`  retry ${target.filename}: ${err.message?.split('\n')[0]}`);
+      await renderTarget(browser, target);
+    }
+    done++;
+    if (done % 25 === 0 || done === targets.length) {
+      console.log(`  ${done}/${targets.length}`);
+    }
   }
 }
 
 async function main() {
   const server = await startServer();
-  const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox'] });
+  const browser = await puppeteer.launch({
+    headless: true,
+    // --disable-dev-shm-usage: the default /dev/shm is too small for the large
+    // deviceScaleFactor:2 A4 screenshots and Chrome crashes after ~30 of them.
+    // --disable-gpu: headless stability. Both are standard CI-hardening flags.
+    args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+    protocolTimeout: 120000,
+  });
   try {
     await prerenderHtml(browser, buildHtmlRoutes());
     await generatePdfs(browser, buildPdfTargets());

@@ -90,8 +90,15 @@ export interface TranslationStrings {
   'maps.intro': string;
   'maps.downloadBlankPdf': string;
   'maps.downloadLabelPdf': string;
+  'maps.downloadNumberPdf': string;
   'maps.previewBlank': string;
   'maps.previewLabel': string;
+  'maps.previewNumber': string;
+  'maps.styleColor': string;
+  'maps.styleBw': string;
+  'maps.orientPortrait': string;
+  'maps.orientLandscape': string;
+  'maps.answerKeyTitle': string;
   'maps.usage': string;
   'maps.dataNote': string;
   'maps.backToHome': string;

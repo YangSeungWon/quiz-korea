@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { select } from 'd3-selection';
 import { geoMercator, geoPath } from 'd3-geo';
 import type { GeoPermissibleObjects } from 'd3-geo';
-import { getShortDisplayName, getCompactDisplayName } from '../../utils/regionUtils';
+import { getShortDisplayName, getCompactDisplayName, getRegionCode } from '../../utils/regionUtils';
+import { placeLabels, type LabelItem } from '../../utils/labelPlacement';
 import type { RegionFeature, Locale } from '../../types';
 
 interface Props {
@@ -25,6 +26,12 @@ interface Props {
   bbox?: readonly [number, number, number, number];
   compact?: boolean; // strip 시/군/특별시/도 suffix — used at sigun level
   fontRange?: readonly [number, number];
+  /** 'name' (default) draws region names; 'number' draws the shared sequential
+   *  number from the `numbers` map (번호형 학습지 variant). */
+  mode?: 'name' | 'number';
+  numbers?: Map<string, number>;
+  /** Low-toner print style: no region fill, black strokes/labels. */
+  monochrome?: boolean;
 }
 
 export default function PrintInset({
@@ -39,6 +46,9 @@ export default function PrintInset({
   bbox,
   compact = false,
   fontRange,
+  mode = 'name',
+  numbers,
+  monochrome = false,
 }: Props) {
   const ref = useRef<SVGSVGElement>(null);
 
@@ -89,7 +99,7 @@ export default function PrintInset({
       .attr('width', width)
       .attr('height', height)
       .attr('fill', '#ffffff')
-      .attr('stroke', '#9ca3af')
+      .attr('stroke', monochrome ? '#000000' : '#9ca3af')
       .attr('stroke-width', 0.8)
       .attr('stroke-dasharray', '3,2');
 
@@ -100,7 +110,7 @@ export default function PrintInset({
       .attr('y', 12)
       .attr('font-size', 9)
       .attr('font-weight', 600)
-      .attr('fill', '#6b7280')
+      .attr('fill', monochrome ? '#000000' : '#6b7280')
       .text(label);
 
     // Clip group when bbox-bound — clips features to exact rectangle
@@ -126,54 +136,39 @@ export default function PrintInset({
         .append('path')
         .datum(f)
         .attr('d', path(f as GeoPermissibleObjects) ?? '')
-        .attr('fill', '#e5e7eb')
-        .attr('stroke', '#9ca3af')
+        .attr('fill', monochrome ? 'none' : '#e5e7eb')
+        .attr('stroke', monochrome ? '#000000' : '#9ca3af')
         .attr('stroke-width', 0.6);
     });
 
-    if (showLabels) {
-      // Dynamic label sizing based on path area within this projection
-      const areas = features.map((f) => Math.abs(path.area(f as GeoPermissibleObjects)));
-      const positive = areas.filter((a) => a > 0);
-      const minA = positive.length > 0 ? Math.min(...positive) : 1;
-      const maxA = positive.length > 0 ? Math.max(...positive) : 1;
-      const lo = Math.log(Math.max(minA, 1));
-      const hi = Math.log(Math.max(maxA, 1));
-      const [fMin, fMax] = fontRange ?? [6, 10];
-      const fontSizeFor = (area: number) => {
-        if (hi <= lo) return Math.round((fMin + fMax) / 2);
-        const v = Math.log(Math.max(area, 1));
-        const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
-        return Math.round(fMin + t * (fMax - fMin));
-      };
+    const isNumber = mode === 'number';
 
+    if (isNumber || showLabels) {
+      // Uniform target size; placeLabels() shrinks only where regions crowd.
+      const areas = features.map((f) => Math.abs(path.area(f as GeoPermissibleObjects)));
+      const [, fMax] = fontRange ?? (isNumber ? [10, 15] : [8, 13]);
+      const fill = monochrome ? '#000000' : '#1f2937';
+      const items: LabelItem[] = [];
       features.forEach((f, i) => {
-        const c = path.centroid(f as GeoPermissibleObjects);
-        if (!Number.isFinite(c[0]) || !Number.isFinite(c[1])) return;
-        const fontSize = fontSizeFor(areas[i]);
-        const fullName = compact ? getCompactDisplayName(f, locale) : getShortDisplayName(f, locale);
-        // Multi-line for compound 시군구 names like "고양시 일산서구" → 2 lines
-        const parts = locale === 'ko' && fullName.includes(' ') ? fullName.split(' ') : [fullName];
-        const lineH = fontSize * 1.0;
-        const totalH = parts.length * lineH;
-        parts.forEach((line, li) => {
-          svg
-            .append('text')
-            .attr('x', c[0])
-            .attr('y', c[1] - totalH / 2 + lineH * (li + 0.5))
-            .attr('text-anchor', 'middle')
-            .attr('dominant-baseline', 'middle')
-            .attr('font-size', fontSize)
-            .attr('font-weight', 600)
-            .attr('fill', '#1f2937')
-            .attr('stroke', '#ffffff')
-            .attr('stroke-width', Math.max(1.5, fontSize * 0.22))
-            .attr('paint-order', 'stroke')
-            .text(line);
-        });
+        // Centroid (not pole-of-inaccessibility) inside insets: the inset <svg>
+        // clips to its viewport, and a pole can land outside the bbox for a
+        // feature that extends past it, hiding the label.
+        const anchor = path.centroid(f as GeoPermissibleObjects) as [number, number];
+        if (!Number.isFinite(anchor[0]) || !Number.isFinite(anchor[1])) return;
+        let lines: string[];
+        if (isNumber) {
+          const num = numbers?.get(getRegionCode(f));
+          if (num === undefined) return;
+          lines = [String(num)];
+        } else {
+          const fullName = compact ? getCompactDisplayName(f, locale) : getShortDisplayName(f, locale);
+          lines = locale === 'ko' && fullName.includes(' ') ? fullName.split(' ') : [fullName];
+        }
+        items.push({ x: anchor[0], y: anchor[1], lines, targetSize: fMax, priority: areas[i], fill });
       });
+      placeLabels(svg as unknown as Parameters<typeof placeLabels>[0], items, { floor: 5, pad: 1.5 });
     }
-  }, [features, label, width, height, showLabels, locale, bbox]);
+  }, [features, label, width, height, showLabels, locale, bbox, mode, numbers, monochrome, compact, fontRange]);
 
   if (features.length === 0) return null;
 

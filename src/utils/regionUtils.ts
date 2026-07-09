@@ -273,6 +273,10 @@ function stripKoCompactSuffix(name: string): string {
 export function getCompactDisplayName(feature: RegionFeature, locale: Locale = 'ko'): string {
   const short = getShortDisplayName(feature, locale);
   if (locale !== 'ko') return short;
+  // Sido (2-digit code): use the canonical 2-char nickname (충청북도 → 충북,
+  // 경상남도 → 경남) instead of naive suffix stripping (which yields "충청북").
+  const code = getRegionCode(feature);
+  if (code.length === 2 && SIDO_SHORT[code]) return SIDO_SHORT[code];
   if (short.includes(' ')) {
     return short.split(' ').map(stripKoCompactSuffix).join(' ');
   }

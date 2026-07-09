@@ -9,6 +9,7 @@ import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { MultiLineString } from 'geojson';
 import type { RegionCollection, RegionFeature, MapDisplayMode, Locale, AdminLevel } from '../types';
 import { getRegionCode, getDisplayName, getShortDisplayName, getCompactDisplayName } from '../utils/regionUtils';
+import { placeLabels, labelAnchor, type LabelItem } from '../utils/labelPlacement';
 // Helper to avoid D3 generics mismatch on .attr('d', path)
 function pathAttr(path: GeoPath): (d: RegionFeature) => string {
   return (d: RegionFeature) => path(d) ?? '';
@@ -140,6 +141,12 @@ interface QuizMapProps {
   staticLabelSkipCodes?: Set<string>;
   staticLabelFontRange?: readonly [number, number];
   staticLabelCompact?: boolean;
+  /** 'name' (default) draws region names; 'number' draws the sequential number
+   *  from staticLabelNumbers — used by the printable 번호형 학습지 variant. */
+  staticLabelMode?: 'name' | 'number';
+  staticLabelNumbers?: Map<string, number>;
+  /** Low-toner print style: no region fill, black strokes/labels. */
+  monochrome?: boolean;
   printBboxMarkers?: ReadonlyArray<{ bbox: readonly [number, number, number, number]; color?: string }>;
   resetZoom?: boolean;
 }
@@ -190,6 +197,9 @@ export default function QuizMap({
   staticLabelSkipCodes,
   staticLabelFontRange,
   staticLabelCompact = false,
+  staticLabelMode = 'name',
+  staticLabelNumbers,
+  monochrome = false,
   printBboxMarkers,
   resetZoom = false,
 }: QuizMapProps) {
@@ -495,15 +505,15 @@ export default function QuizMap({
         .join('path')
         .attr('class', 'context')
         .attr('d', pathAttr(path))
-        .attr('fill', '#f3f4f6')
-        .attr('stroke', '#d1d5db')
+        .attr('fill', monochrome ? 'none' : '#f3f4f6')
+        .attr('stroke', monochrome ? '#000000' : '#d1d5db')
         .attr('stroke-width', 0.8)
         .style('vector-effect', 'non-scaling-stroke')
         .style('pointer-events', 'none');
     }
 
     // Helper: get fill color in normal style (used for main normal mode + insets)
-    const unansweredFill = COLORS.unanswered;
+    const unansweredFill = monochrome ? 'none' : COLORS.unanswered;
     const getNormalFill = (d: RegionFeature): string => {
       const code = getRegionCode(d);
       if (code === wrongFlashCodeRef.current) return COLORS.wrongFlash;
@@ -580,7 +590,7 @@ export default function QuizMap({
         .attr('data-code', (d: RegionFeature) => getRegionCode(d))
         .attr('d', pathAttr(path))
         .attr('fill', getNormalFill)
-        .attr('stroke', hasMesh ? 'none' : COLORS.stroke)
+        .attr('stroke', hasMesh ? 'none' : (monochrome ? '#000000' : COLORS.stroke))
         .attr('stroke-width', hasMesh ? 0 : 1.2)
         .style('vector-effect', 'non-scaling-stroke')
         .style('cursor', 'pointer')
@@ -622,53 +632,53 @@ export default function QuizMap({
           .datum(borderMesh)
           .attr('d', path(borderMesh) ?? '')
           .attr('fill', 'none')
-          .attr('stroke', COLORS.stroke)
+          .attr('stroke', monochrome ? '#000000' : COLORS.stroke)
           .attr('stroke-width', 1.2)
           .style('vector-effect', 'non-scaling-stroke')
           .style('pointer-events', 'none');
       }
 
-      // Static labels for printable maps — font size scales with feature area
-      // so large 시군 get prominent labels, small 자치구 get tighter ones.
+      // Static labels for printable maps — target size scales with feature area
+      // (large 시군 prominent, small 자치구 tighter); placeLabels() then shrinks to
+      // guarantee no overlap. Target ranges run large on purpose since collision
+      // resolution pulls crowded ones back down.
       if (staticLabels) {
         const labels = g.append('g').attr('class', 'static-labels').style('pointer-events', 'none');
         const renderable = geoData.features.filter((f) => {
           const code = getRegionCode(f);
           return !(staticLabelSkipCodes && staticLabelSkipCodes.has(code));
         });
+        // Area only drives placement priority now (bigger regions placed first,
+        // keep their size); target size itself is uniform per map.
         const areas = renderable.map((f) => Math.abs(path.area(f as GeoPermissibleObjects)));
-        const positiveAreas = areas.filter((a) => a > 0);
-        const minA = positiveAreas.length > 0 ? Math.min(...positiveAreas) : 1;
-        const maxA = positiveAreas.length > 0 ? Math.max(...positiveAreas) : 1;
-        const lo = Math.log(Math.max(minA, 1));
-        const hi = Math.log(Math.max(maxA, 1));
-        // Sido level: keep flat 13px (only 17 sizable features). Otherwise dynamic
-        // within the configured range (defaults [7, 12]; filtered views pass [9, 14]).
-        const [fMin, fMax] = staticLabelFontRange ?? [7, 12];
-        const fontSizeFor = (area: number) => {
-          if (adminLevel === 'sido') return 13;
-          if (hi <= lo) return Math.round((fMin + fMax) / 2);
-          const v = Math.log(Math.max(area, 1));
-          const t = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
-          return Math.round(fMin + t * (fMax - fMin));
-        };
+        const isNumber = staticLabelMode === 'number';
+        // Uniform target size per map (filtered views pass their own via
+        // staticLabelFontRange); placeLabels() only shrinks where regions crowd,
+        // so labels look "비스무리" everywhere except unavoidable dense clusters.
+        const [, fMax] = staticLabelFontRange ?? [9, 16];
+        const flatTarget = adminLevel === 'sido' ? 18 : fMax;
+        const labelFill = monochrome ? '#000000' : '#1f2937';
+        const items: LabelItem[] = [];
         renderable.forEach((feature, i) => {
-          const centroid = path.centroid(feature as GeoPermissibleObjects);
-          if (!Number.isFinite(centroid[0]) || !Number.isFinite(centroid[1])) return;
-          const fontSize = fontSizeFor(areas[i]);
-          labels.append('text')
-            .attr('x', centroid[0])
-            .attr('y', centroid[1])
-            .attr('text-anchor', 'middle')
-            .attr('dominant-baseline', 'middle')
-            .attr('font-size', fontSize)
-            .attr('font-weight', '600')
-            .attr('fill', '#1f2937')
-            .attr('stroke', 'white')
-            .attr('stroke-width', Math.max(1.5, fontSize * 0.22))
-            .attr('paint-order', 'stroke')
-            .text(staticLabelCompact ? getCompactDisplayName(feature, locale) : getShortDisplayName(feature, locale));
+          // Pole of inaccessibility (widest interior point), falling back to the
+          // area centroid — avoids labels landing in a pinched waist or near a hole.
+          const anchor = labelAnchor(feature, (p) => projection(p) ?? null)
+            ?? (path.centroid(feature as GeoPermissibleObjects) as [number, number]);
+          if (!anchor || !Number.isFinite(anchor[0]) || !Number.isFinite(anchor[1])) return;
+          const raw = isNumber
+            ? String(staticLabelNumbers?.get(getRegionCode(feature)) ?? '')
+            : (staticLabelCompact ? getCompactDisplayName(feature, locale) : getShortDisplayName(feature, locale));
+          if (!raw) return;
+          // Compound Korean names (e.g. "고양시 일산서구") wrap to 2 lines so they
+          // fit small regions without shrinking to nothing.
+          const lines = (!isNumber && locale === 'ko' && raw.includes(' ')) ? raw.split(' ') : [raw];
+          items.push({ x: anchor[0], y: anchor[1], lines, targetSize: flatTarget, priority: areas[i], fill: labelFill });
         });
+        // Sido has only 17 (all important) short labels — keep a high floor so
+        // area-crammed metros (서울 between 경기/인천) stay readable; the white halo
+        // covers the rare near-touch. Denser levels shrink much smaller.
+        const floor = adminLevel === 'sido' ? (isNumber ? 12 : 11) : (isNumber ? 6 : 5);
+        placeLabels(labels, items, { floor });
       }
 
       // Print bbox markers — dashed rectangles indicating "see inset for this area"
@@ -684,7 +694,7 @@ export default function QuizMap({
             .attr('width', br[0] - tl[0])
             .attr('height', br[1] - tl[1])
             .attr('fill', 'none')
-            .attr('stroke', marker.color ?? '#6b7280')
+            .attr('stroke', monochrome ? '#000000' : (marker.color ?? '#6b7280'))
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '4,3')
             .attr('rx', 2)
@@ -996,7 +1006,7 @@ export default function QuizMap({
     }
     regionElsRef.current = elIndex;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geoData, contextGeoData, topoData, borderMesh, displayMode, width, height, activeInsetZones, zoneFeaturesMap, locale, structuralTargetCode, showLabels, resetZoom]);
+  }, [geoData, contextGeoData, topoData, borderMesh, displayMode, width, height, activeInsetZones, zoneFeaturesMap, locale, structuralTargetCode, showLabels, resetZoom, monochrome, staticLabelMode, staticLabelNumbers]);
 
   // Lightweight fill-update effect: O(1) per code via element index
   useEffect(() => {
@@ -1013,7 +1023,7 @@ export default function QuizMap({
       if (code === wrongFlashCode) fill = COLORS.wrongFlash;
       else if (answeredCodes.has(code)) fill = getAnsweredFill(answeredCodes, code);
       else if (code === targetRegionCode) fill = COLORS.target;
-      else fill = COLORS.unanswered;
+      else fill = monochrome ? 'none' : COLORS.unanswered;
 
       for (const el of els) {
         // Borderless main-map regions stay transparent unless answered/targeted
@@ -1028,7 +1038,7 @@ export default function QuizMap({
         }
       }
     }
-  }, [answeredCodes, wrongFlashCode, targetRegionCode, displayMode]);
+  }, [answeredCodes, wrongFlashCode, targetRegionCode, displayMode, monochrome]);
 
   const computedHeight = computeSvgHeight(width, height, activeInsetZones);
 

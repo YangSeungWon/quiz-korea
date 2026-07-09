@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getSidoMeta, getRegionLabel } from '../../utils/regionUtils';
 import { useI18n } from '../../i18n/useI18n';
@@ -8,16 +9,31 @@ import MapsBanner from './MapsBanner';
 import type { AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
 
+type MapVariant = 'blank' | 'label' | 'number';
+type MapColor = 'color' | 'bw';
+type MapOrient = 'portrait' | 'landscape';
+
 function downloadFilename(
   level: AdminLevel,
   sidoSlug: string | undefined,
-  variant: 'blank' | 'label',
+  variant: MapVariant,
+  color: MapColor,
+  orient: MapOrient,
   locale: 'ko' | 'en',
   ext: 'pdf' | 'png',
 ): string {
   const slugPart = sidoSlug ? `-${sidoSlug}` : '';
-  return `${level}${slugPart}-${variant}-${locale}.${ext}`;
+  const bw = color === 'bw' ? '-bw' : '';
+  const land = orient === 'landscape' ? '-land' : '';
+  return `${level}${slugPart}-${variant}${bw}${land}-${locale}.${ext}`;
 }
+
+// Static Tailwind class strings per card accent (Tailwind can't see interpolated names).
+const ACCENT: Record<string, { border: string; btn: string }> = {
+  blue: { border: 'hover:border-blue-400', btn: 'bg-blue-500 hover:bg-blue-600' },
+  green: { border: 'hover:border-green-400', btn: 'bg-green-500 hover:bg-green-600' },
+  purple: { border: 'hover:border-purple-400', btn: 'bg-purple-500 hover:bg-purple-600' },
+};
 
 export default function MapDownloadPage() {
   const { level: levelParam, sidoSlug } = useParams<{ level: string; sidoSlug?: string }>();
@@ -46,10 +62,19 @@ export default function MapDownloadPage() {
     : `/maps/${adminLevel}/`;
   usePageMeta({ title: seoTitle, description: seoDesc, path: canonicalPath });
 
-  const blankPdfUrl = `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, 'blank', locale, 'pdf')}`;
-  const labelPdfUrl = `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, 'label', locale, 'pdf')}`;
-  const blankPngUrl = `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, 'blank', locale, 'png')}`;
-  const labelPngUrl = `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, 'label', locale, 'png')}`;
+  const [color, setColor] = useState<MapColor>('color');
+  const [orient, setOrient] = useState<MapOrient>('portrait');
+
+  const fileUrl = (variant: MapVariant, ext: 'pdf' | 'png') =>
+    `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, variant, color, orient, locale, ext)}`;
+
+  const previewAspect = orient === 'landscape' ? '297 / 210' : '210 / 297';
+
+  const cards: { variant: MapVariant; preview: string; download: string; accent: string }[] = [
+    { variant: 'blank', preview: t('maps.previewBlank'), download: t('maps.downloadBlankPdf'), accent: 'blue' },
+    { variant: 'label', preview: t('maps.previewLabel'), download: t('maps.downloadLabelPdf'), accent: 'green' },
+    { variant: 'number', preview: t('maps.previewNumber'), download: t('maps.downloadNumberPdf'), accent: 'purple' },
+  ];
 
   const sidoSegment = sidoMeta ? `/${sidoMeta.slug}` : '';
   const relatedLinks = [
@@ -89,54 +114,64 @@ export default function MapDownloadPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{heading}</h1>
         <p className="text-gray-600 mb-6">{t('maps.intro')}</p>
 
+        {/* Style + orientation toggles — swap the previews/downloads below. */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+            {(['color', 'bw'] as MapColor[]).map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(c)}
+                className={`px-3 py-1.5 font-medium transition-colors ${color === c ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                {c === 'color' ? t('maps.styleColor') : t('maps.styleBw')}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+            {(['portrait', 'landscape'] as MapOrient[]).map((o) => (
+              <button
+                key={o}
+                onClick={() => setOrient(o)}
+                className={`px-3 py-1.5 font-medium transition-colors ${orient === o ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                {o === 'portrait' ? t('maps.orientPortrait') : t('maps.orientLandscape')}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Preview + download — PNG thumbnail (cross-platform safe) + PDF link */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-          <div className="flex flex-col gap-2">
-            <a
-              href={blankPdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-blue-400 transition-colors"
-            >
-              <img
-                src={blankPngUrl}
-                alt={t('maps.previewBlank')}
-                loading="lazy"
-                className="block w-full h-auto"
-                style={{ aspectRatio: '210 / 297' }}
-              />
-            </a>
-            <a
-              href={blankPdfUrl}
-              download
-              className="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-semibold text-center transition-colors"
-            >
-              {t('maps.downloadBlankPdf')}
-            </a>
-          </div>
-          <div className="flex flex-col gap-2">
-            <a
-              href={labelPdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-green-400 transition-colors"
-            >
-              <img
-                src={labelPngUrl}
-                alt={t('maps.previewLabel')}
-                loading="lazy"
-                className="block w-full h-auto"
-                style={{ aspectRatio: '210 / 297' }}
-              />
-            </a>
-            <a
-              href={labelPdfUrl}
-              download
-              className="bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold text-center transition-colors"
-            >
-              {t('maps.downloadLabelPdf')}
-            </a>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          {cards.map((card) => {
+            const pdf = fileUrl(card.variant, 'pdf');
+            const png = fileUrl(card.variant, 'png');
+            const a = ACCENT[card.accent];
+            return (
+              <div key={card.variant} className="flex flex-col gap-2">
+                <a
+                  href={pdf}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`block bg-white border border-gray-200 rounded-xl overflow-hidden transition-colors ${a.border}`}
+                >
+                  <img
+                    src={png}
+                    alt={card.preview}
+                    loading="lazy"
+                    className="block w-full h-auto"
+                    style={{ aspectRatio: previewAspect }}
+                  />
+                </a>
+                <a
+                  href={pdf}
+                  download
+                  className={`text-white py-3 rounded-xl font-semibold text-center transition-colors ${a.btn}`}
+                >
+                  {card.download}
+                </a>
+              </div>
+            );
+          })}
         </div>
 
         <p className="text-xs text-gray-500 mb-2">{t('maps.usage')}</p>
