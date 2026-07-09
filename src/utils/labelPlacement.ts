@@ -153,6 +153,16 @@ export interface LabelItem {
 
 interface Rect { x: number; y: number; w: number; h: number }
 
+interface PlacedLabel {
+  fs: number;
+  target: number;
+  cx: number;
+  cy: number;
+  w0: number; // bbox width at target size
+  h0: number;
+  setSize: (fs: number) => void;
+}
+
 export function placeLabels(
   container: LabelSelection,
   items: LabelItem[],
@@ -160,20 +170,13 @@ export function placeLabels(
 ): void {
   const pad = opts.pad ?? 2;
   const weight = opts.fontWeight ?? 600;
-  const placed: Rect[] = [];
+  const floor = opts.floor;
 
-  const overlaps = (b: { x: number; y: number; width: number; height: number }) =>
-    placed.some(
-      (p) =>
-        b.x < p.x + p.w + pad &&
-        b.x + b.width + pad > p.x &&
-        b.y < p.y + p.h + pad &&
-        b.y + b.height + pad > p.y,
-    );
-
-  // Largest/most-important first.
-  const ordered = [...items].sort((a, b) => b.priority - a.priority);
-  for (const it of ordered) {
+  // Create every label at its target size; measure bbox ONCE (getBBox is costly
+  // across 600+ print renders). tspan dy is in em, so shrinking is just a
+  // font-size change and the bbox scales analytically — no further getBBox.
+  const labels: PlacedLabel[] = [];
+  for (const it of items) {
     if (it.lines.length === 0) continue;
     const text = container
       .append('text')
@@ -183,30 +186,61 @@ export function placeLabels(
       .attr('fill', it.fill)
       .attr('stroke', '#ffffff')
       .attr('paint-order', 'stroke');
-
     const n = it.lines.length;
-    const render = (fs: number) => {
-      text.selectAll('*').remove();
-      text.attr('font-size', fs).attr('stroke-width', Math.max(1.2, fs * 0.2));
-      it.lines.forEach((line, i) => {
-        text
-          .append('tspan')
-          .attr('x', it.x)
-          .attr('y', it.y)
-          .attr('dy', `${(i - (n - 1) / 2) * 1.05}em`)
-          .text(line);
-      });
-    };
+    it.lines.forEach((line, i) => {
+      text
+        .append('tspan')
+        .attr('x', it.x)
+        .attr('y', it.y)
+        .attr('dy', `${(i - (n - 1) / 2) * 1.05}em`)
+        .text(line);
+    });
+    const setSize = (fs: number) => text.attr('font-size', fs).attr('stroke-width', Math.max(1.2, fs * 0.2));
+    setSize(it.targetSize);
+    const g = (text.node() as SVGGraphicsElement).getBBox();
+    labels.push({
+      fs: it.targetSize,
+      target: it.targetSize,
+      cx: g.x + g.width / 2,
+      cy: g.y + g.height / 2,
+      w0: g.width,
+      h0: g.height,
+      setSize,
+    });
+  }
 
-    let fs = it.targetSize;
-    render(fs);
-    let bb = (text.node() as SVGGraphicsElement).getBBox();
-    while (fs > opts.floor && overlaps(bb)) {
-      fs -= 1;
-      render(fs);
-      bb = (text.node() as SVGGraphicsElement).getBBox();
+  const bbox = (l: PlacedLabel): Rect => {
+    const s = l.fs / l.target;
+    const w = l.w0 * s;
+    const h = l.h0 * s;
+    return { x: l.cx - w / 2, y: l.cy - h / 2, w, h };
+  };
+  const overlap = (a: Rect, b: Rect) =>
+    a.x < b.x + b.w + pad && a.x + a.w + pad > b.x && a.y < b.y + b.h + pad && a.y + a.h + pad > b.y;
+
+  // Relaxation: each round, for every overlapping pair shrink the LARGER label
+  // (both if equal), down to the floor. Big labels give way to small neighbors
+  // instead of crushing them, so sizes converge and even out — no more a huge
+  // region next to a tiny one, and small enclosed regions keep a readable size.
+  const rects = labels.map(bbox);
+  const MAX_ROUNDS = 48;
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    const shrink = new Set<number>();
+    for (let i = 0; i < labels.length; i++) {
+      for (let j = i + 1; j < labels.length; j++) {
+        if (!overlap(rects[i], rects[j])) continue;
+        const bigI = labels[i].fs >= labels[j].fs ? i : j;
+        const smallI = labels[i].fs >= labels[j].fs ? j : i;
+        if (labels[bigI].fs > floor) shrink.add(bigI);
+        else if (labels[smallI].fs > floor) shrink.add(smallI);
+        if (labels[i].fs === labels[j].fs && labels[smallI].fs > floor) shrink.add(smallI);
+      }
     }
-    // Keep even if it still overlaps at the floor (never hide).
-    placed.push({ x: bb.x, y: bb.y, w: bb.width, h: bb.height });
+    if (shrink.size === 0) break;
+    for (const i of shrink) {
+      labels[i].fs -= 1;
+      labels[i].setSize(labels[i].fs);
+      rects[i] = bbox(labels[i]);
+    }
   }
 }

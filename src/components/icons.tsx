@@ -54,3 +54,40 @@ export function ImageIcon(props: IconProps) {
     </Base>
   );
 }
+
+// Color: overlapping circles (color mixing). B/W: half-filled contrast circle.
+export function ColorIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="9" cy="9" r="5" />
+      <circle cx="15" cy="9" r="5" />
+      <circle cx="12" cy="15" r="5" />
+    </Base>
+  );
+}
+
+export function BwIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none" />
+    </Base>
+  );
+}
+
+// Orientation: a tall page vs a wide page.
+export function PortraitIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="6" y="3" width="12" height="18" rx="1.5" />
+    </Base>
+  );
+}
+
+export function LandscapeIcon(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="6" width="18" height="12" rx="1.5" />
+    </Base>
+  );
+}

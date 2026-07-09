@@ -110,8 +110,8 @@ const INSET_H = 110;
 // so it gets visual weight similar to the mainland portion.
 const FILTERED_OUTLIER_W = 280;
 const FILTERED_OUTLIER_H = 210;
-const SUGOKWON_W = 200;
-const SUGOKWON_H = 200;
+const SUGOKWON_W = 250;
+const SUGOKWON_H = 250;
 const METRO_INSET_W = 150;
 const METRO_INSET_H = 130;
 
@@ -370,11 +370,17 @@ export default function MapPrintView() {
     const ownCodes = new Set(own.map((f) => getRegionCode(f)));
     return mainGeoData.features.filter((f) => !ownCodes.has(getRegionCode(f)) && featureOverlapsBbox(f, bbox));
   };
+  // 인천 straddles the 수도권 bbox (centroid west of it), so it isn't in the
+  // centroid-partitioned zone. At 시군 level add it to the zoom's own (drawn +
+  // labeled, position clamped inside), while keeping it labeled on the main map.
+  const sugokwonOwn = partitioned
+    ? [...partitioned.sugokwon, ...(adminLevel === 'sigun' ? (mainGeoData?.features.filter((f) => getRegionCode(f) === '23') ?? []) : [])]
+    : [];
   const insetDefs = partitioned
     ? ([
         { features: partitioned.seohae, contextFeatures: undefined as RegionFeature[] | undefined, label: locale === 'en' ? 'West Sea Islands' : '서해 5도', w: seohaeBig ? FILTERED_OUTLIER_W : INSET_W, h: seohaeBig ? FILTERED_OUTLIER_H : INSET_H, fontRange: seohaeBig ? ([11, 17] as [number, number]) : undefined, bbox: undefined as (readonly [number, number, number, number] | undefined) },
         { features: partitioned.donghae, contextFeatures: undefined, label: locale === 'en' ? 'East Sea (Ulleung/Dokdo)' : '동해 (울릉도/독도)', w: donghaeBig ? FILTERED_OUTLIER_W : INSET_W, h: donghaeBig ? FILTERED_OUTLIER_H : INSET_H, fontRange: donghaeBig ? ([11, 17] as [number, number]) : undefined, bbox: undefined },
-        { features: partitioned.sugokwon, contextFeatures: contextFor(SUGOKWON_BBOX, partitioned.sugokwon), label: locale === 'en' ? 'Capital Region (zoom)' : '수도권 확대', w: SUGOKWON_W, h: SUGOKWON_H, fontRange: undefined, bbox: SUGOKWON_BBOX },
+        { features: sugokwonOwn, contextFeatures: contextFor(SUGOKWON_BBOX, sugokwonOwn), label: locale === 'en' ? 'Capital Region (zoom)' : '수도권 확대', w: SUGOKWON_W, h: SUGOKWON_H, fontRange: undefined, bbox: SUGOKWON_BBOX },
         { features: partitioned.daegu, contextFeatures: contextFor(DAEGU_BBOX, partitioned.daegu), label: locale === 'en' ? 'Daegu (zoom)' : '대구 확대', w: METRO_INSET_W, h: METRO_INSET_H, fontRange: undefined, bbox: DAEGU_BBOX },
         { features: partitioned.busan, contextFeatures: contextFor(BUSAN_BBOX, partitioned.busan), label: locale === 'en' ? 'Busan (zoom)' : '부산 확대', w: METRO_INSET_W, h: METRO_INSET_H, fontRange: undefined, bbox: BUSAN_BBOX },
       ].filter((d) => d.features.length > 0))
@@ -389,12 +395,20 @@ export default function MapPrintView() {
     for (const p of placedInsets) { p.x = x; p.y = keyBox.y; x += p.w + 10; rowH = Math.max(rowH, p.h); }
     if (rowH > 0) effKeyBox = { ...keyBox, y: keyBox.y + rowH + 12, h: keyBox.h - rowH - 12 };
   } else {
-    // Corner layout: 동해 top-right, everything else stacked down the left.
+    // Corner layout: 동해 top-right, everything else stacked down the left. For
+    // filtered 경북 (donghaeBig) the map fills the sheet and its NE tip (울진) is
+    // at top-right, so drop the (enlarged) 동해 inset to the empty bottom-right.
     let leftY = mapBox.y + 12;
     for (const p of placedInsets) {
       const isDonghae = p.label.includes('동해') || p.label.includes('East Sea');
-      if (isDonghae) { p.x = mapBox.x + mapBox.w - p.w - 12; p.y = mapBox.y + 12; }
-      else { p.x = mapBox.x + 12; p.y = leftY; leftY += p.h + 16; }
+      if (isDonghae) {
+        p.x = mapBox.x + mapBox.w - p.w - 12;
+        p.y = donghaeBig ? (mapBox.y + mapBox.h - p.h - 12) : (mapBox.y + 12);
+      } else {
+        p.x = mapBox.x + 12;
+        p.y = leftY;
+        leftY += p.h + 16;
+      }
     }
   }
 

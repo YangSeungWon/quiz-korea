@@ -6,7 +6,8 @@ import { usePageMeta } from '../../hooks/usePageMeta';
 import { useLocalePath } from '../../hooks/useLocalePath';
 import LanguageToggle from '../LanguageToggle';
 import MapsBanner from './MapsBanner';
-import { FileTextIcon, ImageIcon } from '../icons';
+import { FileTextIcon, ImageIcon, ColorIcon, BwIcon, PortraitIcon, LandscapeIcon } from '../icons';
+import type { ComponentType } from 'react';
 import type { AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
 
@@ -42,23 +43,18 @@ interface DownloadCardProps {
   downloadLabel: string;
   accent: string;
   pngLabel: string;
-  colorOpts: { value: MapColor; label: string }[];
-  orientOpts: { value: MapOrient; label: string }[];
+  color: MapColor;
+  orient: MapOrient;
   buildUrl: (variant: MapVariant, color: MapColor, orient: MapOrient, ext: 'pdf' | 'png') => string;
 }
 
-// One content type (백지도 / 이름 / 번호). Two independent segmented toggles —
-// color (컬러/흑백) and orientation (세로/가로) — live-update the preview and the
-// download buttons, so you always see what you'll get.
-function DownloadCard({ variant, previewAlt, downloadLabel, accent, pngLabel, colorOpts, orientOpts, buildUrl }: DownloadCardProps) {
-  const [color, setColor] = useState<MapColor>('color');
-  const [orient, setOrient] = useState<MapOrient>('portrait');
+// One content type (백지도 / 이름 / 번호). Color + orientation come from the global
+// toggle above, so all three previews and downloads switch together.
+function DownloadCard({ variant, previewAlt, downloadLabel, accent, pngLabel, color, orient, buildUrl }: DownloadCardProps) {
   const a = ACCENT[accent];
   const pdf = buildUrl(variant, color, orient, 'pdf');
   const png = buildUrl(variant, color, orient, 'png');
   const aspect = orient === 'landscape' ? '297 / 210' : '210 / 297';
-  const seg = (active: boolean) =>
-    active ? a.chip : 'bg-white text-gray-500 hover:text-gray-700';
   return (
     <div className="flex flex-col gap-2">
       <a
@@ -70,22 +66,6 @@ function DownloadCard({ variant, previewAlt, downloadLabel, accent, pngLabel, co
       >
         <img src={png} alt={previewAlt} loading="lazy" className="block w-full h-full object-contain" />
       </a>
-      <div className="flex flex-wrap justify-center gap-2">
-        <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
-          {colorOpts.map((o) => (
-            <button key={o.value} onClick={() => setColor(o.value)} className={`px-2.5 py-1 transition-colors ${seg(color === o.value)}`}>
-              {o.label}
-            </button>
-          ))}
-        </div>
-        <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
-          {orientOpts.map((o) => (
-            <button key={o.value} onClick={() => setOrient(o.value)} className={`px-2.5 py-1 transition-colors ${seg(orient === o.value)}`}>
-              {o.label}
-            </button>
-          ))}
-        </div>
-      </div>
       <a
         href={pdf}
         download
@@ -141,14 +121,17 @@ export default function MapDownloadPage() {
     { variant: 'label', preview: t('maps.previewLabel'), download: t('maps.downloadLabelPdf'), accent: 'green' },
     { variant: 'number', preview: t('maps.previewNumber'), download: t('maps.downloadNumberPdf'), accent: 'purple' },
   ];
-  // Two independent axes; toggling either live-updates the card preview + downloads.
-  const colorOpts: { value: MapColor; label: string }[] = [
-    { value: 'color', label: t('maps.styleColor') },
-    { value: 'bw', label: t('maps.styleBw') },
+  // Global axes — one toggle drives all three previews/downloads at once.
+  const [color, setColor] = useState<MapColor>('color');
+  const [orient, setOrient] = useState<MapOrient>('portrait');
+  type IconC = ComponentType<{ size?: number }>;
+  const colorOpts: { value: MapColor; label: string; Icon: IconC }[] = [
+    { value: 'color', label: t('maps.styleColor'), Icon: ColorIcon },
+    { value: 'bw', label: t('maps.styleBw'), Icon: BwIcon },
   ];
-  const orientOpts: { value: MapOrient; label: string }[] = [
-    { value: 'portrait', label: t('maps.orientPortrait') },
-    { value: 'landscape', label: t('maps.orientLandscape') },
+  const orientOpts: { value: MapOrient; label: string; Icon: IconC }[] = [
+    { value: 'portrait', label: t('maps.orientPortrait'), Icon: PortraitIcon },
+    { value: 'landscape', label: t('maps.orientLandscape'), Icon: LandscapeIcon },
   ];
 
   const sidoSegment = sidoMeta ? `/${sidoMeta.slug}` : '';
@@ -189,7 +172,34 @@ export default function MapDownloadPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{heading}</h1>
         <p className="text-gray-600 mb-6">{t('maps.intro')}</p>
 
-        {/* Each card: pick a version chip → preview + downloads update live. */}
+        {/* Global toggle — controls all three previews/downloads at once. */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
+            {colorOpts.map((o) => (
+              <button
+                key={o.value}
+                onClick={() => setColor(o.value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${color === o.value ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                <o.Icon size={15} />
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
+            {orientOpts.map((o) => (
+              <button
+                key={o.value}
+                onClick={() => setOrient(o.value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${orient === o.value ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                <o.Icon size={15} />
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           {cards.map((card) => (
             <DownloadCard
@@ -199,8 +209,8 @@ export default function MapDownloadPage() {
               downloadLabel={card.download}
               accent={card.accent}
               pngLabel={t('maps.downloadPng')}
-              colorOpts={colorOpts}
-              orientOpts={orientOpts}
+              color={color}
+              orient={orient}
               buildUrl={fileUrl}
             />
           ))}

@@ -143,7 +143,7 @@ export default function PrintInset({
         .append('path')
         .datum(f)
         .attr('d', path(f as GeoPermissibleObjects) ?? '')
-        .attr('fill', monochrome ? '#e5e7eb' : '#f3f4f6')
+        .attr('fill', monochrome ? 'none' : '#f3f4f6')
         .attr('stroke', monochrome ? '#9ca3af' : '#d1d5db')
         .attr('stroke-width', 0.6);
     });
@@ -152,7 +152,7 @@ export default function PrintInset({
         .append('path')
         .datum(f)
         .attr('d', path(f as GeoPermissibleObjects) ?? '')
-        .attr('fill', monochrome ? '#ffffff' : '#e5e7eb')
+        .attr('fill', monochrome ? 'none' : '#e5e7eb')
         .attr('stroke', monochrome ? '#000000' : '#9ca3af')
         .attr('stroke-width', 0.6);
     });
@@ -169,8 +169,14 @@ export default function PrintInset({
         // Centroid (not pole-of-inaccessibility) inside insets: the inset <svg>
         // clips to its viewport, and a pole can land outside the bbox for a
         // feature that extends past it, hiding the label.
-        const anchor = path.centroid(f as GeoPermissibleObjects) as [number, number];
-        if (!Number.isFinite(anchor[0]) || !Number.isFinite(anchor[1])) return;
+        const c = path.centroid(f as GeoPermissibleObjects) as [number, number];
+        if (!Number.isFinite(c[0]) || !Number.isFinite(c[1])) return;
+        // Clamp into the inset so a straddler (e.g. 인천, centroid west of the
+        // bbox) still gets a visible label instead of being clipped away.
+        const anchor: [number, number] = [
+          Math.min(Math.max(c[0], padX + 8), width - padX - 8),
+          Math.min(Math.max(c[1], labelBarH + 8), height - padX - 8),
+        ];
         let lines: string[];
         if (isNumber) {
           const num = numbers?.get(getRegionCode(f));
