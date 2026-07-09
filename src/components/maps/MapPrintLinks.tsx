@@ -1,5 +1,6 @@
 import { useI18n } from '../../i18n/useI18n';
 import { useLocalePath } from '../../hooks/useLocalePath';
+import { PrinterIcon } from '../icons';
 import type { AdminLevel } from '../../types';
 
 interface Props {
@@ -34,7 +35,7 @@ export default function MapPrintLinks({ adminLevel, slug, dongCode }: Props) {
     const printRoute = (v: 'blank' | 'label') => localized(`/maps/print/${v}/${seg}/`);
     return (
       <div className={wrap}>
-        <span aria-hidden className="text-gray-500">🖨</span>
+        <span aria-hidden className="text-gray-500 flex items-center"><PrinterIcon size={15} /></span>
         <a href={printRoute('blank')} target="_blank" rel="noopener noreferrer" className={linkCls}>
           {locale === 'en' ? 'Blank map' : '백지도'}
         </a>

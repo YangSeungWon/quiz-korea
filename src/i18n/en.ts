@@ -70,6 +70,7 @@ const en: TranslationStrings = {
   'maps.optBw': 'B/W',
   'maps.optLandscape': 'Landscape',
   'maps.optBwLandscape': 'B/W + landscape',
+  'maps.downloadPng': 'Save image (PNG)',
   'maps.answerKeyTitle': 'Answer key',
   'maps.usage': 'A4 · for study, classroom, and practice',
   'maps.dataNote': 'Administrative boundaries: Statistics Korea (SGIS) 2025 census',

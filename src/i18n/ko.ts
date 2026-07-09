@@ -70,6 +70,7 @@ const ko: TranslationStrings = {
   'maps.optBw': '흑백',
   'maps.optLandscape': '가로',
   'maps.optBwLandscape': '흑백+가로',
+  'maps.downloadPng': '이미지(PNG) 저장',
   'maps.answerKeyTitle': '정답',
   'maps.usage': 'A4 · 학습/수업/연습용',
   'maps.dataNote': '행정구역 기준: 통계청 SGIS 2025년 센서스 경계',

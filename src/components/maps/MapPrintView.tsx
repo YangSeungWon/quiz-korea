@@ -7,6 +7,7 @@ import { extractRegions, getSidoMeta, getRegionCode, getShortDisplayName } from 
 import { useI18n } from '../../i18n/useI18n';
 import QuizMap from '../../maps/QuizMap';
 import PrintInset from './PrintInset';
+import { PrinterIcon } from '../icons';
 import type { AdminLevel, RegionFeature } from '../../types';
 
 // A4 portrait at 96dpi = 794 × 1123 px (full bleed: margin 0 in page.pdf).
@@ -499,7 +500,7 @@ export default function MapPrintView() {
           cursor: 'pointer',
         }}
       >
-        🖨 {locale === 'en' ? 'Print' : '인쇄'}
+        <PrinterIcon size={16} /> {locale === 'en' ? 'Print' : '인쇄'}
       </button>
     </div>
   );

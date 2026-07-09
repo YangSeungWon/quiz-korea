@@ -5,6 +5,7 @@ import { usePageMeta } from '../../hooks/usePageMeta';
 import { useLocalePath } from '../../hooks/useLocalePath';
 import LanguageToggle from '../LanguageToggle';
 import MapsBanner from './MapsBanner';
+import { FileTextIcon, ImageIcon } from '../icons';
 import type { AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
 
@@ -141,9 +142,18 @@ export default function MapDownloadPage() {
                 <a
                   href={pdf}
                   download
-                  className={`text-white py-3 rounded-xl font-semibold text-center transition-colors ${a.btn}`}
+                  className={`flex items-center justify-center gap-2 text-white py-3 rounded-xl font-semibold text-center transition-colors ${a.btn}`}
                 >
+                  <FileTextIcon size={18} />
                   {card.download}
+                </a>
+                <a
+                  href={fileUrl(card.variant, 'color', 'portrait', 'png')}
+                  download
+                  className="flex items-center justify-center gap-2 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:border-gray-400 hover:text-gray-800 transition-colors"
+                >
+                  <ImageIcon size={16} />
+                  {t('maps.downloadPng')}
                 </a>
                 <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 text-xs text-gray-500">
                   {variantOptions.map((o, i) => (

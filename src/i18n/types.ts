@@ -101,6 +101,7 @@ export interface TranslationStrings {
   'maps.optBw': string;
   'maps.optLandscape': string;
   'maps.optBwLandscape': string;
+  'maps.downloadPng': string;
   'maps.answerKeyTitle': string;
   'maps.usage': string;
   'maps.dataNote': string;
