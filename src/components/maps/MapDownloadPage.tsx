@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getSidoMeta, getRegionLabel } from '../../utils/regionUtils';
 import { useI18n } from '../../i18n/useI18n';
@@ -62,18 +61,20 @@ export default function MapDownloadPage() {
     : `/maps/${adminLevel}/`;
   usePageMeta({ title: seoTitle, description: seoDesc, path: canonicalPath });
 
-  const [color, setColor] = useState<MapColor>('color');
-  const [orient, setOrient] = useState<MapOrient>('portrait');
-
-  const fileUrl = (variant: MapVariant, ext: 'pdf' | 'png') =>
+  const fileUrl = (variant: MapVariant, color: MapColor, orient: MapOrient, ext: 'pdf' | 'png') =>
     `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, variant, color, orient, locale, ext)}`;
 
-  const previewAspect = orient === 'landscape' ? '297 / 210' : '210 / 297';
-
+  // Preview + primary button = the expected default (color · portrait); the
+  // extra combos (흑백/가로/흑백+가로) hang off each card as small secondary links.
   const cards: { variant: MapVariant; preview: string; download: string; accent: string }[] = [
     { variant: 'blank', preview: t('maps.previewBlank'), download: t('maps.downloadBlankPdf'), accent: 'blue' },
     { variant: 'label', preview: t('maps.previewLabel'), download: t('maps.downloadLabelPdf'), accent: 'green' },
     { variant: 'number', preview: t('maps.previewNumber'), download: t('maps.downloadNumberPdf'), accent: 'purple' },
+  ];
+  const variantOptions: { color: MapColor; orient: MapOrient; label: string }[] = [
+    { color: 'bw', orient: 'portrait', label: t('maps.optBw') },
+    { color: 'color', orient: 'landscape', label: t('maps.optLandscape') },
+    { color: 'bw', orient: 'landscape', label: t('maps.optBwLandscape') },
   ];
 
   const sidoSegment = sidoMeta ? `/${sidoMeta.slug}` : '';
@@ -114,37 +115,12 @@ export default function MapDownloadPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{heading}</h1>
         <p className="text-gray-600 mb-6">{t('maps.intro')}</p>
 
-        {/* Style + orientation toggles — swap the previews/downloads below. */}
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
-            {(['color', 'bw'] as MapColor[]).map((c) => (
-              <button
-                key={c}
-                onClick={() => setColor(c)}
-                className={`px-3 py-1.5 font-medium transition-colors ${color === c ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-              >
-                {c === 'color' ? t('maps.styleColor') : t('maps.styleBw')}
-              </button>
-            ))}
-          </div>
-          <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-sm">
-            {(['portrait', 'landscape'] as MapOrient[]).map((o) => (
-              <button
-                key={o}
-                onClick={() => setOrient(o)}
-                className={`px-3 py-1.5 font-medium transition-colors ${orient === o ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-              >
-                {o === 'portrait' ? t('maps.orientPortrait') : t('maps.orientLandscape')}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Preview + download — PNG thumbnail (cross-platform safe) + PDF link */}
+        {/* Preview (default color·portrait) + primary PDF button, with the other
+            combos as small secondary links so the hero stays clean. */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
           {cards.map((card) => {
-            const pdf = fileUrl(card.variant, 'pdf');
-            const png = fileUrl(card.variant, 'png');
+            const pdf = fileUrl(card.variant, 'color', 'portrait', 'pdf');
+            const png = fileUrl(card.variant, 'color', 'portrait', 'png');
             const a = ACCENT[card.accent];
             return (
               <div key={card.variant} className="flex flex-col gap-2">
@@ -159,7 +135,7 @@ export default function MapDownloadPage() {
                     alt={card.preview}
                     loading="lazy"
                     className="block w-full h-auto"
-                    style={{ aspectRatio: previewAspect }}
+                    style={{ aspectRatio: '210 / 297' }}
                   />
                 </a>
                 <a
@@ -169,6 +145,20 @@ export default function MapDownloadPage() {
                 >
                   {card.download}
                 </a>
+                <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 text-xs text-gray-500">
+                  {variantOptions.map((o, i) => (
+                    <span key={o.label} className="flex items-center gap-2">
+                      {i > 0 && <span className="text-gray-300">·</span>}
+                      <a
+                        href={fileUrl(card.variant, o.color, o.orient, 'pdf')}
+                        download
+                        className="hover:text-gray-800 hover:underline transition-colors"
+                      >
+                        {o.label}
+                      </a>
+                    </span>
+                  ))}
+                </div>
               </div>
             );
           })}
