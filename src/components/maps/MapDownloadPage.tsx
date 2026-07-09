@@ -66,9 +66,9 @@ function DownloadCard({ variant, previewAlt, downloadLabel, accent, pngLabel, co
         target="_blank"
         rel="noopener noreferrer"
         className={`flex items-center justify-center bg-white border border-gray-200 rounded-xl overflow-hidden transition-colors ${a.border}`}
-        style={{ aspectRatio: '210 / 297' }}
+        style={{ aspectRatio: aspect }}
       >
-        <img src={png} alt={previewAlt} loading="lazy" className="block max-w-full max-h-full" style={{ aspectRatio: aspect }} />
+        <img src={png} alt={previewAlt} loading="lazy" className="block w-full h-full object-contain" />
       </a>
       <div className="flex flex-wrap justify-center gap-2">
         <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">

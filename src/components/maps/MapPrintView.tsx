@@ -25,7 +25,7 @@ interface SheetLayout {
 // keeps the historical full-bleed map so existing output is unchanged. The
 // number variant reserves a panel for the answer key; landscape is used mainly
 // to host that key in the horizontal whitespace (Korea is portrait-shaped).
-function computeLayout(isNumber: boolean, landscape: boolean): SheetLayout {
+function computeLayout(isNumber: boolean, landscape: boolean, keyN = 0, keyMaxChars = 0): SheetLayout {
   const sheet = landscape ? { w: PRINT_HEIGHT, h: PRINT_WIDTH } : { w: PRINT_WIDTH, h: PRINT_HEIGHT };
   if (!isNumber) {
     // Map fills the whole sheet in both orientations. Wide filtered regions (충북)
@@ -33,10 +33,28 @@ function computeLayout(isNumber: boolean, landscape: boolean): SheetLayout {
     // corners empty for the outlier insets (no more covering 강원 in landscape).
     return { sheet, mapBox: { x: 0, y: 0, w: sheet.w, h: sheet.h }, keyBox: null };
   }
+  // Number: size the answer-key band to its content so a short list doesn't steal
+  // map space. Portrait key sits at the bottom (pack wide → few rows → taller map).
+  const fontSize = 11;
+  const rowH = fontSize + 4;
+  const heading = 22;
+  const n = Math.max(1, keyN);
+  const colW = 24 + keyMaxChars * fontSize * 0.6 + KEY_COL_GAP;
   if (!landscape) {
-    return { sheet, mapBox: { x: 0, y: 0, w: PRINT_WIDTH, h: 760 }, keyBox: { x: 12, y: 768, w: 770, h: 343 } };
+    const maxCols = Math.max(1, Math.floor((PRINT_WIDTH - 24) / colW));
+    const cols = Math.min(maxCols, n);
+    const rows = Math.ceil(n / cols);
+    const keyH = Math.min(Math.round(PRINT_HEIGHT * 0.42), heading + rows * rowH + 12);
+    const mapH = PRINT_HEIGHT - keyH - 8;
+    return { sheet, mapBox: { x: 0, y: 0, w: PRINT_WIDTH, h: mapH }, keyBox: { x: 12, y: mapH + 4, w: PRINT_WIDTH - 24, h: keyH } };
   }
-  return { sheet, mapBox: { x: 0, y: 0, w: 600, h: sheet.h }, keyBox: { x: 612, y: 40, w: 495, h: 714 } };
+  // Landscape key sits on the right; keep a min width for the inset row that stacks
+  // above it, but still shrink toward the content for short lists.
+  const rowsPerCol = Math.max(1, Math.floor((sheet.h - 52 - heading) / rowH));
+  const cols = Math.max(1, Math.ceil(n / rowsPerCol));
+  const keyW = Math.max(370, Math.min(Math.round(sheet.w * 0.5), cols * colW));
+  const mapW = sheet.w - keyW - 24;
+  return { sheet, mapBox: { x: 0, y: 0, w: mapW, h: sheet.h }, keyBox: { x: mapW + 12, y: 40, w: keyW, h: sheet.h - 52 } };
 }
 
 // Adaptive answer-key sizing: pick the largest font in the ladder whose columns
@@ -46,18 +64,29 @@ function computeLayout(isNumber: boolean, landscape: boolean): SheetLayout {
 const KEY_COL_GAP = 10;
 function computeKeyStyle(n: number, keyBox: Box, maxChars: number) {
   const colUnit = (fontSize: number) => 24 + maxChars * fontSize * 0.6 + KEY_COL_GAP;
-  for (const fontSize of [12, 11, 10, 9, 8, 7]) {
+  // Rebalance so the grid has no near-empty trailing column: once the row count
+  // is fixed, spread entries evenly (8 items → 4×2, not 7+1).
+  const pick = (fontSize: number) => {
     const rowH = fontSize + 4;
     const rowsPerCol = Math.max(1, Math.floor((keyBox.h - 20) / rowH));
-    const cols = Math.max(1, Math.ceil(n / rowsPerCol));
-    if (keyBox.w / cols >= colUnit(fontSize) - KEY_COL_GAP) {
-      return { fontSize, cols, rowH, width: Math.min(keyBox.w, Math.ceil(cols * colUnit(fontSize))) };
-    }
+    const maxCols = Math.max(1, Math.min(Math.floor(keyBox.w / (colUnit(fontSize) - KEY_COL_GAP)), Math.ceil(n / 1)));
+    const cols0 = Math.max(1, Math.ceil(n / rowsPerCol));
+    if (cols0 > maxCols) return null; // doesn't fit this font
+    const rows = Math.ceil(n / cols0);
+    const cols = Math.ceil(n / rows); // even columns for `rows` rows
+    return { fontSize, cols, rowH, width: Math.min(keyBox.w, Math.ceil(cols * colUnit(fontSize))) };
+  };
+  for (const fontSize of [12, 11, 10, 9, 8, 7]) {
+    const r = pick(fontSize);
+    if (r) return r;
   }
+  // Floor: accept 7px even if tight.
   const fontSize = 7;
   const rowH = fontSize + 4;
   const rowsPerCol = Math.max(1, Math.floor((keyBox.h - 20) / rowH));
-  const cols = Math.max(1, Math.ceil(n / rowsPerCol));
+  const cols0 = Math.max(1, Math.ceil(n / rowsPerCol));
+  const rows = Math.ceil(n / cols0);
+  const cols = Math.ceil(n / rows);
   return { fontSize, cols, rowH, width: Math.min(keyBox.w, Math.ceil(cols * colUnit(fontSize))) };
 }
 
@@ -168,7 +197,6 @@ export default function MapPrintView() {
   const showLabels = variant === 'label';
   const monochrome = searchParams.get('bw') === '1';
   const landscape = searchParams.get('orient') === 'landscape';
-  const { sheet, mapBox, keyBox } = computeLayout(isNumber, landscape);
 
   const { geoData, topoData, borderMesh, loading, error } = useMapData(adminLevel, filterCode);
 
@@ -215,6 +243,10 @@ export default function MapPrintView() {
     });
     return { numbering: map, keyEntries: entries };
   }, [isNumber, filteredGeoData, locale]);
+
+  // Layout depends on the answer-key size so a short list gives the map more room.
+  const keyMaxChars = keyEntries.reduce((m, e) => Math.max(m, `${e.num}. ${e.name}`.length), 0);
+  const { sheet, mapBox, keyBox } = computeLayout(isNumber, landscape, keyEntries.length, keyMaxChars);
 
   // Codes inside any density inset → skip labels in main map (labels live in inset).
   const insetSkipCodes = useMemo(() => {
@@ -437,22 +469,26 @@ export default function MapPrintView() {
               position: 'absolute',
               left: effKeyBox.x,
               top: effKeyBox.y,
-              width: keyW,
+              width: effKeyBox.w,
               height: effKeyBox.h,
               fontFamily: 'system-ui, sans-serif',
               color: '#111827',
               overflow: 'hidden',
             }}
           >
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
-              {t('maps.answerKeyTitle')}
-            </div>
-            <div style={{ columnCount: cols, columnGap: 10, fontSize, lineHeight: `${rowH}px` }}>
-              {keyEntries.map((e) => (
-                <div key={e.num} style={{ breakInside: 'avoid', whiteSpace: 'nowrap' }}>
-                  {e.num}. {e.name}
-                </div>
-              ))}
+            {/* Centered block sized to its content so short lists don't leave a
+                big gap on one side. */}
+            <div style={{ width: keyW, margin: '0 auto' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6 }}>
+                {t('maps.answerKeyTitle')}
+              </div>
+              <div style={{ columnCount: cols, columnGap: 10, fontSize, lineHeight: `${rowH}px` }}>
+                {keyEntries.map((e) => (
+                  <div key={e.num} style={{ breakInside: 'avoid', whiteSpace: 'nowrap' }}>
+                    {e.num}. {e.name}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         );

@@ -135,14 +135,24 @@ export default function PrintInset({
       regionGroup = svg.append('g').attr('clip-path', `url(#${clipPathId})`) as unknown as typeof regionGroup;
     }
 
-    // Straddling neighbors first (context), then the inset's own regions on top.
-    // Both clipped to the box; only own regions get labels below.
-    [...(contextFeatures ?? []), ...features].forEach((f) => {
+    // Straddling neighbors (context) drawn first and recede; the inset's own
+    // regions on top, popping. In monochrome the own regions are opaque white
+    // over gray context so target vs context stays distinguishable.
+    (contextFeatures ?? []).forEach((f) => {
       regionGroup
         .append('path')
         .datum(f)
         .attr('d', path(f as GeoPermissibleObjects) ?? '')
-        .attr('fill', monochrome ? 'none' : '#e5e7eb')
+        .attr('fill', monochrome ? '#e5e7eb' : '#f3f4f6')
+        .attr('stroke', monochrome ? '#9ca3af' : '#d1d5db')
+        .attr('stroke-width', 0.6);
+    });
+    features.forEach((f) => {
+      regionGroup
+        .append('path')
+        .datum(f)
+        .attr('d', path(f as GeoPermissibleObjects) ?? '')
+        .attr('fill', monochrome ? '#ffffff' : '#e5e7eb')
         .attr('stroke', monochrome ? '#000000' : '#9ca3af')
         .attr('stroke-width', 0.6);
     });

@@ -505,15 +505,17 @@ export default function QuizMap({
         .join('path')
         .attr('class', 'context')
         .attr('d', pathAttr(path))
-        .attr('fill', monochrome ? 'none' : '#f3f4f6')
-        .attr('stroke', monochrome ? '#000000' : '#d1d5db')
+        .attr('fill', monochrome ? '#e5e7eb' : '#f3f4f6')
+        .attr('stroke', monochrome ? '#9ca3af' : '#d1d5db')
         .attr('stroke-width', 0.8)
         .style('vector-effect', 'non-scaling-stroke')
         .style('pointer-events', 'none');
     }
 
     // Helper: get fill color in normal style (used for main normal mode + insets)
-    const unansweredFill = monochrome ? 'none' : COLORS.unanswered;
+    // Monochrome: opaque white (not 'none') so the target region covers the gray
+    // context layer behind it — otherwise target and context both read as white.
+    const unansweredFill = monochrome ? '#ffffff' : COLORS.unanswered;
     const getNormalFill = (d: RegionFeature): string => {
       const code = getRegionCode(d);
       if (code === wrongFlashCodeRef.current) return COLORS.wrongFlash;
@@ -1026,7 +1028,7 @@ export default function QuizMap({
       if (code === wrongFlashCode) fill = COLORS.wrongFlash;
       else if (answeredCodes.has(code)) fill = getAnsweredFill(answeredCodes, code);
       else if (code === targetRegionCode) fill = COLORS.target;
-      else fill = monochrome ? 'none' : COLORS.unanswered;
+      else fill = monochrome ? '#ffffff' : COLORS.unanswered;
 
       for (const el of els) {
         // Borderless main-map regions stay transparent unless answered/targeted
