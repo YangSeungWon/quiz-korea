@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getSidoMeta, getRegionLabel } from '../../utils/regionUtils';
 import { useI18n } from '../../i18n/useI18n';
@@ -29,11 +30,81 @@ function downloadFilename(
 }
 
 // Static Tailwind class strings per card accent (Tailwind can't see interpolated names).
-const ACCENT: Record<string, { border: string; btn: string }> = {
-  blue: { border: 'hover:border-blue-400', btn: 'bg-blue-500 hover:bg-blue-600' },
-  green: { border: 'hover:border-green-400', btn: 'bg-green-500 hover:bg-green-600' },
-  purple: { border: 'hover:border-purple-400', btn: 'bg-purple-500 hover:bg-purple-600' },
+const ACCENT: Record<string, { border: string; btn: string; chip: string }> = {
+  blue: { border: 'hover:border-blue-400', btn: 'bg-blue-500 hover:bg-blue-600', chip: 'bg-blue-500 text-white border-blue-500' },
+  green: { border: 'hover:border-green-400', btn: 'bg-green-500 hover:bg-green-600', chip: 'bg-green-500 text-white border-green-500' },
+  purple: { border: 'hover:border-purple-400', btn: 'bg-purple-500 hover:bg-purple-600', chip: 'bg-purple-500 text-white border-purple-500' },
 };
+
+interface DownloadCardProps {
+  variant: MapVariant;
+  previewAlt: string;
+  downloadLabel: string;
+  accent: string;
+  pngLabel: string;
+  colorOpts: { value: MapColor; label: string }[];
+  orientOpts: { value: MapOrient; label: string }[];
+  buildUrl: (variant: MapVariant, color: MapColor, orient: MapOrient, ext: 'pdf' | 'png') => string;
+}
+
+// One content type (백지도 / 이름 / 번호). Two independent segmented toggles —
+// color (컬러/흑백) and orientation (세로/가로) — live-update the preview and the
+// download buttons, so you always see what you'll get.
+function DownloadCard({ variant, previewAlt, downloadLabel, accent, pngLabel, colorOpts, orientOpts, buildUrl }: DownloadCardProps) {
+  const [color, setColor] = useState<MapColor>('color');
+  const [orient, setOrient] = useState<MapOrient>('portrait');
+  const a = ACCENT[accent];
+  const pdf = buildUrl(variant, color, orient, 'pdf');
+  const png = buildUrl(variant, color, orient, 'png');
+  const aspect = orient === 'landscape' ? '297 / 210' : '210 / 297';
+  const seg = (active: boolean) =>
+    active ? a.chip : 'bg-white text-gray-500 hover:text-gray-700';
+  return (
+    <div className="flex flex-col gap-2">
+      <a
+        href={pdf}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`flex items-center justify-center bg-white border border-gray-200 rounded-xl overflow-hidden transition-colors ${a.border}`}
+        style={{ aspectRatio: '210 / 297' }}
+      >
+        <img src={png} alt={previewAlt} loading="lazy" className="block max-w-full max-h-full" style={{ aspectRatio: aspect }} />
+      </a>
+      <div className="flex flex-wrap justify-center gap-2">
+        <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+          {colorOpts.map((o) => (
+            <button key={o.value} onClick={() => setColor(o.value)} className={`px-2.5 py-1 transition-colors ${seg(color === o.value)}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+          {orientOpts.map((o) => (
+            <button key={o.value} onClick={() => setOrient(o.value)} className={`px-2.5 py-1 transition-colors ${seg(orient === o.value)}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <a
+        href={pdf}
+        download
+        className={`flex items-center justify-center gap-2 text-white py-3 rounded-xl font-semibold text-center transition-colors ${a.btn}`}
+      >
+        <FileTextIcon size={18} />
+        {downloadLabel}
+      </a>
+      <a
+        href={png}
+        download
+        className="flex items-center justify-center gap-2 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:border-gray-400 hover:text-gray-800 transition-colors"
+      >
+        <ImageIcon size={16} />
+        {pngLabel}
+      </a>
+    </div>
+  );
+}
 
 export default function MapDownloadPage() {
   const { level: levelParam, sidoSlug } = useParams<{ level: string; sidoSlug?: string }>();
@@ -65,17 +136,19 @@ export default function MapDownloadPage() {
   const fileUrl = (variant: MapVariant, color: MapColor, orient: MapOrient, ext: 'pdf' | 'png') =>
     `/downloads/${downloadFilename(adminLevel, sidoMeta?.slug, variant, color, orient, locale, ext)}`;
 
-  // Preview + primary button = the expected default (color · portrait); the
-  // extra combos (흑백/가로/흑백+가로) hang off each card as small secondary links.
   const cards: { variant: MapVariant; preview: string; download: string; accent: string }[] = [
     { variant: 'blank', preview: t('maps.previewBlank'), download: t('maps.downloadBlankPdf'), accent: 'blue' },
     { variant: 'label', preview: t('maps.previewLabel'), download: t('maps.downloadLabelPdf'), accent: 'green' },
     { variant: 'number', preview: t('maps.previewNumber'), download: t('maps.downloadNumberPdf'), accent: 'purple' },
   ];
-  const variantOptions: { color: MapColor; orient: MapOrient; label: string }[] = [
-    { color: 'bw', orient: 'portrait', label: t('maps.optBw') },
-    { color: 'color', orient: 'landscape', label: t('maps.optLandscape') },
-    { color: 'bw', orient: 'landscape', label: t('maps.optBwLandscape') },
+  // Two independent axes; toggling either live-updates the card preview + downloads.
+  const colorOpts: { value: MapColor; label: string }[] = [
+    { value: 'color', label: t('maps.styleColor') },
+    { value: 'bw', label: t('maps.styleBw') },
+  ];
+  const orientOpts: { value: MapOrient; label: string }[] = [
+    { value: 'portrait', label: t('maps.orientPortrait') },
+    { value: 'landscape', label: t('maps.orientLandscape') },
   ];
 
   const sidoSegment = sidoMeta ? `/${sidoMeta.slug}` : '';
@@ -116,62 +189,21 @@ export default function MapDownloadPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-2">{heading}</h1>
         <p className="text-gray-600 mb-6">{t('maps.intro')}</p>
 
-        {/* Preview (default color·portrait) + primary PDF button, with the other
-            combos as small secondary links so the hero stays clean. */}
+        {/* Each card: pick a version chip → preview + downloads update live. */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-          {cards.map((card) => {
-            const pdf = fileUrl(card.variant, 'color', 'portrait', 'pdf');
-            const png = fileUrl(card.variant, 'color', 'portrait', 'png');
-            const a = ACCENT[card.accent];
-            return (
-              <div key={card.variant} className="flex flex-col gap-2">
-                <a
-                  href={pdf}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`block bg-white border border-gray-200 rounded-xl overflow-hidden transition-colors ${a.border}`}
-                >
-                  <img
-                    src={png}
-                    alt={card.preview}
-                    loading="lazy"
-                    className="block w-full h-auto"
-                    style={{ aspectRatio: '210 / 297' }}
-                  />
-                </a>
-                <a
-                  href={pdf}
-                  download
-                  className={`flex items-center justify-center gap-2 text-white py-3 rounded-xl font-semibold text-center transition-colors ${a.btn}`}
-                >
-                  <FileTextIcon size={18} />
-                  {card.download}
-                </a>
-                <a
-                  href={fileUrl(card.variant, 'color', 'portrait', 'png')}
-                  download
-                  className="flex items-center justify-center gap-2 py-2 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium hover:border-gray-400 hover:text-gray-800 transition-colors"
-                >
-                  <ImageIcon size={16} />
-                  {t('maps.downloadPng')}
-                </a>
-                <div className="flex flex-wrap justify-center gap-x-2 gap-y-0.5 text-xs text-gray-500">
-                  {variantOptions.map((o, i) => (
-                    <span key={o.label} className="flex items-center gap-2">
-                      {i > 0 && <span className="text-gray-300">·</span>}
-                      <a
-                        href={fileUrl(card.variant, o.color, o.orient, 'pdf')}
-                        download
-                        className="hover:text-gray-800 hover:underline transition-colors"
-                      >
-                        {o.label}
-                      </a>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+          {cards.map((card) => (
+            <DownloadCard
+              key={card.variant}
+              variant={card.variant}
+              previewAlt={card.preview}
+              downloadLabel={card.download}
+              accent={card.accent}
+              pngLabel={t('maps.downloadPng')}
+              colorOpts={colorOpts}
+              orientOpts={orientOpts}
+              buildUrl={fileUrl}
+            />
+          ))}
         </div>
 
         <p className="text-xs text-gray-500 mb-2">{t('maps.usage')}</p>

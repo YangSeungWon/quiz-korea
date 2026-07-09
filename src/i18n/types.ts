@@ -98,6 +98,7 @@ export interface TranslationStrings {
   'maps.styleBw': string;
   'maps.orientPortrait': string;
   'maps.orientLandscape': string;
+  'maps.optDefault': string;
   'maps.optBw': string;
   'maps.optLandscape': string;
   'maps.optBwLandscape': string;
