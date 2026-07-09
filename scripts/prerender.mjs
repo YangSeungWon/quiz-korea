@@ -161,6 +161,13 @@ async function generatePdfs(browser, targets) {
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
     await page.waitForSelector('[data-print-ready="true"]', { timeout: 15000 });
 
+    // Emulate print media for BOTH outputs. In screen media the print view
+    // centers the A4 sheet on a gray "desk" with padding, which flex-shrinks the
+    // 794px sheet below the viewport width and clips the map's right edge in the
+    // screenshot. Print media resets to a full-bleed 794×1123 sheet (no padding,
+    // no floating print button), so the PNG matches the PDF exactly.
+    await page.emulateMediaType('print');
+
     const pdf = await page.pdf({
       format: 'A4',
       landscape: false,
