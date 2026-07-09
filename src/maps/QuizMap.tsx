@@ -655,7 +655,10 @@ export default function QuizMap({
         // Uniform target size per map (filtered views pass their own via
         // staticLabelFontRange); placeLabels() only shrinks where regions crowd,
         // so labels look "비스무리" everywhere except unavoidable dense clusters.
-        const [, fMax] = staticLabelFontRange ?? [9, 16];
+        // Filtered views pass a larger range via staticLabelFontRange; the
+        // default (national 시군/시군구, ~150–250 dense regions) stays modest so
+        // labels aren't oversized.
+        const [, fMax] = staticLabelFontRange ?? [9, 13];
         const flatTarget = adminLevel === 'sido' ? 18 : fMax;
         const labelFill = monochrome ? '#000000' : '#1f2937';
         const items: LabelItem[] = [];

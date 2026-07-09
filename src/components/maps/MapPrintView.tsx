@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { geoCentroid } from 'd3-geo';
+import { geoCentroid, geoBounds } from 'd3-geo';
 import type { GeoPermissibleObjects } from 'd3-geo';
 import { useMapData } from '../../hooks/useMapData';
 import { extractRegions, getSidoMeta, getRegionCode, getShortDisplayName } from '../../utils/regionUtils';
@@ -27,11 +27,10 @@ interface SheetLayout {
 function computeLayout(isNumber: boolean, landscape: boolean): SheetLayout {
   const sheet = landscape ? { w: PRINT_HEIGHT, h: PRINT_WIDTH } : { w: PRINT_WIDTH, h: PRINT_HEIGHT };
   if (!isNumber) {
-    if (!landscape) return { sheet, mapBox: { x: 0, y: 0, w: PRINT_WIDTH, h: PRINT_HEIGHT }, keyBox: null };
-    // Center a portrait-proportioned map on the landscape sheet so the outlier
-    // insets stay next to the coastline instead of drifting into empty margin.
-    const w = 640;
-    return { sheet, mapBox: { x: Math.round((sheet.w - w) / 2), y: 0, w, h: sheet.h }, keyBox: null };
+    // Map fills the whole sheet in both orientations. Wide filtered regions (충북)
+    // then fill a landscape sheet; national Korea (tall) centers, leaving the side
+    // corners empty for the outlier insets (no more covering 강원 in landscape).
+    return { sheet, mapBox: { x: 0, y: 0, w: sheet.w, h: sheet.h }, keyBox: null };
   }
   if (!landscape) {
     return { sheet, mapBox: { x: 0, y: 0, w: PRINT_WIDTH, h: 760 }, keyBox: { x: 12, y: 768, w: 770, h: 343 } };
@@ -40,21 +39,25 @@ function computeLayout(isNumber: boolean, landscape: boolean): SheetLayout {
 }
 
 // Adaptive answer-key sizing: pick the largest font in the ladder whose columns
-// fit keyBox for N entries. 7px floor is the safety net for the densest case
-// (national 시군 ~150 in portrait). Never needs a second page.
+// fit keyBox for N entries. Also returns the *packed* width (cols × column width)
+// so a short list occupies a narrow block instead of stretching across keyBox.
+// 7px floor is the safety net for the densest case (national 시군 ~150 portrait).
+const KEY_COL_GAP = 10;
 function computeKeyStyle(n: number, keyBox: Box, maxChars: number) {
+  const colUnit = (fontSize: number) => 24 + maxChars * fontSize * 0.6 + KEY_COL_GAP;
   for (const fontSize of [12, 11, 10, 9, 8, 7]) {
     const rowH = fontSize + 4;
     const rowsPerCol = Math.max(1, Math.floor((keyBox.h - 20) / rowH));
     const cols = Math.max(1, Math.ceil(n / rowsPerCol));
-    const colW = keyBox.w / cols;
-    const needW = 24 + maxChars * fontSize * 0.6; // number gutter + text estimate
-    if (colW >= needW) return { fontSize, cols, rowH };
+    if (keyBox.w / cols >= colUnit(fontSize) - KEY_COL_GAP) {
+      return { fontSize, cols, rowH, width: Math.min(keyBox.w, Math.ceil(cols * colUnit(fontSize))) };
+    }
   }
   const fontSize = 7;
   const rowH = fontSize + 4;
   const rowsPerCol = Math.max(1, Math.floor((keyBox.h - 20) / rowH));
-  return { fontSize, cols: Math.max(1, Math.ceil(n / rowsPerCol)), rowH };
+  const cols = Math.max(1, Math.ceil(n / rowsPerCol));
+  return { fontSize, cols, rowH, width: Math.min(keyBox.w, Math.ceil(cols * colUnit(fontSize))) };
 }
 
 // Outlier sigungu codes — pulled out of the main map and rendered in dedicated
@@ -85,6 +88,11 @@ const METRO_INSET_H = 130;
 function inBbox(centroid: [number, number], bbox: readonly [number, number, number, number]): boolean {
   const [lon, lat] = centroid;
   return lon >= bbox[0] && lon <= bbox[2] && lat >= bbox[1] && lat <= bbox[3];
+}
+
+function featureOverlapsBbox(feature: RegionFeature, bbox: readonly [number, number, number, number]): boolean {
+  const [[fMinLon, fMinLat], [fMaxLon, fMaxLat]] = geoBounds(feature as GeoPermissibleObjects);
+  return fMaxLon >= bbox[0] && fMinLon <= bbox[2] && fMaxLat >= bbox[1] && fMinLat <= bbox[3];
 }
 
 interface PartitionedFeatures {
@@ -314,6 +322,49 @@ export default function MapPrintView() {
     );
   }
 
+  // ---- Inset placement ----
+  // Portrait & landscape blank/label: layered over the full-sheet map's empty
+  // corners (Korea centers in landscape, so corners are sea). Number landscape:
+  // the map is narrow (key on the right), so insets sit in a row atop the key
+  // column and push the key down instead of covering the map.
+  const insetMode = isNumber ? ('number' as const) : ('name' as const);
+  const seohaeBig = sidoMeta?.code === '23';
+  const donghaeBig = sidoMeta?.code === '37';
+  // Neighbors straddling a density bbox: rendered (clipped) in the zoom for
+  // geographic context, but labeled on the main map (their centroid is outside).
+  const contextFor = (bbox: readonly [number, number, number, number], own: RegionFeature[]) => {
+    if (!mainGeoData) return [] as RegionFeature[];
+    const ownCodes = new Set(own.map((f) => getRegionCode(f)));
+    return mainGeoData.features.filter((f) => !ownCodes.has(getRegionCode(f)) && featureOverlapsBbox(f, bbox));
+  };
+  const insetDefs = partitioned
+    ? ([
+        { features: partitioned.seohae, contextFeatures: undefined as RegionFeature[] | undefined, label: locale === 'en' ? 'West Sea Islands' : '서해 5도', w: seohaeBig ? FILTERED_OUTLIER_W : INSET_W, h: seohaeBig ? FILTERED_OUTLIER_H : INSET_H, fontRange: seohaeBig ? ([11, 17] as [number, number]) : undefined, bbox: undefined as (readonly [number, number, number, number] | undefined) },
+        { features: partitioned.donghae, contextFeatures: undefined, label: locale === 'en' ? 'East Sea (Ulleung/Dokdo)' : '동해 (울릉도/독도)', w: donghaeBig ? FILTERED_OUTLIER_W : INSET_W, h: donghaeBig ? FILTERED_OUTLIER_H : INSET_H, fontRange: donghaeBig ? ([11, 17] as [number, number]) : undefined, bbox: undefined },
+        { features: partitioned.sugokwon, contextFeatures: contextFor(SUGOKWON_BBOX, partitioned.sugokwon), label: locale === 'en' ? 'Capital Region (zoom)' : '수도권 확대', w: SUGOKWON_W, h: SUGOKWON_H, fontRange: undefined, bbox: SUGOKWON_BBOX },
+        { features: partitioned.daegu, contextFeatures: contextFor(DAEGU_BBOX, partitioned.daegu), label: locale === 'en' ? 'Daegu (zoom)' : '대구 확대', w: METRO_INSET_W, h: METRO_INSET_H, fontRange: undefined, bbox: DAEGU_BBOX },
+        { features: partitioned.busan, contextFeatures: contextFor(BUSAN_BBOX, partitioned.busan), label: locale === 'en' ? 'Busan (zoom)' : '부산 확대', w: METRO_INSET_W, h: METRO_INSET_H, fontRange: undefined, bbox: BUSAN_BBOX },
+      ].filter((d) => d.features.length > 0))
+    : [];
+
+  let effKeyBox = keyBox;
+  const placedInsets = insetDefs.map((d, i) => ({ ...d, x: 0, y: 0, idx: i }));
+  if (isNumber && landscape && keyBox) {
+    // Row across the top of the key column; push the key below the tallest inset.
+    let x = keyBox.x;
+    let rowH = 0;
+    for (const p of placedInsets) { p.x = x; p.y = keyBox.y; x += p.w + 10; rowH = Math.max(rowH, p.h); }
+    if (rowH > 0) effKeyBox = { ...keyBox, y: keyBox.y + rowH + 12, h: keyBox.h - rowH - 12 };
+  } else {
+    // Corner layout: 동해 top-right, everything else stacked down the left.
+    let leftY = mapBox.y + 12;
+    for (const p of placedInsets) {
+      const isDonghae = p.label.includes('동해') || p.label.includes('East Sea');
+      if (isDonghae) { p.x = mapBox.x + mapBox.w - p.w - 12; p.y = mapBox.y + 12; }
+      else { p.x = mapBox.x + 12; p.y = leftY; leftY += p.h + 16; }
+    }
+  }
+
   return (
     <div
       data-print-ready="true"
@@ -352,109 +403,41 @@ export default function MapPrintView() {
         />
       </div>
 
-      {/* Outlier insets — layered absolute on top of the main map, positioned
-          relative to mapBox so they follow the map in landscape/number layouts. */}
-      {partitioned && (() => {
-        const seohaeBig = sidoMeta?.code === '23';   // /maps/.../incheon
-        const donghaeBig = sidoMeta?.code === '37';  // /maps/.../gyeongbuk
-        const seohaeW = seohaeBig ? FILTERED_OUTLIER_W : INSET_W;
-        const seohaeH = seohaeBig ? FILTERED_OUTLIER_H : INSET_H;
-        const donghaeW = donghaeBig ? FILTERED_OUTLIER_W : INSET_W;
-        const donghaeH = donghaeBig ? FILTERED_OUTLIER_H : INSET_H;
-        const insetMode = isNumber ? ('number' as const) : ('name' as const);
-        const left = mapBox.x;
-        const top = mapBox.y;
-        return (
-        <>
-          <PrintInset
-            features={partitioned.seohae}
-            label={locale === 'en' ? 'West Sea Islands' : '서해 5도'}
-            showLabels={showLabels}
-            mode={insetMode}
-            numbers={numbering}
-            monochrome={monochrome}
-            locale={locale}
-            x={left + 12}
-            y={top + 12}
-            width={seohaeW}
-            height={seohaeH}
-            compact={adminLevel === 'sigun'}
-            fontRange={seohaeBig ? [11, 17] : undefined}
-          />
-          <PrintInset
-            features={partitioned.donghae}
-            label={locale === 'en' ? 'East Sea (Ulleung/Dokdo)' : '동해 (울릉도/독도)'}
-            showLabels={showLabels}
-            mode={insetMode}
-            numbers={numbering}
-            monochrome={monochrome}
-            locale={locale}
-            x={left + mapBox.w - donghaeW - 12}
-            y={top + 12}
-            width={donghaeW}
-            height={donghaeH}
-            compact={adminLevel === 'sigun'}
-            fontRange={donghaeBig ? [11, 17] : undefined}
-          />
-          <PrintInset
-            features={partitioned.sugokwon}
-            label={locale === 'en' ? 'Capital Region (zoom)' : '수도권 확대'}
-            showLabels={showLabels}
-            mode={insetMode}
-            numbers={numbering}
-            monochrome={monochrome}
-            locale={locale}
-            x={left + 12}
-            y={top + 12 + INSET_H + 16}
-            width={SUGOKWON_W}
-            height={SUGOKWON_H}
-            bbox={SUGOKWON_BBOX}
-            compact={adminLevel === 'sigun'}
-          />
-          <PrintInset
-            features={partitioned.daegu}
-            label={locale === 'en' ? 'Daegu (zoom)' : '대구 확대'}
-            showLabels={showLabels}
-            mode={insetMode}
-            numbers={numbering}
-            monochrome={monochrome}
-            locale={locale}
-            x={left + 12}
-            y={top + 12 + INSET_H + 16 + SUGOKWON_H + 16}
-            width={METRO_INSET_W}
-            height={METRO_INSET_H}
-            bbox={DAEGU_BBOX}
-          />
-          <PrintInset
-            features={partitioned.busan}
-            label={locale === 'en' ? 'Busan (zoom)' : '부산 확대'}
-            showLabels={showLabels}
-            mode={insetMode}
-            numbers={numbering}
-            monochrome={monochrome}
-            locale={locale}
-            x={left + 12}
-            y={top + 12 + INSET_H + 16 + SUGOKWON_H + 16 + METRO_INSET_H + 16}
-            width={METRO_INSET_W}
-            height={METRO_INSET_H}
-            bbox={BUSAN_BBOX}
-          />
-        </>
-        );
-      })()}
+      {/* Outlier / density insets — positions computed above (corner-over-map,
+          or a row atop the key column for number-landscape). */}
+      {placedInsets.map((p) => (
+        <PrintInset
+          key={p.idx}
+          features={p.features}
+          label={p.label}
+          showLabels={showLabels}
+          mode={insetMode}
+          numbers={numbering}
+          monochrome={monochrome}
+          locale={locale}
+          x={p.x}
+          y={p.y}
+          width={p.w}
+          height={p.h}
+          bbox={p.bbox}
+          contextFeatures={p.contextFeatures}
+          compact={adminLevel === 'sigun'}
+          fontRange={p.fontRange}
+        />
+      ))}
 
-      {/* 번호형 answer key — DOM panel at keyBox, adaptive multi-column list. */}
-      {isNumber && keyBox && keyEntries.length > 0 && (() => {
+      {/* 번호형 answer key — DOM panel at effKeyBox, adaptive multi-column list. */}
+      {isNumber && effKeyBox && keyEntries.length > 0 && (() => {
         const maxChars = keyEntries.reduce((m, e) => Math.max(m, `${e.num}. ${e.name}`.length), 0);
-        const { fontSize, cols, rowH } = computeKeyStyle(keyEntries.length, keyBox, maxChars);
+        const { fontSize, cols, rowH, width: keyW } = computeKeyStyle(keyEntries.length, effKeyBox, maxChars);
         return (
           <div
             style={{
               position: 'absolute',
-              left: keyBox.x,
-              top: keyBox.y,
-              width: keyBox.w,
-              height: keyBox.h,
+              left: effKeyBox.x,
+              top: effKeyBox.y,
+              width: keyW,
+              height: effKeyBox.h,
               fontFamily: 'system-ui, sans-serif',
               color: '#111827',
               overflow: 'hidden',

@@ -24,6 +24,9 @@ interface Props {
    * outlier insets like 동해/서해 where every island should be visible).
    */
   bbox?: readonly [number, number, number, number];
+  /** Neighboring regions that straddle the bbox: drawn (clipped) for geographic
+   *  context so the zoom has no gaps, but NOT labeled (they belong to the main map). */
+  contextFeatures?: RegionFeature[];
   compact?: boolean; // strip 시/군/특별시/도 suffix — used at sigun level
   fontRange?: readonly [number, number];
   /** 'name' (default) draws region names; 'number' draws the shared sequential
@@ -44,6 +47,7 @@ export default function PrintInset({
   width,
   height,
   bbox,
+  contextFeatures,
   compact = false,
   fontRange,
   mode = 'name',
@@ -131,7 +135,9 @@ export default function PrintInset({
       regionGroup = svg.append('g').attr('clip-path', `url(#${clipPathId})`) as unknown as typeof regionGroup;
     }
 
-    features.forEach((f) => {
+    // Straddling neighbors first (context), then the inset's own regions on top.
+    // Both clipped to the box; only own regions get labels below.
+    [...(contextFeatures ?? []), ...features].forEach((f) => {
       regionGroup
         .append('path')
         .datum(f)
@@ -168,7 +174,7 @@ export default function PrintInset({
       });
       placeLabels(svg as unknown as Parameters<typeof placeLabels>[0], items, { floor: 5, pad: 1.5 });
     }
-  }, [features, label, width, height, showLabels, locale, bbox, mode, numbers, monochrome, compact, fontRange]);
+  }, [features, contextFeatures, label, width, height, showLabels, locale, bbox, mode, numbers, monochrome, compact, fontRange]);
 
   if (features.length === 0) return null;
 
