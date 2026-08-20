@@ -25,7 +25,7 @@ export default function QuizPrompt({
   const isTypeMode = mode === 'type';
 
   return (
-    <div className="text-center py-3 px-4">
+    <div className="text-center py-4 px-4">
       {isTypeMode ? (
         <div className="flex flex-col items-center gap-1">
           <TypeInput
@@ -35,7 +35,7 @@ export default function QuizPrompt({
             wrongKey={wrongShakeKey}
           />
           {revealAnswer && (
-            <p className="text-sm text-amber-600">
+            <p className="text-base text-amber-600">
               {t('quiz.answerLabel')}: <span className="font-bold">{currentRegion.name}</span>
             </p>
           )}
@@ -49,11 +49,11 @@ export default function QuizPrompt({
           }}
         >
           {t('quiz.clickPrefix') && (
-            <span className="text-sm text-gray-400">{t('quiz.clickPrefix')}</span>
+            <span className="text-base text-gray-400">{t('quiz.clickPrefix')}</span>
           )}
-          <span className="text-xl font-bold">{currentRegion.name}</span>
+          <span className="text-2xl font-bold">{currentRegion.name}</span>
           {t('quiz.clickSuffix') && (
-            <span className="text-sm text-gray-400">{t('quiz.clickSuffix')}</span>
+            <span className="text-base text-gray-400">{t('quiz.clickSuffix')}</span>
           )}
         </p>
       )}

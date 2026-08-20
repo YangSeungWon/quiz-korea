@@ -22,12 +22,12 @@ export default function QuizProgress({
     <div className="flex items-center gap-4 px-4 py-3 bg-white border-b border-gray-200">
       <button
         onClick={onBack}
-        className="text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
+        className="text-gray-500 hover:text-gray-800 transition-colors text-base font-medium"
       >
         &larr; {t('quiz.back')}
       </button>
 
-      <div className="flex-1 flex items-center justify-center gap-4 text-sm font-medium text-gray-700">
+      <div className="flex-1 flex items-center justify-center gap-4 text-base font-medium text-gray-700">
         <span>
           {current}/{total}
         </span>
