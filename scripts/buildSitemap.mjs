@@ -6,38 +6,25 @@
  * x-default (defaults to ko).
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  LOCALES,
+  QUIZ_MODES,
+  LEVELS,
+  METRO_SLUGS,
+  PROVINCE_SLUGS,
+  loadDongScopeCodes,
+} from './regionSlugs.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT = join(__dirname, '..', 'public', 'sitemap.xml');
 const BASE = 'https://quiz-korea.ysw.kr';
-const LOCALES = ['ko', 'en'];
 const X_DEFAULT_LOCALE = 'ko';
-
-const QUIZ_MODES = ['pin', 'type'];
-const LEVELS = ['sido', 'sigun', 'sigungu'];
-const METRO_SLUGS = ['seoul', 'busan', 'daegu', 'incheon', 'gwangju', 'daejeon', 'ulsan'];
-const PROVINCE_SLUGS = ['gyeonggi', 'gangwon', 'chungbuk', 'chungnam', 'jeonbuk', 'jeonnam', 'gyeongbuk', 'gyeongnam', 'jeju'];
 
 // Build the lang-less path set. Priorities are tuned so that landing > base
 // pages > filtered pages > deep filtered.
-// 동(읍면동) scope codes from the sigungu data: every 5-digit 시군구 plus the
-// 4-digit 시-전체 code for 일반구 도시 (수원·성남 등, 여러 구가 4자리를 공유).
-async function loadDongScopeCodes() {
-  const file = join(__dirname, '..', 'public', 'data', 'korea-sigungu.json');
-  const topo = JSON.parse(await readFile(file, 'utf-8'));
-  const objKey = Object.keys(topo.objects)[0];
-  const codes = topo.objects[objKey].geometries
-    .map((g) => g.properties?.SIG_CD)
-    .filter(Boolean);
-  const countBy4 = new Map();
-  for (const c of codes) countBy4.set(c.slice(0, 4), (countBy4.get(c.slice(0, 4)) ?? 0) + 1);
-  const scopes = new Set(codes);
-  for (const [p4, n] of countBy4) if (n > 1) scopes.add(p4); // 시-전체 (일반구 합본)
-  return [...scopes].sort();
-}
 
 function buildPaths(dongCodes) {
   const paths = [];

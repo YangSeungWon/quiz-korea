@@ -15,18 +15,27 @@ import { dirname, join } from 'node:path';
 import { createServer } from 'node:http';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer';
+import {
+  LOCALES,
+  QUIZ_MODES,
+  LEVELS,
+  METRO_SLUGS,
+  PROVINCE_SLUGS,
+  loadDongScopeCodes,
+} from './regionSlugs.mjs';
 
 const DIST = join(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 const DOWNLOADS = join(DIST, 'downloads');
 const PORT = 45678;
 
-const QUIZ_MODES = ['pin', 'type'];
-const LEVELS = ['sido', 'sigun', 'sigungu'];
-const METRO_SLUGS = ['seoul', 'busan', 'daegu', 'incheon', 'gwangju', 'daejeon', 'ulsan'];
-const PROVINCE_SLUGS = ['gyeonggi', 'gangwon', 'chungbuk', 'chungnam', 'jeonbuk', 'jeonnam', 'gyeongbuk', 'gyeongnam', 'jeju'];
-const LOCALES = ['ko', 'en'];
+// Measured sweet spot for HTML pre-render. 1 → ~970ms/page, 2 → ~480, 3 → ~380
+// with zero retries; at 4+ pages start losing navigations to ERR_ABORTED and the
+// retry cost wipes out the gain (~960ms/page). Note this is the opposite of the
+// PDF phase below, which must stay serial — HTML render is cheap, PDF capture
+// starves itself on GPU/CDP contention.
+const HTML_CONCURRENCY = 3;
 
-function buildLanglessPaths() {
+function buildLanglessPaths(dongCodes) {
   const paths = ['/'];
   for (const mode of QUIZ_MODES) {
     for (const level of LEVELS) paths.push(`/quiz/${mode}/${level}`);
@@ -41,11 +50,21 @@ function buildLanglessPaths() {
   for (const slug of METRO_SLUGS) paths.push(`/maps/sigungu/${slug}`);
   for (const slug of PROVINCE_SLUGS) paths.push(`/maps/sigun/${slug}`);
   for (const slug of PROVINCE_SLUGS) paths.push(`/maps/sigungu/${slug}`);
+  // 읍면동 quiz/learn pages, one per 시군구 / 시-전체 code. These are the bulk of
+  // the sitemap (1584 of 1754 URLs) and were the whole reason it was mostly 404.
+  for (const code of dongCodes) {
+    for (const mode of QUIZ_MODES) paths.push(`/quiz/${mode}/dong/${code}`);
+    paths.push(`/learn/dong/${code}`);
+  }
+  // Records is linked from the landing header and the results screen. Without
+  // an emitted file GitHub Pages answers a direct hit with 404.html — browsers
+  // recover via the SPA fallback, but crawlers and link previews see the 404.
+  paths.push('/records');
   return paths;
 }
 
-function buildHtmlRoutes() {
-  const langless = buildLanglessPaths();
+function buildHtmlRoutes(dongCodes) {
+  const langless = buildLanglessPaths(dongCodes);
   const routes = [];
   for (const locale of LOCALES) {
     for (const path of langless) {
@@ -134,12 +153,10 @@ function startServer() {
   });
 }
 
-async function prerenderHtml(browser, routes) {
-  console.log(`Pre-rendering ${routes.length} HTML routes...`);
-  for (const route of routes) {
-    const url = `http://localhost:${PORT}${route}`;
-    console.log(`  HTML ${route}`);
-    const page = await browser.newPage();
+async function renderRoute(browser, route) {
+  const url = `http://localhost:${PORT}${route}`;
+  const page = await browser.newPage();
+  try {
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
     await page.waitForSelector('#root > *', { timeout: 10000 });
 
@@ -153,8 +170,62 @@ async function prerenderHtml(browser, routes) {
       await mkdir(outDir, { recursive: true });
       await writeFile(join(outDir, 'index.html'), html, 'utf-8');
     }
+  } finally {
     await page.close();
   }
+}
+
+async function prerenderHtml(browser, routes) {
+  console.log(`Pre-rendering ${routes.length} HTML routes (concurrency ${HTML_CONCURRENCY})...`);
+  let done = 0;
+  for (let i = 0; i < routes.length; i += HTML_CONCURRENCY) {
+    const batch = routes.slice(i, i + HTML_CONCURRENCY);
+    await Promise.all(
+      batch.map(async (route) => {
+        try {
+          await renderRoute(browser, route);
+        } catch (err) {
+          // One retry — a transient ERR_ABORTED under concurrency shouldn't fail
+          // the whole build. Same policy as the PDF phase.
+          console.warn(`  retry ${route}: ${err.message?.split('\n')[0]}`);
+          await renderRoute(browser, route);
+        }
+      }),
+    );
+    done += batch.length;
+    if (done % 100 === 0 || done === routes.length) {
+      console.log(`  HTML ${done}/${routes.length}`);
+    }
+  }
+}
+
+/**
+ * Every URL we advertise in the sitemap must exist as a real file, or GitHub
+ * Pages answers it with 404.html — which browsers survive via the SPA fallback
+ * but crawlers read as a plain 404. This is the guard for the drift that let
+ * 1584 of 1754 sitemap URLs go un-emitted; it fails the build rather than
+ * shipping a sitemap that mostly 404s.
+ */
+async function verifySitemapCoverage() {
+  const xml = await readFile(join(DIST, 'sitemap.xml'), 'utf-8');
+  const locs = [...xml.matchAll(/<loc>https:\/\/quiz-korea\.ysw\.kr([^<]*)<\/loc>/g)].map((m) => m[1]);
+  const missing = [];
+  for (const loc of locs) {
+    const rel = loc.replace(/\/$/, '');
+    const file = rel === '' ? join(DIST, 'index.html') : join(DIST, rel, 'index.html');
+    try {
+      await readFile(file);
+    } catch {
+      missing.push(loc);
+    }
+  }
+  if (missing.length > 0) {
+    console.error(`\n${missing.length} of ${locs.length} sitemap URLs have no emitted file:`);
+    for (const m of missing.slice(0, 10)) console.error(`  ${m}`);
+    if (missing.length > 10) console.error(`  ...and ${missing.length - 10} more`);
+    throw new Error('sitemap references URLs that were never pre-rendered');
+  }
+  console.log(`Sitemap coverage OK — all ${locs.length} URLs emitted.`);
 }
 
 async function renderTarget(browser, { route, filename, landscape }) {
@@ -232,8 +303,10 @@ async function main() {
     protocolTimeout: 120000,
   });
   try {
-    await prerenderHtml(browser, buildHtmlRoutes());
+    const dongCodes = await loadDongScopeCodes();
+    await prerenderHtml(browser, buildHtmlRoutes(dongCodes));
     await generatePdfs(browser, buildPdfTargets());
+    await verifySitemapCoverage();
     console.log('Pre-render + PDF generation complete.');
   } finally {
     await browser.close();
