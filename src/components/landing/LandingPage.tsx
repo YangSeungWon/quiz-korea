@@ -7,6 +7,7 @@ import RegionPicker from './RegionPicker';
 import QuizCard from './QuizCard';
 import LanguageToggle from '../LanguageToggle';
 import MapsBanner from '../maps/MapsBanner';
+import { SigunTypingLandingLink } from '../SigunTypingPromo';
 import { SIDO_SLUG } from '../../utils/regionUtils';
 import type { AdminLevel, QuizMode } from '../../types';
 
@@ -181,6 +182,8 @@ export default function LandingPage() {
         <div className="mt-6">
           <MapsBanner currentSidoCode={region?.filter} />
         </div>
+
+        <SigunTypingLandingLink />
 
         <footer className="text-center mt-10 text-xs text-gray-400">
           {t('landing.dataSource')}:{' '}

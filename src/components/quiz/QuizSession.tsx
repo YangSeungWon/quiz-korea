@@ -381,6 +381,9 @@ export default function QuizSession() {
                   mode={mode}
                   adminLevel={adminLevel}
                   regionLabel={regionLabel}
+                  // 읍면동: sidoFilter holds a 5-digit 시군구 code, not a sido
+                  // code — leave it out so the promo falls back to home.
+                  sidoCode={isDong ? undefined : sidoFilter}
                   record={record}
                   isSubset={countParam > 0}
                   borderless={borderless}

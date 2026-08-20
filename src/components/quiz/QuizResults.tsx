@@ -5,6 +5,7 @@ import { useLocalePath } from '../../hooks/useLocalePath';
 import type { QuizMode, AdminLevel } from '../../types';
 import type { TranslationStrings } from '../../i18n/types';
 import { formatTime, type RecordEntry } from '../../utils/records';
+import { SigunTypingResultCard } from '../SigunTypingPromo';
 import { buildResultCard, captureMapImage } from '../../utils/resultCard';
 import {
   isKakaoEnabled,
@@ -23,6 +24,8 @@ interface QuizResultsProps {
   adminLevel: AdminLevel;
   /** Region the quiz was scoped to (e.g. "경기", "수원시"). Empty for 전국. */
   regionLabel?: string;
+  /** Sido code the quiz was scoped to; undefined for 전국 and for 읍면동. */
+  sidoCode?: string;
   /** Personal-best record outcome for this attempt. */
   record?: { best: RecordEntry; isNewBest: boolean; previous: RecordEntry | null } | null;
   isSubset: boolean;
@@ -41,6 +44,7 @@ export default function QuizResults({
   mode,
   adminLevel,
   regionLabel,
+  sidoCode,
   record,
   isSubset,
   borderless,
@@ -387,6 +391,8 @@ export default function QuizResults({
         >
           🏆 {t('results.viewRecords')}
         </Link>
+        {/* Pitch varies by mode — see SigunTypingPromo. */}
+        <SigunTypingResultCard mode={mode} adminLevel={adminLevel} sidoCode={sidoCode} />
         <div className="mt-3 text-xs text-gray-300">quiz-korea.ysw.kr</div>
       </div>
     </div>
