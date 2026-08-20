@@ -91,22 +91,28 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
     // then the multi-구 city groups at the back.
     const plains: DongScope[] = [];
     const cities: DongScope[] = [];
-    for (const [p4, arr] of [...by4].sort((a, b) => a[0].localeCompare(b[0]))) {
+    for (const [p4, arr] of by4) {
       arr.sort((a, b) => (a.properties.SIG_CD as string).localeCompare(b.properties.SIG_CD as string));
       const isCity = new Set(arr.map((f) => f.properties.SIG_CD)).size > 1;
       if (isCity) {
         const full = getShortDisplayName(arr[0], locale); // "수원시 영통구" / "Suwon Yeongtong-gu"
         const city = locale === 'en' ? `${full.split(' ')[0]}-si` : full.split(' ')[0];
-        const gus = arr.map((f) => {
-          const fn = getShortDisplayName(f, locale);
-          const gu = fn.includes(' ') ? fn.split(' ').slice(1).join(' ') : fn;
-          return { code: f.properties.SIG_CD as string, label: gu };
-        });
+        const gus = arr
+          .map((f) => {
+            const fn = getShortDisplayName(f, locale);
+            const gu = fn.includes(' ') ? fn.split(' ').slice(1).join(' ') : fn;
+            return { code: f.properties.SIG_CD as string, label: gu };
+          })
+          .sort((a, b) => a.label.localeCompare(b.label, locale));
         cities.push({ kind: 'city', code: p4, label: city, gus });
       } else {
         plains.push({ kind: 'plain', code: arr[0].properties.SIG_CD as string, label: getShortDisplayName(arr[0], locale) });
       }
     }
+    // 가나다(en: 알파벳)순으로 정렬 — 시군구는 코드 순서가 익숙하지 않아 이름순이 찾기 쉬움.
+    const byLabel = (a: DongScope, b: DongScope) => a.label.localeCompare(b.label, locale);
+    plains.sort(byLabel);
+    cities.sort(byLabel);
     return [...plains, ...cities];
   }, [geoData, dongSido, locale]);
 
