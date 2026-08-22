@@ -77,7 +77,7 @@ const en: TranslationStrings = {
   'maps.dataNote': 'Administrative boundaries: Statistics Korea (SGIS) 2025 census',
   'maps.backToHome': 'Home',
   'maps.regionListHeading': 'Full list of {regionLabel} in {sido} ({count})',
-  'maps.regionListNote': 'The administrative regions shown on the maps above.',
+  'maps.regionListNote': 'The administrative regions shown on the maps above. Tap a name to explore its towns and neighborhoods.',
   'maps.relatedHeading': 'Practice this region',
 
   'picker.sido': 'Provinces',

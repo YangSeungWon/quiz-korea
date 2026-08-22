@@ -105,25 +105,34 @@ export default function MapDownloadPage() {
   // nationwide one — without it Google reads them as one duplicated template and
   // ranks /maps/sigun/ for "경기도 백지도". Nationwide pages get no list (they
   // already rank, and 250 names would bury the downloads).
-  const regionNames = (() => {
+  //
+  // Each entry's code doubles as a 읍면동 scope (loadDongScopeCodes emits every
+  // SIG_CD plus the 4-digit prefix of each compound city), so the roster is also
+  // the only internal-link path into /learn/dong/*. Those pages are in the
+  // sitemap but URL Inspection reports referringUrls: [sitemap.xml] and
+  // lastCrawlTime: never — sitemap-only discovery is what orphan pages look
+  // like, and links are the fix.
+  const regions = (() => {
     if (!sidoMeta) return [];
     const lists = SIDO_REGIONS[sidoMeta.code];
     if (!lists) return [];
     const entries = adminLevel === 'sigun' ? lists.sigun : lists.sigungu;
     return entries
-      .map((r) =>
-        locale === 'en'
-          ? COMPOUND_CITY_NAMES_EN[r.nameKo] ?? SIGUNGU_NAMES_EN[r.code] ?? r.nameKo
-          : r.nameKo,
-      )
-      .sort((a, b) => a.localeCompare(b, locale));
+      .map((r) => ({
+        code: r.code,
+        name:
+          locale === 'en'
+            ? COMPOUND_CITY_NAMES_EN[r.nameKo] ?? SIGUNGU_NAMES_EN[r.code] ?? r.nameKo
+            : r.nameKo,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, locale));
   })();
 
   const seoTitle = sidoMeta
     ? t('seo.maps.filtered.title', { sido: sidoName, regionLabel })
     : t(`seo.maps.${adminLevel}.title` as keyof TranslationStrings);
   const seoDesc = sidoMeta
-    ? t('seo.maps.filtered.desc', { sido: sidoName, regionLabel, count: regionNames.length })
+    ? t('seo.maps.filtered.desc', { sido: sidoName, regionLabel, count: regions.length })
     : t(`seo.maps.${adminLevel}.desc` as keyof TranslationStrings);
 
   const heading = sidoMeta
@@ -245,17 +254,27 @@ export default function MapDownloadPage() {
             "경기도 시군 목록" style query land here instead of nowhere. Plain
             text, not links: linking out to the ~1,700 dong pages would spend
             crawl budget on the pages that already fail to get indexed. */}
-        {regionNames.length > 0 && (
+        {regions.length > 0 && (
           <div className="border-t border-gray-200 pt-6 mb-8">
             <h2 className="text-sm font-semibold text-gray-700 mb-3">
               {t('maps.regionListHeading', {
                 sido: sidoName,
                 regionLabel,
-                count: regionNames.length,
+                count: regions.length,
               })}
             </h2>
             <p className="text-sm text-gray-600 leading-relaxed">
-              {regionNames.join(' · ')}
+              {regions.map((r, i) => (
+                <span key={r.code}>
+                  {i > 0 && <span className="text-gray-300"> · </span>}
+                  <Link
+                    to={localized(`/learn/dong/${r.code}/`)}
+                    className="text-gray-600 hover:text-blue-600 hover:underline"
+                  >
+                    {r.name}
+                  </Link>
+                </span>
+              ))}
             </p>
             <p className="text-xs text-gray-400 mt-2">{t('maps.regionListNote')}</p>
           </div>

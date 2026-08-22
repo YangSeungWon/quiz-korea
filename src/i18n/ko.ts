@@ -78,7 +78,7 @@ const ko: TranslationStrings = {
   'maps.backToHome': '메인으로',
   'maps.relatedHeading': '이 지역으로 학습하기',
   'maps.regionListHeading': '{sido} {regionLabel} 목록 ({count}곳)',
-  'maps.regionListNote': '위 지도에 표시되는 행정구역입니다.',
+  'maps.regionListNote': '위 지도에 표시되는 행정구역입니다. 이름을 누르면 해당 지역의 읍·면·동을 살펴볼 수 있습니다.',
 
   'picker.sido': '시도',
   'picker.allSido': '전국 17개 시도',
