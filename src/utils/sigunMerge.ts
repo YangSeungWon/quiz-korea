@@ -27,19 +27,24 @@ function getSigunNameKo(sido: string, firstName: string): string {
   return firstName;
 }
 
+/**
+ * English names for the 시 that own 일반구 — these merge into a single 시군 whose
+ * representative code (first 4 digits) is absent from SIGUNGU_NAMES_EN, so they
+ * need their own lookup. Also used by the printable-map region lists.
+ */
+export const COMPOUND_CITY_NAMES_EN: Record<string, string> = {
+  '수원시': 'Suwon-si', '성남시': 'Seongnam-si', '안양시': 'Anyang-si',
+  '안산시': 'Ansan-si', '고양시': 'Goyang-si', '용인시': 'Yongin-si',
+  '부천시': 'Bucheon-si', '청주시': 'Cheongju-si', '천안시': 'Cheonan-si',
+  '전주시': 'Jeonju-si', '포항시': 'Pohang-si', '창원시': 'Changwon-si',
+};
+
 function getSigunNameEn(sido: string, code: string, nameKo: string): string {
   if (METRO_CODES.has(sido)) {
     return SIDO_MAP_EN[sido] || nameKo;
   }
   // For compound cities, derive from Korean name
-  // Map known city names
-  const cityNameMap: Record<string, string> = {
-    '수원시': 'Suwon-si', '성남시': 'Seongnam-si', '안양시': 'Anyang-si',
-    '안산시': 'Ansan-si', '고양시': 'Goyang-si', '용인시': 'Yongin-si',
-    '청주시': 'Cheongju-si', '천안시': 'Cheonan-si', '전주시': 'Jeonju-si',
-    '포항시': 'Pohang-si', '창원시': 'Changwon-si',
-  };
-  if (cityNameMap[nameKo]) return cityNameMap[nameKo];
+  if (COMPOUND_CITY_NAMES_EN[nameKo]) return COMPOUND_CITY_NAMES_EN[nameKo];
 
   // Standalone: use SIGUNGU_NAMES_EN lookup
   return SIGUNGU_NAMES_EN[code] || SIDO_MAP_EN[code] || nameKo;

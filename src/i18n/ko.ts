@@ -51,7 +51,7 @@ const ko: TranslationStrings = {
   'seo.maps.sigungu.title': '한국 시군구 백지도 PDF 다운로드 - 한국 지리 퀴즈',
   'seo.maps.sigungu.desc': '대한민국 시군구 백지도와 이름 라벨 지도 A4 PDF 무료 다운로드 (학습용)',
   'seo.maps.filtered.title': '{sido} {regionLabel} 백지도 PDF 다운로드 - 한국 지리 퀴즈',
-  'seo.maps.filtered.desc': '{sido}의 {regionLabel} 시군구 위치 학습용 백지도와 이름 라벨 지도 A4 PDF 무료 다운로드',
+  'seo.maps.filtered.desc': '{sido} 행정구역 백지도 고화질 PDF 무료 다운로드. {regionLabel} {count}곳의 이름 라벨·번호 지도까지 A4 인쇄용으로 제공합니다.',
   'maps.heading.sido': '시도 백지도 PDF',
   'maps.heading.sigun': '시군 백지도 PDF',
   'maps.heading.sigungu': '시군구 백지도 PDF',
@@ -77,6 +77,8 @@ const ko: TranslationStrings = {
   'maps.dataNote': '행정구역 기준: 통계청 SGIS 2025년 센서스 경계',
   'maps.backToHome': '메인으로',
   'maps.relatedHeading': '이 지역으로 학습하기',
+  'maps.regionListHeading': '{sido} {regionLabel} 목록 ({count}곳)',
+  'maps.regionListNote': '위 지도에 표시되는 행정구역입니다.',
 
   'picker.sido': '시도',
   'picker.allSido': '전국 17개 시도',

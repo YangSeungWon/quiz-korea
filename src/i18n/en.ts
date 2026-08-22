@@ -51,7 +51,7 @@ const en: TranslationStrings = {
   'seo.maps.sigungu.title': 'Korea Districts Blank Map PDF Download - Korea Geography Quiz',
   'seo.maps.sigungu.desc': 'Free A4 PDF download of South Korea districts blank and labeled map (educational use)',
   'seo.maps.filtered.title': '{sido} {regionLabel} Blank Map PDF Download - Korea Geography Quiz',
-  'seo.maps.filtered.desc': 'Free A4 PDF download of {sido} {regionLabel} blank and labeled map (educational use)',
+  'seo.maps.filtered.desc': 'Free high-resolution A4 PDF of the {sido} administrative blank map — all {count} {regionLabel}, plus labeled and numbered versions for printing.',
   'maps.heading.sido': 'Provinces Blank Map PDF',
   'maps.heading.sigun': 'Cities Blank Map PDF',
   'maps.heading.sigungu': 'Districts Blank Map PDF',
@@ -76,6 +76,8 @@ const en: TranslationStrings = {
   'maps.usage': 'A4 · for study, classroom, and practice',
   'maps.dataNote': 'Administrative boundaries: Statistics Korea (SGIS) 2025 census',
   'maps.backToHome': 'Home',
+  'maps.regionListHeading': 'Full list of {regionLabel} in {sido} ({count})',
+  'maps.regionListNote': 'The administrative regions shown on the maps above.',
   'maps.relatedHeading': 'Practice this region',
 
   'picker.sido': 'Provinces',

@@ -108,6 +108,8 @@ export interface TranslationStrings {
   'maps.dataNote': string;
   'maps.backToHome': string;
   'maps.relatedHeading': string;
+  'maps.regionListHeading': string;
+  'maps.regionListNote': string;
 
   // Results
   'results.title': string;
