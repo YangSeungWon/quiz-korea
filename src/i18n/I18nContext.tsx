@@ -8,8 +8,6 @@ import en from './en';
 
 const translations: Record<Locale, TranslationStrings> = { ko, en };
 
-const VALID: ReadonlySet<Locale> = new Set<Locale>(['ko', 'en']);
-
 // Read locale from the first segment of the URL path. Fallback for non-prefixed
 // pages (e.g. /maps/print/...) is derived from browser/localStorage so static
 // prerender of those pages still picks something sensible.
@@ -102,5 +100,3 @@ function LocaleSyncBridge({
   }, [location.pathname, currentLocale, onChange]);
   return null;
 }
-
-export { VALID as VALID_LOCALES };

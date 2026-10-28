@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
 import { useMapData } from '../../hooks/useMapData';
 import { getSidoList, getShortDisplayName } from '../../utils/regionUtils';
 import { getSigunCount, METRO_CODES } from '../../utils/sigunMerge';
@@ -45,12 +45,18 @@ export default function RegionPicker({ value, onChange }: RegionPickerProps) {
   const shortNames = locale === 'en' ? SHORT_NAMES_EN : SHORT_NAMES_KO;
 
   // 동 mode: track the chosen 시도 so we can list its 시군구.
-  const [dongSido, setDongSido] = useState<string | null>(null);
+  const [dongSido, setDongSido] = useState<string | null>(
+    value?.level === 'dong' && value.filter ? value.filter.substring(0, 2) : null,
+  );
   // Keep dongSido in sync with an externally-set dong filter; reset when leaving 동.
-  useEffect(() => {
+  // Adjusted during render (not in an effect) so there's no stale frame.
+  const syncKey = `${value?.level ?? ''}|${value?.filter ?? ''}`;
+  const [prevSyncKey, setPrevSyncKey] = useState(syncKey);
+  if (syncKey !== prevSyncKey) {
+    setPrevSyncKey(syncKey);
     if (value?.level !== 'dong') setDongSido(null);
     else if (value.filter) setDongSido(value.filter.substring(0, 2));
-  }, [value?.level, value?.filter]);
+  }
 
   const selectedBtn = 'bg-blue-500 text-white';
   const unselectedBtn = 'bg-white border border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-600';

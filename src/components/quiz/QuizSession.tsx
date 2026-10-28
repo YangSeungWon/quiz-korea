@@ -102,60 +102,37 @@ export default function QuizSession() {
   const [showResults, setShowResults] = useState(true);
   const [wrongPulse, setWrongPulse] = useState<{ code: string; n: number } | null>(null);
   const [record, setRecord] = useState<ReturnType<typeof saveAttempt> | null>(null);
-  const recordedRef = useRef(false);
 
-  // noAccum: visibleAnswered with 1-second fadeout — only show the latest answer
-  const [visibleAnswered, setVisibleAnswered] = useState<Map<string, number>>(new Map());
-  const fadeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const prevAnsweredKeys = useRef<Set<string>>(new Set());
-
+  // noAccum: only the latest answer is shown, fading out after 1 second.
+  // `answered` is a new Map on every correct answer (and on reset), so its
+  // identity marks "the answer whose fade has finished".
+  const [fadedAnswered, setFadedAnswered] = useState<Map<string, number> | null>(null);
   useEffect(() => {
-    if (!noAccum) return;
-    // Find the single newly added code
-    for (const [code, mistakes] of state.answered) {
-      if (!prevAnsweredKeys.current.has(code)) {
-        prevAnsweredKeys.current.add(code);
-        // Show only this one
-        setVisibleAnswered(new Map([[code, mistakes]]));
-        // Clear previous timer
-        if (fadeTimer.current) clearTimeout(fadeTimer.current);
-        fadeTimer.current = setTimeout(() => {
-          setVisibleAnswered(new Map());
-        }, 1000);
-      }
-    }
+    if (!noAccum || state.answered.size === 0) return;
+    const answered = state.answered;
+    const id = setTimeout(() => setFadedAnswered(answered), 1000);
+    return () => clearTimeout(id);
   }, [noAccum, state.answered]);
+  const visibleAnswered = useMemo(() => {
+    if (!noAccum || state.answered === fadedAnswered) return new Map<string, number>();
+    let latest: [string, number] | undefined;
+    for (const entry of state.answered) latest = entry;
+    return new Map(latest ? [latest] : []);
+  }, [noAccum, state.answered, fadedAnswered]);
 
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => { if (fadeTimer.current) clearTimeout(fadeTimer.current); };
-  }, []);
-
-  // Reset visibleAnswered when quiz resets
-  useEffect(() => {
-    if (state.phase === 'ready') {
-      setVisibleAnswered(new Map());
-      prevAnsweredKeys.current = new Set();
-    }
-  }, [state.phase]);
-
-  // Save a personal-best record once when the quiz finishes (learn has no
-  // QuizSession). Reset the guard so a retry records its own attempt.
-  useEffect(() => {
-    if (state.phase !== 'finished') {
-      recordedRef.current = false;
-      setRecord(null);
-      return;
-    }
-    if (recordedRef.current) return;
-    recordedRef.current = true;
-    let correct = 0;
+  // Answer the current region correctly; on the last one, save a personal-best
+  // record (learn has no QuizSession). Done here rather than in an effect so it
+  // runs exactly once per finished attempt.
+  const handleCorrect = useCallback(() => {
+    answerCorrect();
+    if (state.currentIndex + 1 < state.queue.length) return;
+    let correct = state.currentWrongCount === 0 ? 1 : 0;
     for (const m of state.answered.values()) if (m === 0) correct++;
     setRecord(saveAttempt(
       { mode, adminLevel, filter: sidoFilter, count: countParam, borderless, noAccum, outline },
       { correct, total: state.totalRegions, timeMs: elapsedMs, dateISO: new Date().toISOString() },
     ));
-  }, [state.phase, state.answered, state.totalRegions, mode, adminLevel, sidoFilter, countParam, borderless, noAccum, outline, elapsedMs]);
+  }, [answerCorrect, state.currentIndex, state.queue.length, state.currentWrongCount, state.answered, state.totalRegions, mode, adminLevel, sidoFilter, countParam, borderless, noAccum, outline, elapsedMs]);
 
   const regions = useMemo(() => {
     if (!geoData) return [];
@@ -200,13 +177,13 @@ export default function QuizSession() {
       if (!noAccum && state.answered.has(clickedCode)) return;
 
       if (clickedCode === currentRegion.code) {
-        answerCorrect();
+        handleCorrect();
       } else {
         answerWrong();
         setWrongPulse((prev) => ({ code: clickedCode, n: (prev?.n ?? 0) + 1 }));
       }
     },
-    [currentRegion, state.phase, state.answered, noAccum, answerCorrect, answerWrong],
+    [currentRegion, state.phase, state.answered, noAccum, handleCorrect, answerWrong],
   );
 
   const handleTypeAnswer = useCallback(
@@ -214,15 +191,16 @@ export default function QuizSession() {
       if (!currentRegion || state.phase !== 'playing') return;
 
       if (matchesRegionName(input, currentRegion.name, locale)) {
-        answerCorrect();
+        handleCorrect();
       } else {
         answerWrong();
       }
     },
-    [currentRegion, state.phase, locale, answerCorrect, answerWrong],
+    [currentRegion, state.phase, locale, handleCorrect, answerWrong],
   );
 
   const handleRetry = useCallback(() => {
+    setRecord(null);
     reset();
     // Will auto-start via useEffect
   }, [reset]);

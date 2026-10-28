@@ -11,7 +11,9 @@ export default function RecordsPage() {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
   const localized = useLocalePath();
-  const [records, setRecords] = useState<RecordEntry[]>([]);
+  const [records, setRecords] = useState<RecordEntry[]>(
+    () => getAllRecords().sort((a, b) => b.dateISO.localeCompare(a.dateISO)),
+  );
 
   useEffect(() => {
     document.title = `${t('records.title')} - ${t('landing.title')}`;
@@ -26,10 +28,6 @@ export default function RecordsPage() {
     meta.setAttribute('content', 'noindex,nofollow');
     return () => { if (prev) meta!.setAttribute('content', prev); };
   }, [t]);
-
-  useEffect(() => {
-    setRecords(getAllRecords().sort((a, b) => b.dateISO.localeCompare(a.dateISO)));
-  }, []);
 
   const rows = useMemo(() => records.map((e) => {
     const modeLabel = t(e.mode === 'pin' ? 'landing.pinQuiz' : 'landing.typeQuiz');

@@ -11,9 +11,10 @@ interface TypeInputProps {
 export default function TypeInput({ onSubmit, placeholder, wrongKey }: TypeInputProps) {
   const { t } = useI18n();
   const [value, setValue] = useState('');
-  const [wrong, setWrong] = useState(false);
+  // Red until the flash for the latest wrongKey has run out.
+  const [clearedKey, setClearedKey] = useState(wrongKey);
+  const wrong = wrongKey !== clearedKey;
   const inputRef = useRef<HTMLInputElement>(null);
-  const firstRun = useRef(true);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -21,8 +22,7 @@ export default function TypeInput({ onSubmit, placeholder, wrongKey }: TypeInput
 
   // Wrong-answer feedback: shake the input and flash its border red.
   useEffect(() => {
-    if (firstRun.current) { firstRun.current = false; return; }
-    setWrong(true);
+    if (!wrong) return;
     inputRef.current?.animate(
       [
         { transform: 'translateX(0)' },
@@ -33,9 +33,9 @@ export default function TypeInput({ onSubmit, placeholder, wrongKey }: TypeInput
       ],
       { duration: 300, easing: 'ease' },
     );
-    const id = setTimeout(() => setWrong(false), 600);
+    const id = setTimeout(() => setClearedKey(wrongKey), 600);
     return () => clearTimeout(id);
-  }, [wrongKey]);
+  }, [wrong, wrongKey]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
