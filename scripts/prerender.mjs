@@ -35,6 +35,22 @@ const PORT = 45678;
 // starves itself on GPU/CDP contention.
 const HTML_CONCURRENCY = 3;
 
+// CI runners are slower and noisier than local: a few dozen of the ~1750 routes
+// stall each run, and with a single retry one unlucky double-stall failed the
+// whole deploy. Three attempts makes that vanishingly rare.
+const MAX_ATTEMPTS = 3;
+
+async function withRetries(label, fn) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (attempt >= MAX_ATTEMPTS) throw err;
+      console.warn(`  retry ${attempt}/${MAX_ATTEMPTS - 1} ${label}: ${err.message?.split('\n')[0]}`);
+    }
+  }
+}
+
 function buildLanglessPaths(dongCodes) {
   const paths = ['/'];
   for (const mode of QUIZ_MODES) {
@@ -158,7 +174,8 @@ async function renderRoute(browser, route) {
   const page = await browser.newPage();
   try {
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
-    await page.waitForSelector('#root > *', { timeout: 10000 });
+    // 30s, not 10s: under CI CPU contention React sometimes mounts late.
+    await page.waitForSelector('#root > *', { timeout: 30000 });
 
     let html = await page.content();
     html = html.replace('</head>', '<meta name="prerendered" content="true">\n</head>');
@@ -181,16 +198,9 @@ async function prerenderHtml(browser, routes) {
   for (let i = 0; i < routes.length; i += HTML_CONCURRENCY) {
     const batch = routes.slice(i, i + HTML_CONCURRENCY);
     await Promise.all(
-      batch.map(async (route) => {
-        try {
-          await renderRoute(browser, route);
-        } catch (err) {
-          // One retry — a transient ERR_ABORTED under concurrency shouldn't fail
-          // the whole build. Same policy as the PDF phase.
-          console.warn(`  retry ${route}: ${err.message?.split('\n')[0]}`);
-          await renderRoute(browser, route);
-        }
-      }),
+      // A transient ERR_ABORTED / stall under concurrency shouldn't fail the
+      // whole build. Same policy as the PDF phase.
+      batch.map((route) => withRetries(route, () => renderRoute(browser, route))),
     );
     done += batch.length;
     if (done % 100 === 0 || done === routes.length) {
@@ -278,13 +288,7 @@ async function generatePdfs(browser, targets) {
   // its natural ~0.5–4s. Each target uses a fresh page (see renderTarget).
   let done = 0;
   for (const target of targets) {
-    try {
-      await renderTarget(browser, target);
-    } catch (err) {
-      // One retry — a transient stall shouldn't fail the whole build.
-      console.warn(`  retry ${target.filename}: ${err.message?.split('\n')[0]}`);
-      await renderTarget(browser, target);
-    }
+    await withRetries(target.filename, () => renderTarget(browser, target));
     done++;
     if (done % 25 === 0 || done === targets.length) {
       console.log(`  ${done}/${targets.length}`);
