@@ -35,9 +35,9 @@ const PORT = 45678;
 // starves itself on GPU/CDP contention.
 const HTML_CONCURRENCY = 3;
 
-// CI runners are slower and noisier than local: a few dozen of the ~1750 routes
-// stall each run, and with a single retry one unlucky double-stall failed the
-// whole deploy. Three attempts makes that vanishingly rare.
+// Safety margin for transient stalls. The main cause of failed attempts (asset
+// loads aborted by Chrome's cache, see Cache-Control in startServer) is fixed;
+// with a single retry, one double-stall used to fail the whole deploy.
 const MAX_ATTEMPTS = 3;
 
 async function withRetries(label, fn) {
@@ -139,7 +139,14 @@ function startServer() {
       let filePath = join(DIST, url.pathname);
       try {
         const stat = await import('node:fs').then((fs) => fs.promises.stat(filePath));
-        if (stat.isDirectory()) filePath = join(filePath, 'index.html');
+        if (stat.isDirectory()) {
+          filePath = join(filePath, 'index.html');
+          // A directory can exist before its own index.html: rendering a child
+          // route (/quiz/pin/sigungu/seoul) mkdirs its parent. Serving that
+          // missing file used to 404, so a retry of the parent got a blank page
+          // every time and failed the whole build. Fall back to the SPA shell.
+          await import('node:fs').then((fs) => fs.promises.access(filePath));
+        }
       } catch {
         filePath = join(DIST, 'index.html');
       }
@@ -158,7 +165,11 @@ function startServer() {
             webmanifest: 'application/manifest+json',
             pdf: 'application/pdf',
           }[ext] || 'application/octet-stream';
-        res.writeHead(200, { 'Content-Type': mime });
+        // no-store: without any cache headers Chrome heuristically caches, and
+        // concurrent pages contending for the same cached bundle lose it to
+        // net::ERR_ABORTED — the page never mounts and waitForSelector times
+        // out. This was the source of the dozens of "retry" lines per build.
+        res.writeHead(200, { 'Content-Type': mime, 'Cache-Control': 'no-store' });
         res.end(content);
       } catch {
         res.writeHead(404);
@@ -174,7 +185,7 @@ async function renderRoute(browser, route) {
   const page = await browser.newPage();
   try {
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
-    // 30s, not 10s: under CI CPU contention React sometimes mounts late.
+    // Generous: a slow CI runner shouldn't be mistaken for a broken page.
     await page.waitForSelector('#root > *', { timeout: 30000 });
 
     let html = await page.content();
