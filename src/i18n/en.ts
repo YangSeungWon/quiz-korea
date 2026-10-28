@@ -16,6 +16,7 @@ const en: TranslationStrings = {
   'landing.mapsDesc': 'Download printable blank / labeled map PDFs.',
   'landing.modeSelect': 'Select Mode',
   'landing.dataSource': 'Data source',
+  'landing.contact': 'Feedback',
 
   'seo.home.title': 'Korea Geography Quiz - Provinces & Districts Map Quiz',
   'seo.home.desc': 'Test your knowledge of South Korean geography — provinces, districts, and towns — with interactive map quizzes',

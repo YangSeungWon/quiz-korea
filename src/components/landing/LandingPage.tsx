@@ -197,6 +197,14 @@ export default function LandingPage() {
               ? 'SGIS (Statistics Korea), 2025'
               : '통계청 SGIS 행정구역경계 (2025)'}
           </a>
+          <br />
+          {t('landing.contact')}:{' '}
+          <a
+            href="mailto:sw.yang43@gmail.com"
+            className="text-blue-400 hover:underline"
+          >
+            sw.yang43@gmail.com
+          </a>
         </footer>
       </div>
     </div>

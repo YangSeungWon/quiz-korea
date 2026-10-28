@@ -16,6 +16,7 @@ const ko: TranslationStrings = {
   'landing.mapsDesc': '학습용 백지도 / 이름 라벨 PDF 다운로드.',
   'landing.modeSelect': '모드 선택',
   'landing.dataSource': '데이터 출처',
+  'landing.contact': '문의·의견',
 
   'seo.home.title': '한국 지리 퀴즈 - 시도/시군구 지도 퀴즈',
   'seo.home.desc': '한국의 시도·시군구·읍면동을 지도에서 찾아보는 퀴즈',

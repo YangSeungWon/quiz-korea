@@ -17,6 +17,7 @@ export interface TranslationStrings {
   'landing.mapsDesc': string;
   'landing.modeSelect': string;
   'landing.dataSource': string;
+  'landing.contact': string;
 
   // Region picker
   'picker.sido': string;
